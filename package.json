@@ -1,0 +1,83 @@
+{
+  "name": "@sv443-network/editme-packagename",
+  "libName": "EDITME-libName",
+  "version": "EDITME-version",
+  "description": "EDITME-description",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/lib/index.d.ts",
+  "exports": {
+    ".": {
+      "browser": "./dist/index.umd.js",
+      "types": "./dist/lib/index.d.ts",
+      "require": "./dist/index.cjs",
+      "import": "./dist/index.js"
+    }
+  },
+  "type": "module",
+  "scripts": {
+    "lint": "eslint . && tsc --noEmit",
+    "format": "eslint . --fix",
+    "build-types": "tsc --emitDeclarationOnly --declaration --outDir dist && node --import tsx ./tools/fix-dts.mts",
+    "build-common": "tsup lib/index.ts --format cjs,esm --clean --treeshake",
+    "build-all": "tsup lib/index.ts --format cjs,esm --treeshake --onSuccess \"pnpm build-types\"",
+    "build": "pnpm build-common -- && pnpm build-types",
+    "dev": "pnpm build-common -- --sourcemap --watch --onSuccess \"pnpm build-types\"",
+    "dev-all": "pnpm build-all -- --watch",
+    "update-jsr-version": "node --import tsx ./tools/update-jsr-version.mts",
+    "publish-package": "changeset publish",
+    "publish-package-jsr": "pnpm update-jsr-version && npx jsr publish --allow-dirty",
+    "check-jsr": "npx jsr publish --allow-dirty --dry-run",
+    "change": "changeset",
+    "test": "vitest",
+    "test-coverage": "vitest --coverage"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Sv443-Network/EDITME-repo.git"
+  },
+  "keywords": [
+    "userscript",
+    "utilities"
+  ],
+  "author": {
+    "name": "Sv443",
+    "url": "https://github.com/Sv443"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Sv443-Network/EDITME-repo/issues"
+  },
+  "homepage": "https://github.com/Sv443-Network/EDITME-repo",
+  "devDependencies": {
+    "@changesets/cli": "^2.29.2",
+    "@eslint/eslintrc": "^3.3.1",
+    "@eslint/js": "^9.25.1",
+    "@testing-library/dom": "^10.4.0",
+    "@types/node": "^22.15.3",
+    "@types/tx2": "^1.0.3",
+    "@typescript-eslint/eslint-plugin": "^8.31.1",
+    "@typescript-eslint/parser": "^8.31.1",
+    "@typescript-eslint/utils": "^8.31.1",
+    "@vitest/coverage-v8": "^3.1.2",
+    "eslint": "^9.25.1",
+    "globals": "^15.15.0",
+    "jsdom": "^26.1.0",
+    "tslib": "^2.8.1",
+    "tsup": "^8.4.0",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3",
+    "vitest": "^3.1.2"
+  },
+  "files": [
+    "/dist/index.js",
+    "/dist/index.cjs",
+    "/dist/index.mjs",
+    "/dist/index.umd.js",
+    "/dist/lib/**.d.ts",
+    "/package.json",
+    "/README.md",
+    "/CHANGELOG.md",
+    "/LICENSE.txt"
+  ]
+}

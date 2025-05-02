@@ -1,0 +1,23 @@
+{
+  "$schema": "https://jsr.io/schema/config-file.v1.json",
+  "name": "@sv443-network/EDITME-packageName",
+  "version": "0.0.1-invalid",
+  "exports": "./lib/index.ts",
+  "publish": {
+    "include": [
+      "lib/**/*.ts",
+      "dist/index.js",
+      "dist/index.mjs",
+      "dist/index.cjs",
+      "dist/index.umd.js",
+      "dist/lib/*.d.ts",
+      "package.json",
+      "README.md",
+      "CHANGELOG.md",
+      "LICENSE.txt"
+    ],
+    "exclude": [
+      "**/*.spec.ts"
+    ]
+  }
+}

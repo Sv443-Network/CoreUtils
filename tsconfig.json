@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "target": "ES2016",
+    "outDir": "dist/out",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "baseUrl": ".",
+    "rootDir": ".",
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true,
+    "noImplicitThis": false,
+    "noUncheckedIndexedAccess": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "strict": true,
+    "useDefineForClassFields": true
+  },
+  "exclude": [
+    "**/*.js",
+    "dist/**",
+    "tools/**",
+    "test/**",
+    "**/test.ts",
+    "**/*.spec.ts",
+    "vitest.config.ts"
+  ]
+}
