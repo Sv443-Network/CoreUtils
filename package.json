@@ -1,8 +1,8 @@
 {
-  "name": "@sv443-network/editme-packagename",
-  "libName": "EDITME-libName",
-  "version": "EDITME-version",
-  "description": "EDITME-description",
+  "name": "@sv443-network/coreutils",
+  "libName": "@sv443-network/coreutils",
+  "version": "0.1.0",
+  "description": "",
   "main": "dist/index.js",
   "module": "dist/index.js",
   "types": "dist/lib/index.d.ts",
@@ -34,7 +34,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Sv443-Network/EDITME-repo.git"
+    "url": "git+https://github.com/Sv443-Network/CoreUtils.git"
   },
   "keywords": [
     "userscript",
@@ -46,9 +46,9 @@
   },
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/Sv443-Network/EDITME-repo/issues"
+    "url": "https://github.com/Sv443-Network/CoreUtils/issues"
   },
-  "homepage": "https://github.com/Sv443-Network/EDITME-repo",
+  "homepage": "https://github.com/Sv443-Network/CoreUtils",
   "devDependencies": {
     "@changesets/cli": "^2.29.2",
     "@eslint/eslintrc": "^3.3.1",
@@ -79,5 +79,8 @@
     "/README.md",
     "/CHANGELOG.md",
     "/LICENSE.txt"
-  ]
+  ],
+  "dependencies": {
+    "nanoevents": "^9.1.0"
+  }
 }

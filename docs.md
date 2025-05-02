@@ -1,5 +1,5 @@
-# EDITME-libName Documentation
-EDITME-description  
+# CoreUtils Documentation
+Core library used by [@sv443-network/userutils](https://github.com/Sv443-Network/UserUtils) and [@sv443-network/djsutils](https://github.com/Sv443-Network/DJSUtils)  
   
 If you like using this library, please consider [supporting the development ❤️](https://github.com/sponsors/Sv443)
 
@@ -19,8 +19,8 @@ They will also be further explained in the description below that section.
   
 Warning emojis (⚠️) denote special cautions or important notes that you should be aware of when using the feature.  
   
-If you need help with something, please [create a new discussion](https://github.com/Sv443-Network/EDITME-repo/discussions) or [join my Discord server.](https://dc.sv443.net/)  
-For submitting bug reports or feature requests, please use the [GitHub issue tracker.](https://github.com/Sv443-Network/EDITME-repo/issues)
+If you need help with something, please [create a new discussion](https://github.com/Sv443-Network/CoreUtils/discussions) or [join my Discord server.](https://dc.sv443.net/)  
+For submitting bug reports or feature requests, please use the [GitHub issue tracker.](https://github.com/Sv443-Network/CoreUtils/issues)
 
 <br>
 
@@ -75,10 +75,10 @@ The options object is optional. See the [type `MyClassOptions`](#type-myclassopt
 <details><summary>Example - click to view</summary>
 
 ```ts
-import { MyClass } from '@sv443-network/editme-pkgname';
+import { MyClass } from "@sv443-network/coreutils";
 
 const myClass = new MyClass({
-  property1: 'value1',
+  property1: "value1",
   property2: 42,
 });
 ```
