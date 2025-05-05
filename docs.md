@@ -66,7 +66,7 @@ For submitting bug reports or feature requests, please use the [GitHub issue tra
     - 🟧 [`class Debouncer`](#class-debouncer) - Class that manages listeners whose calls are rate-limited
     - 🔷 [`type DebouncerType`](#type-debouncertype) - The triggering type for the debouncer
     - 🔷 [`type DebouncedFunction`](#type-debouncedfunction) - Function type that is returned by the [`debounce()` function](#debounce)
-    - 🔷 [`type DebouncerEventMap`](#type-debouncereventmap) - 
+    - 🔷 [`type DebouncerEventMap`](#type-debouncereventmap) - Event map type for the [`Debouncer` class](#class-debouncer)
   - [**Errors:**](#errors)
     - 🟧 [`class DatedError`](#class-datederror) - Base error class with a `date` property
     - 🟧 [`class ChecksumMismatchError`](#class-checksummismatcherror) - Error thrown when two checksums don't match
@@ -81,17 +81,17 @@ For submitting bug reports or feature requests, please use the [GitHub issue tra
     - 🟣 [`function randRange()`](#function-randrange) - Returns a random number in the given range
     - 🟣 [`function roundFixed()`](#function-roundfixed) - Rounds the given number to the given number of decimal places
     - 🟣 [`function valsWithin()`](#function-valswithin) - Checks if the given numbers are within a certain range of each other
-  - *[**Misc:**](#misc)
-    - 🟣 *[`function pauseFor()`](#function-pausefor) - Pauses async execution for the given amount of time
-    - 🟣 *[`function fetchAdvanced()`](#function-fetchadvanced) - Wrapper around [`fetch()`](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) with options like a timeout
-      - 🔷 *[`type FetchAdvancedOpts`](#type-fetchadvancedopts) - Options for the [`fetchAdvanced()`](#function-fetchadvanced) function
-    - 🟣 *[`function consumeGen()`](#function-consumegen) - Consumes a [`ValueGen` object](#type-valuegen)
-      - 🔷 *[`type ValueGen`](#type-valuegen) - A value that can be either type T, or a sync or async function that returns T
-    - 🟣 *[`function consumeStringGen()`](#function-consumestringgen) - Consumes a [`StringGen` object](#type-stringgen)
-      - 🔷 *[`type StringGen`](#type-stringgen) - A value that can be either of type string, or a sync or async function that returns a string
-    - 🟣 *[`function getListLength()`](#function-getlistlength) - Returns the length of a [`ListLike` object](#type-listlike)
-      - 🔷 *[`type ListLike`](#type-listlike) - Any value with a quantifiable `length`, `count` or `size` property
-    - 🟣 *[`function pureObj()`](#function-pureobj) - Applies an object's props to a null object (object without prototype chain) or just returns a new null object
+  - [**Misc:**](#misc)
+    - 🟣 [`function consumeGen()`](#function-consumegen) - Consumes a [`ValueGen` object](#type-valuegen)
+      - 🔷 [`type ValueGen`](#type-valuegen) - A value that can be either type T, or a sync or async function that returns T
+    - 🟣 [`function consumeStringGen()`](#function-consumestringgen) - Consumes a [`StringGen` object](#type-stringgen)
+      - 🔷 [`type StringGen`](#type-stringgen) - A value that can be either of type string, or a sync or async function that returns a string
+    - 🟣 [`function fetchAdvanced()`](#function-fetchadvanced) - Wrapper around [`fetch()`](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) with options like a timeout
+      - 🔷 [`type FetchAdvancedOpts`](#type-fetchadvancedopts) - Options for the [`fetchAdvanced()` function](#function-fetchadvanced)
+    - 🟣 [`function getListLength()`](#function-getlistlength) - Returns the length of a [`ListLike` object](#type-listlike)
+      - 🔷 [`type ListLike`](#type-listlike) - Any value with a quantifiable `length`, `count` or `size` property
+    - 🟣 [`function pauseFor()`](#function-pausefor) - Pauses async execution for the given amount of time
+    - 🟣 [`function pureObj()`](#function-pureobj) - Applies an object's props to a null object (object without prototype chain) or just returns a new null object
   - *[**NanoEmitter:**](#nanoemitter)
     - 🟧 *[`class NanoEmitter`](#class-nanoemitter) - Simple, lightweight event emitter class based on [`node:events`' `EventEmitter`](https://nodejs.org/api/events.html#class-eventemitter) and [`nanoevents`](https://npmjs.com/package/nanoevents) that can be used in both FP and OOP
       - 🔷 *[`type NanoEmitterOptions`](#type-nanoemitteroptions) - Options for the [`NanoEmitter` class](#class-nanoemitter)
@@ -670,7 +670,7 @@ deb.on("change", (timeout, type) => {
 <br>
 
 ### Events:
-The Debouncer class inherits from [`NanoEmitter`](#nanoemitter), so you can use all of its inherited methods to listen to the following events:
+The Debouncer class inherits from [`NanoEmitter`](#class-nanoemitter), so you can use all of its inherited methods to listen to the following events:
 | Event | Arguments | Description |
 | :-- | :-- | :-- |
 | `call` | `...TArgs[]`, same as `addListener()` and `call()` | Emitted when the debouncer triggers and calls all listener functions, as an event-driven alternative to the callback-based `addListener()` method. |
@@ -1255,6 +1255,285 @@ console.log(valsWithin(3, Math.PI, 0.1));             // false
 
 <br><br>
 
+
+<!-- #region misc -->
+## Misc
+
+<br>
+
+### `function consumeGen()`
+Signature:
+```ts
+consumeGen(valGen: ValueGen<any>): Promise<any>
+```
+  
+Asynchronously turns a [`ValueGen`](#type-valuegen) into its final value.  
+ValueGen allows for tons of flexibility in how the value can be obtained. Calling this function will resolve the final value, no matter in what form it was passed.  
+  
+<details><summary><b>Example - click to view</b></summary>
+
+```ts
+import { consumeGen, type ValueGen } from "@sv443-network/coreutils";
+
+async function useValue(value: ValueGen<number>) {
+  // type gets inferred as `number` because `value` is typed as a `ValueGen<number>` above
+  const finalValue = await consumeGen(value);
+  console.log(finalValue);
+}
+
+// the following are all valid and yield 42:
+useValue(42);
+useValue(() => 42);
+useValue(Promise.resolve(42));
+useValue(async () => 42);
+
+// throws a TS error:
+useValue("foo");
+```
+</details>
+
+<br>
+
+### `type ValueGen`
+```ts
+type ValueGen<TValueType> = TValueType | Promise<TValueType> | (() => TValueType | Promise<TValueType>);
+```
+  
+Describes a value that can be obtained in various ways, including via the type itself, a function that returns the type, a Promise that resolves to the type or either a sync or an async function that returns the type.  
+Use it in the [`consumeGen()` function](#function-consumegen) to convert the given ValueGen value to the type it represents. Also refer to that function for an example.  
+
+<br>
+
+### `function consumeStringGen()`
+Signature:
+```ts
+consumeStringGen(strGen: StringGen): Promise<string>
+```
+  
+Asynchronously turns a [`StringGen`](#type-stringgen) into its final string value.  
+StringGen allows for tons of flexibility in how the string can be obtained. Calling this function will resolve the final string.  
+Optionally you can use the template parameter to define the union of strings that the StringGen should yield.  
+  
+<details><summary><b>Example - click to view</b></summary>
+
+```ts
+import { consumeStringGen, type StringGen } from "@sv443-network/coreutils";
+
+export class MyTextPromptThing {
+  // full flexibility on how the string can be passed to the constructor,
+  // because it can be obtained synchronously or asynchronously,
+  // in string or function form:
+  constructor(private text: StringGen) {}
+
+  /** Shows the prompt dialog */
+  public async showPrompt() {
+    const promptText = await consumeStringGen(this.text);
+    const promptHtml = promptText.trim().replace(/\n/gm, "<br>");
+
+    // ...
+  }
+}
+
+// all valid:
+const myText = "Hello, World!";
+new MyTextPromptThing(myText);
+new MyTextPromptThing(() => myText);
+new MyTextPromptThing(Promise.resolve(myText));
+new MyTextPromptThing(async () => myText);
+
+// throws a TS error:
+new MyTextPromptThing(420);
+```
+</details>
+
+<br>
+
+### `type StringGen`
+```ts
+type StringGen = ValueGen<Stringifiable>;
+```
+  
+Describes a string that can be obtained in various ways, including via a [`Stringifiable`](#type-stringifiable) value, a function that returns a [`Stringifiable`](#type-stringifiable) value, a Promise that resolves to a [`Stringifiable`](#type-stringifiable) value or either a sync or an async function that returns a [`Stringifiable`](#type-stringifiable) value.  
+Remember that [`Stringifiable`](#type-stringifiable) is a type that describes a value that either is a string itself or can be converted to a string implicitly using `toString()`, template literal interpolation, or by passing it to `String()`, giving you the utmost flexibility in how the string can be passed.  
+  
+Contrary to [`ValueGen`](#type-valuegen), this type allows for specifying a union of strings that the StringGen should yield, as long as it is loosely typed as just `string`.  
+Use it in the [`consumeStringGen()` function](#function-consumestringgen) to convert the given StringGen value to a plain string. Also refer to that function for an example.
+
+<br>
+
+### `function fetchAdvanced()`
+Signature:
+```ts
+fetchAdvanced(input: string | Request | URL, options?: {
+  timeout?: number,
+  // any other options from fetch()
+}): Promise<Response>
+```
+  
+A drop-in replacement for the native `fetch()` function that adds a timeout property.  
+The timeout will default to 10 seconds if left undefined. Set it to a negative number to disable the timeout.  
+Pass an [AbortController's signal](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) to the `signal` property to be able to abort the request manually in addition to the automatic timeout.  
+  
+<details><summary><b>Example - click to view</b></summary>
+
+```ts
+import { fetchAdvanced } from "@sv443-network/userutils";
+
+const controller = new AbortController();
+
+fetchAdvanced("https://jokeapi.dev/joke/Any?safe-mode&format=json", {
+  // times out after 5 seconds:
+  timeout: 5000,
+  // also accepts any other fetch options like headers and signal:
+  headers: {
+    "Accept": "application/json",
+  },
+  // make the request manually abortable:
+  signal: controller.signal,
+}).then(async (response) => {
+  console.log("Fetch data:", await response.json());
+}).catch((err) => {
+  console.error("Fetch error:", err);
+});
+
+// can also be aborted manually before the timeout is reached:
+document.querySelector("button#cancel")?.addEventListener("click", () => {
+  controller.abort();
+});
+```
+</details>
+
+<br>
+
+### `type FetchAdvancedOpts`
+```ts
+type FetchAdvancedOpts = RequestInit & {
+  timeout?: number;
+};
+```
+  
+The options object for the [`fetchAdvanced()` function.](#function-fetchadvanced)  
+
+<br>
+
+### `function getListLength()`
+Signature:
+```ts
+getListLength(obj: ListWithLength, zeroOnInvalid?: boolean): number
+```
+  
+Returns the length of the given list-like object (anything with a numeric `length`, `size` or `count` property, like an array, Map or NodeList).  
+Refer to the [`ListWithLength` type](#type-listwithlength) for more info.  
+  
+If the object doesn't have any of these properties, it will return 0 by default.  
+Set `zeroOnInvalid` to false to return NaN instead of 0 if the object doesn't have any of the properties.  
+  
+<details><summary><b>Example - click to view</b></summary>
+
+```ts
+import { getListLength } from "@sv443-network/userutils";
+
+getListLength([1, 2, 3]); // 3
+getListLength("Hello, World!"); // 13
+getListLength(document.querySelectorAll("body")); // 1
+getListLength(new Map([["foo", "bar"], ["baz", "qux"]])); // 2
+getListLength({ size: 42 }); // 42
+
+// returns 0 by default:
+getListLength({ foo: "bar" }); // 0
+
+// can return NaN instead:
+getListLength({ foo: "bar" }, false); // NaN
+```
+</details>
+
+<br>
+
+### `type ListLike`
+```ts
+type ListLike = unknown[] | { length: number } | { count: number } | { size: number };
+```
+  
+Represents a value that is either an array, NodeList, or any other object that has a numeric `length`, `count` or `size` property.  
+Iterables are not included because they don't have a quantifiable length property. They need to be converted to an array first using `Array.from()` or `[...iterable]`.  
+
+<br>
+
+### `function pauseFor()`
+Signature:
+```ts
+pauseFor(time: number, abortSignal?: AbortSignal, rejectOnAbort?: boolean): Promise<void>
+```
+  
+Pauses async execution for a given amount of time.  
+If an [AbortSignal](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) is passed, the pause will be cut short when the signal is aborted.  
+By default, this will resolve the promise, but you can set `rejectOnAbort` to true to reject it instead.  
+  
+<details><summary><b>Example - click to view</b></summary>
+
+```ts
+import { pauseFor } from "@sv443-network/userutils";
+
+async function run() {
+  console.log("Hello");
+
+  await pauseFor(3000); // waits for 3 seconds
+
+  console.log("World");
+
+
+  // can also be cut short manually:
+
+  const controller = new AbortController();
+  setTimeout(() => controller.abort(), 1000);
+
+  await pauseFor(2_147_483_647, controller.signal); // (maximum possible timeout)
+
+  console.log("This gets printed after just 1 second");
+}
+```
+</details>
+
+<br>
+
+### `function pureObj()`
+Signature:
+```ts
+pureObj<TObj extends object>(obj?: TObj): TObj
+```
+  
+Turns the passed object into a "pure" object without a prototype chain, meaning it won't have any default properties like `toString`, `__proto__`, `__defineGetter__`, etc.  
+This could be useful to prevent prototype pollution attacks or to clean up object literals, at the cost of being harder to work with in some cases.  
+Returns an empty, pure object if no object is passed.  
+It also effectively transforms a [`Stringifiable`](#type-stringifiable) value into one that will throw a TypeError when stringified instead of defaulting to `[object Object]`  
+  
+<details><summary><b>Example - click to view</b></summary>
+
+```ts
+import { pureObj } from "@sv443-network/userutils";
+
+const impureObj = { foo: "bar" };
+
+console.log(impureObj.toString);         // [Function: toString]
+console.log(impureObj.__proto__);        // { ... }
+console.log(impureObj.__defineGetter__); // [Function: __defineGetter__]
+console.log(`${impureObj}`);             // "[object Object]"
+
+const pureObj = pureObj(impureObj);
+
+console.log(pureObj.toString);         // undefined
+console.log(pureObj.__proto__);        // undefined
+console.log(pureObj.__defineGetter__); // undefined
+console.log(`${pureObj}`);             // TypeError: Cannot convert object to string
+
+const emptyObj = pureObj();
+
+console.log(emptyObj);          // {}
+console.log(emptyObj.toString); // undefined
+```
+</details>
+
+<br><br>
 
 
 <!-- #region text -->
