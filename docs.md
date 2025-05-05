@@ -93,9 +93,9 @@ For submitting bug reports or feature requests, please use the [GitHub issue tra
       - 🔷 [`type ListLike`](#type-listlike) - Any value with a quantifiable `length`, `count` or `size` property
     - 🟣 [`function pauseFor()`](#function-pausefor) - Pauses async execution for the given amount of time
     - 🟣 [`function pureObj()`](#function-pureobj) - Applies an object's props to a null object (object without prototype chain) or just returns a new null object
-  - *[**NanoEmitter:**](#nanoemitter)
-    - 🟧 *[`class NanoEmitter`](#class-nanoemitter) - Simple, lightweight event emitter class based on [`node:events`' `EventEmitter`](https://nodejs.org/api/events.html#class-eventemitter) and [`nanoevents`](https://npmjs.com/package/nanoevents) that can be used in both FP and OOP
-      - 🔷 *[`type NanoEmitterOptions`](#type-nanoemitteroptions) - Options for the [`NanoEmitter` class](#class-nanoemitter)
+  - [**NanoEmitter:**](#nanoemitter)
+    - 🟧 [`class NanoEmitter`](#class-nanoemitter) - Simple, lightweight event emitter class based on [`node:events`' `EventEmitter`](https://nodejs.org/api/events.html#class-eventemitter) and [`nanoevents`](https://npmjs.com/package/nanoevents) that can be used in both FP and OOP
+      - 🔷 [`type NanoEmitterOptions`](#type-nanoemitteroptions) - Options for the [`NanoEmitter` class](#class-nanoemitter)
   - [**Text:**](#text)
     - 🟣 [`function autoPlural()`](#function-autoplural) - Turns the given term into its plural form, depending on the given number or list length
     - 🟣 [`function capitalize()`](#function-capitalize) - Capitalizes the first letter of the given string
@@ -828,7 +828,7 @@ See the below diagram for a visual representation of the different types.
 <details><summary><b>Example - click to view</b></summary>
 
 ```ts
-import { debounce } from "@sv443-network/userutils";
+import { debounce } from "@sv443-network/coreutils";
 
 // simple example:
 window.addEventListener("resize", debounce((evt) => {
@@ -1080,7 +1080,7 @@ If `withDecimals` is set to false, the decimal point and everything after it wil
 <details><summary><b>Example - click to view</b></summary>
 
 ```ts
-import { digitCount } from "@sv443-network/userutils";
+import { digitCount } from "@sv443-network/coreutils";
 
 const num1 = 123;
 const num2 = 123456789;
@@ -1151,7 +1151,7 @@ If only the `max` arguments are passed, the function will set the `min` for both
 <details><summary><b>Example - click to view</b></summary>
 
 ```ts
-import { mapRange } from "@sv443-network/userutils";
+import { mapRange } from "@sv443-network/coreutils";
 
 mapRange(5, 0, 10, 0, 100); // 50
 mapRange(5, 0, 10, 0, 50);  // 25
@@ -1183,7 +1183,7 @@ Note that this makes the function call take longer, but the generated IDs will h
 <details><summary><b>Example - click to view</b></summary>
 
 ```ts
-import { randRange } from "@sv443-network/userutils";
+import { randRange } from "@sv443-network/coreutils";
 
 randRange(0, 10);       // 4
 randRange(10, 20);      // 17
@@ -1381,7 +1381,7 @@ Pass an [AbortController's signal](https://developer.mozilla.org/en-US/docs/Web/
 <details><summary><b>Example - click to view</b></summary>
 
 ```ts
-import { fetchAdvanced } from "@sv443-network/userutils";
+import { fetchAdvanced } from "@sv443-network/coreutils";
 
 const controller = new AbortController();
 
@@ -1435,7 +1435,7 @@ Set `zeroOnInvalid` to false to return NaN instead of 0 if the object doesn't ha
 <details><summary><b>Example - click to view</b></summary>
 
 ```ts
-import { getListLength } from "@sv443-network/userutils";
+import { getListLength } from "@sv443-network/coreutils";
 
 getListLength([1, 2, 3]); // 3
 getListLength("Hello, World!"); // 13
@@ -1476,7 +1476,7 @@ By default, this will resolve the promise, but you can set `rejectOnAbort` to tr
 <details><summary><b>Example - click to view</b></summary>
 
 ```ts
-import { pauseFor } from "@sv443-network/userutils";
+import { pauseFor } from "@sv443-network/coreutils";
 
 async function run() {
   console.log("Hello");
@@ -1514,7 +1514,7 @@ It also effectively transforms a [`Stringifiable`](#type-stringifiable) value in
 <details><summary><b>Example - click to view</b></summary>
 
 ```ts
-import { pureObj } from "@sv443-network/userutils";
+import { pureObj } from "@sv443-network/coreutils";
 
 const impureObj = { foo: "bar" };
 
@@ -1536,6 +1536,184 @@ console.log(emptyObj);          // {}
 console.log(emptyObj.toString); // undefined
 ```
 </details>
+
+<br><br>
+
+<!--- #region NanoEmitter -->
+## NanoEmitter
+
+<br>
+
+### `class NanoEmitter`
+Usage:
+```ts
+// functional:
+const emitter = new NanoEmitter<TEventMap = EventsMap>(options?: NanoEmitterOptions);
+// object-oriented:
+class MyClass extends NanoEmitter<TEventMap = EventsMap> {
+  constructor() {
+    super(options?: NanoEmitterOptions);
+  }
+}
+```
+  
+A class that provides a minimalistic event emitter with a tiny footprint powered by [the nanoevents library.](https://npmjs.com/package/nanoevents)  
+The `TEventMap` generic is used to define the events that can be emitted and listened to.  
+  
+The main intention behind this class is to extend it in your own classes to provide a simple event system directly built into the class.  
+However in a functional environment you can also just create instances for use as standalone event emitters throughout your project.  
+  
+For the options object, refer to the [`NanoEmitterOptions` type.](#type-nanoemitteroptions)  
+  
+<br>
+  
+<details><summary><b>Object oriented example - click to view</b></summary>
+
+```ts
+import { NanoEmitter } from "@sv443-network/coreutils";
+
+// map of events for strong typing - the functions always return void
+interface MyEventMap {
+  foo: (bar: string) => void;
+  baz: (qux: number) => void;
+}
+
+class MyClass extends NanoEmitter<MyEventMap> {
+  constructor() {
+    super({
+      // allow emitting events from outside the class body:
+      publicEmit: true,
+    });
+
+    // the class can also listen to its own events:
+    this.once("baz", (qux) => {
+      console.log("baz event (inside, once):", qux);
+    });
+  }
+
+  public doStuff() {
+    // any call to the public emit() method, even when inside the own class, won't work if publicEmit is set to false:
+    this.emit("foo", "hello");
+    this.emit("baz", 42);
+    this.emit("foo", "world");
+    // this one will always work when used inside the class and functions identically:
+    this.events.emit("baz", 69);
+  }
+}
+
+const myInstance = new MyClass();
+myInstance.doStuff();
+
+// listeners attached with on() can be called multiple times:
+myInstance.on("foo", (bar) => {
+  console.log("foo event (outside):", bar);
+});
+
+// throws a TS error since `events` is protected, but technically still works in JS:
+myInstance.events.emit("foo", "hello");
+
+// only works because publicEmit is set to true:
+myInstance.emit("baz", "hello from the outside");
+
+// remove all listeners:
+myInstance.unsubscribeAll();
+```
+</details>
+
+<br>
+
+<details><summary><b>Functional example - click to view</b></summary>
+
+```ts
+import { NanoEmitter } from "@sv443-network/coreutils";
+
+// map of events for strong typing - the functions always return void
+interface MyEventMap {
+  foo: (bar: string) => void;
+  baz: (qux: number) => void;
+}
+
+const myEmitter = new NanoEmitter<MyEventMap>({
+  // very important for functional usage - allow emitting events from outside the class body:
+  publicEmit: true,
+});
+
+myEmitter.on("foo", (bar) => {
+  console.log("foo event:", bar);
+});
+
+myEmitter.once("baz", (qux) => {
+  console.log("baz event (once):", qux);
+});
+
+function doStuff() {
+  // only works if publicEmit is set to true
+  myEmitter.emit("foo", "hello");
+  myEmitter.emit("baz", 42);
+  myEmitter.emit("foo", "world");
+  myEmitter.emit("baz", 69);
+
+  myEmitter.emit("foo", "hello from the outside");
+
+  myEmitter.unsubscribeAll();
+}
+
+doStuff();
+```
+</details>
+
+<br>
+  
+### Methods
+#### `NanoEmitter.on()`  
+Signature:
+```ts
+NanoEmitter.on<K extends keyof TEventMap>(event: K, listener: TEventMap[K]): void
+```
+  
+Registers a listener function for the given event.  
+May be called multiple times for the same event.
+  
+<br>
+
+#### `NanoEmitter.once()`
+Signature:
+```ts
+NanoEmitter.once<K extends keyof TEventMap>(event: K, listener: TEventMap[K]): void
+```
+  
+Registers a listener function for the given event that will only be called once.
+
+<br>
+
+#### `NanoEmitter.emit()`
+Signature:
+```ts
+NanoEmitter.emit<K extends keyof TEventMap>(event: K, ...args: Parameters<TEventMap[K]>): boolean
+```
+  
+Emits an event with the given arguments from outside the class instance if `publicEmit` is set to `true`.  
+If `publicEmit` is set to `true`, this method will return `true` if the event was emitted.  
+If it is set to `false`, it will always return `false` and you will need to use `this.events.emit()` from inside the class instead.
+
+<br>
+
+#### `NanoEmitter.unsubscribeAll()`
+Signature:
+```ts
+NanoEmitter.unsubscribeAll(): void
+```
+  
+Removes all listeners from all events.
+
+<br>
+
+### `type NanoEmitterOptions`
+The options object for the [`NanoEmitter` class.](#class-nanoemitter)  
+It can have the following properties:
+| Property | Type | Description |
+| :-- | :-- | :-- |
+| `publicEmit?` | boolean | If set to true, the public method `emit()` will be callable. False by default. |
 
 <br><br>
 
