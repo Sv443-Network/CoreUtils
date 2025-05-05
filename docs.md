@@ -47,7 +47,7 @@ For submitting bug reports or feature requests, please use the [GitHub issue tra
     - 🟣 [`function decompress()`](#function-decompress) - Decompresses the given string using the given algorithm (gzip/deflate) and encoding
     - 🟣 [`function computeHash()`](#function-computehash) - Computes a string's hash using the given algorithm (SHA-x, MD5, ...)
     - 🟣 [`function randomId()`](#function-randomid) - Generates a random ID of the given length
-  - *[**DataStore:**](#datastore) - Cross-platform, general-purpose, sync/async hybrid, JSON-serializable database infrastructure
+  - *[**DataStore**](#datastore) - Cross-platform, general-purpose, sync/async hybrid, JSON-serializable database infrastructure:
     - 🟧 *[`class DataStore`](#class-datastore) - The main class for the data store
       - 🔷 *[`type DataStoreOptions`](#type-datastoreoptions) - Options for the data store
     - 🟧 *[`class DataStoreSerializer`](#class-datastoreserializer) - Serializes and deserializes data for multiple DataStore instances
@@ -55,12 +55,13 @@ For submitting bug reports or feature requests, please use the [GitHub issue tra
       - 🔷 *[`type LoadStoresDataResult`](#type-loadstoresdataresult) - Result of calling [`loadStoresData()`](#datastoreserializer-loadstoresdata)
       - 🔷 *[`type SerializedDataStore`](#type-serializeddatastore) - Meta object and serialized data of a DataStore instance
       - 🔷 *[`type StoreFilter`](#type-storefilter) - Filter for selecting data stores
-    - 🟧 *[`class DataStoreEngine`](#class-datastoreengine) - Base class for DataStore storage engines
+    - 🟧 *[`class DataStoreEngine`](#class-datastoreengine) - Base class for DataStore storage engines, which handle the data storage
       - 🔷 *[`type DataStoreEngineOptions`](#type-datastoreengineoptions) - Options for the data store engine
-    - 🟧 *[`class BrowserStorageEngine`](#class-browserstorageengine) - Storage engine for browser environments (localStorage, sessionStorage)
-      - 🔷 *[`type BrowserStorageEngineOptions`](#browserstorageengineoptions) - Options for the browser storage engine
-    - 🟧 *[`class JSONFileStorageEngine`](#class-JSONFileStorageEngine) - Storage engine for Node.js environments (JSON file)
-      - 🔷 *[`type JSONFileStorageEngineOptions`](#JSONFileStorageEngineoptions) - Options for the JSON file engine
+    - **Storage Engines:**
+      - 🟧 *[`class BrowserStorageEngine`](#class-browserstorageengine) - Storage engine for browser environments (localStorage, sessionStorage)
+        - 🔷 *[`type BrowserStorageEngineOptions`](#browserstorageengineoptions) - Options for the browser storage engine
+      - 🟧 *[`class JSONFileStorageEngine`](#class-JSONFileStorageEngine) - Storage engine for Node.js environments (JSON file)
+        - 🔷 *[`type JSONFileStorageEngineOptions`](#JSONFileStorageEngineoptions) - Options for the JSON file engine
   - [**Debouncer:**](#debouncer)
     - 🟣 [`function debounce()`](#function-debounce) - Function wrapper for the [`Debouncer` class](#class-debouncer)
     - 🟧 [`class Debouncer`](#class-debouncer) - Class that manages listeners whose calls are rate-limited
@@ -113,6 +114,9 @@ For submitting bug reports or feature requests, please use the [GitHub issue tra
     - 🔷 *[`type TrObject`](#type-trobject) - The translation object for a specific language
   - [**Misc. Types:**](#types)
     TODO:
+    - 🔷 [`type ListLike`](#type-listlike) - Any value with a quantifiable `length`, `count` or `size` property
+    - 🔷 [`type ValueGen`](#type-valuegen) - A value that can be either the generic type T, or a sync or async function that returns T
+    - 🔷 [`type StringGen`](#type-stringgen) - A value that can be either of type string, or a sync or async function that returns a string
 
 <br><br><br>
 
