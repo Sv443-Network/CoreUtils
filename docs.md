@@ -43,30 +43,29 @@ For submitting bug reports or feature requests, please use the [GitHub issue tra
   - [**Crypto:**](#crypto)
     - 🟣 [`function abtoa()`](#function-abtoa) - Converts an ArrayBuffer to a string
     - 🟣 [`function atoab()`](#function-atoab) - Converts a string to an ArrayBuffer
-    - 🟣 [`function compress()`](#function-compress) - Compresses the given string using the given algorithm (gzip/deflate) and encoding
-    - 🟣 [`function decompress()`](#function-decompress) - Decompresses the given string using the given algorithm (gzip/deflate) and encoding
-    - 🟣 [`function computeHash()`](#function-computehash) - Computes a string's hash using the given algorithm (SHA-x, MD5, ...)
+    - 🟣 [`function compress()`](#function-compress) - Compresses the given string using the given algorithm and encoding
+    - 🟣 [`function decompress()`](#function-decompress) - Decompresses the given string using the given algorithm and encoding
+    - 🟣 [`function computeHash()`](#function-computehash) - Computes a string's hash using the given algorithm
     - 🟣 [`function randomId()`](#function-randomid) - Generates a random ID of the given length
-  - *[**DataStore**](#datastore) - Cross-platform, general-purpose, sync/async hybrid, JSON-serializable database infrastructure:
-    - 🟧 *[`class DataStore`](#class-datastore) - The main class for the data store
-      - 🔷 *[`type DataStoreOptions`](#type-datastoreoptions) - Options for the data store
-    - 🟧 *[`class DataStoreSerializer`](#class-datastoreserializer) - Serializes and deserializes data for multiple DataStore instances
-      - 🔷 *[`type DataStoreSerializerOptions`](#type-datastoreserializeroptions) - Options for the DataStoreSerializer
-      - 🔷 *[`type LoadStoresDataResult`](#type-loadstoresdataresult) - Result of calling [`loadStoresData()`](#datastoreserializer-loadstoresdata)
-      - 🔷 *[`type SerializedDataStore`](#type-serializeddatastore) - Meta object and serialized data of a DataStore instance
-      - 🔷 *[`type StoreFilter`](#type-storefilter) - Filter for selecting data stores
-    - 🟧 *[`class DataStoreEngine`](#class-datastoreengine) - Base class for DataStore storage engines, which handle the data storage
-      - 🔷 *[`type DataStoreEngineOptions`](#type-datastoreengineoptions) - Options for the data store engine
-    - **Storage Engines:**
-      - 🟧 *[`class BrowserStorageEngine`](#class-browserstorageengine) - Storage engine for browser environments (localStorage, sessionStorage)
-        - 🔷 *[`type BrowserStorageEngineOptions`](#browserstorageengineoptions) - Options for the browser storage engine
-      - 🟧 *[`class JSONFileStorageEngine`](#class-JSONFileStorageEngine) - Storage engine for Node.js environments (JSON file)
-        - 🔷 *[`type JSONFileStorageEngineOptions`](#JSONFileStorageEngineoptions) - Options for the JSON file engine
+  - [**DataStore:**](#datastore) - Cross-platform, general-purpose, sync/async hybrid, JSON-serializable database infrastructure:
+    - 🟧 [`class DataStore`](#class-datastore) - The main class for the data store
+      - 🔷 [`type DataStoreOptions`](#type-datastoreoptions) - Options for the data store
+    - 🟧 [`class DataStoreSerializer`](#class-datastoreserializer) - Serializes and deserializes data for multiple DataStore instances
+      - 🔷 [`type DataStoreSerializerOptions`](#type-datastoreserializeroptions) - Options for the DataStoreSerializer
+      - 🔷 [`type LoadStoresDataResult`](#type-loadstoresdataresult) - Result of calling [`loadStoresData()`](#datastoreserializer-loadstoresdata)
+      - 🔷 [`type SerializedDataStore`](#type-serializeddatastore) - Meta object and serialized data of a DataStore instance
+      - 🔷 [`type StoreFilter`](#type-storefilter) - Filter for selecting data stores
+    - 🟧 [`class DataStoreEngine`](#class-datastoreengine) - Base class for DataStore storage engines, which handle the data storage
+    - [Storage Engines:](#storage-engines)
+      - 🟧 [`class BrowserStorageEngine`](#class-browserstorageengine) - Storage engine for browser environments (localStorage, sessionStorage)
+        - 🔷 [`type BrowserStorageEngineOptions`](#browserstorageengineoptions) - Options for the browser storage engine
+      - 🟧 [`class JSONFileStorageEngine`](#class-JSONFileStorageEngine) - Storage engine for Node.js environments (JSON file)
+        - 🔷 [`type JSONFileStorageEngineOptions`](#JSONFileStorageEngineoptions) - Options for the JSON file engine
   - [**Debouncer:**](#debouncer)
     - 🟣 [`function debounce()`](#function-debounce) - Function wrapper for the [`Debouncer` class](#class-debouncer)
     - 🟧 [`class Debouncer`](#class-debouncer) - Class that manages listeners whose calls are rate-limited
     - 🔷 [`type DebouncerType`](#type-debouncertype) - The triggering type for the debouncer
-    - 🔷 [`type DebouncedFunction`](#type-debouncedfunction) - Function type that is returned by the [`debounce()` function](#debounce)
+    - 🔷 [`type DebouncedFunction`](#type-debouncedfunction) - Function type that is returned by the [`debounce()` function](#function-debounce)
     - 🔷 [`type DebouncerEventMap`](#type-debouncereventmap) - Event map type for the [`Debouncer` class](#class-debouncer)
   - [**Errors:**](#errors)
     - 🟧 [`class DatedError`](#class-datederror) - Base error class with a `date` property
@@ -105,6 +104,7 @@ For submitting bug reports or feature requests, please use the [GitHub issue tra
     - 🟣 [`function joinArrayReadable()`](#function-joinarrayreadable) - Joins the given array into a string, using the given separators and last separator
     - 🟣 [`function secsToTimeStr()`](#function-sectostimestr) - Turns the given number of seconds into a string in the format `(hh:)mm:ss` with intelligent zero-padding
     - 🟣 [`function truncStr()`](#function-truncstr) - Truncates the given string to the given length
+  <!-- - *[**TieredCache:**](#tieredcache) -->
   - *[**Translate:**](#translate)
     - 🟧 *[`class Translate`](#class-translate) - JSON-based translation system supporting transformation hooks, value injection, nested objects, etc.
     - 🔷 *[`type TransformFn`](#type-transformfn) - The type of the transformation hook functions
@@ -117,6 +117,7 @@ For submitting bug reports or feature requests, please use the [GitHub issue tra
     - 🔷 [`type ListLike`](#type-listlike) - Any value with a quantifiable `length`, `count` or `size` property
     - 🔷 [`type ValueGen`](#type-valuegen) - A value that can be either the generic type T, or a sync or async function that returns T
     - 🔷 [`type StringGen`](#type-stringgen) - A value that can be either of type string, or a sync or async function that returns a string
+    - 🔷 [`type SerializableVal`](#type-serializableval) - Any value that can be serialized to JSON
 
 <br><br><br>
 
@@ -581,7 +582,867 @@ benchmark(true, true);   // Generated 10k in 1054ms
 
 <br>
 
-<!-- TODO: -->
+### `class DataStore`
+Signature:
+```ts
+class DataStore<TData extends object = object>;
+```
+  
+Usage:
+```ts
+const store = new DataStore(options: DataStoreOptions);
+```
+  
+A class that manages a sync & async JSON database that is persistently saved and has an in-memory cache for synchronous access.  
+Supports automatic migration of outdated data formats via configured migration functions.  
+You may create as many instances as you like as long as they have different IDs.  
+The class' internal methods are all declared as protected, so you can extend this class and override them if you need to add your own functionality.  
+  
+For info on the options object, see the [`DataStoreOptions` type.](#type-datastoreoptions)  
+  
+Each DataStore instance needs an engine, which is responsible for the actual data storage.  
+To see a list of available engines, see the [Storage Engines section.](#storage-engines)  
+To make your own engine, refer to the [`DataStoreEngine` class.](#class-datastoreengine)  
+  
+If you have multiple DataStore instances and you want to be able to easily and safely export and import their data, take a look at the [DataStoreSerializer class.](#class-datastoreserializer)  
+It combines the data of multiple DataStore instances into a single object that can be exported and imported as a whole, including partial im- and exports.  
+  
+If you were using the `DataStore` class from the `@sv443-network/userutils` package before, all your data should be migrated automatically on the first call to `loadData()`.  
+  
+⚠️ The data is serialized as a JSON string, so only JSON-compatible data can be used. Circular structures and complex objects (containing functions, symbols, etc.) will either throw an error on load and save or cause otherwise unexpected behavior. Properties with a value of `undefined` will be removed from the data prior to saving it, so use `null` instead.  
+  
+<details><summary><b>Example - click to view</b></summary>
+
+```ts
+import { DataStore, compress, decompress } from "@sv443-network/userutils";
+
+/** Example: Script configuration data */
+interface MyConfig {
+  foo: string;
+  bar: number;
+  baz: string;
+  qux: string;
+}
+
+/** Default data returned by getData() calls until setData() is used and also fallback data if something goes wrong */
+const defaultData: MyConfig = {
+  foo: "hello",
+  bar: 42,
+  baz: "xyz",
+  qux: "something",
+};
+/** If any properties are added to, removed from, or renamed in the MyConfig type, increment this number */
+const formatVersion = 2;
+/** These are functions that migrate outdated data to the latest format - make sure a function exists for every previously used formatVersion and that no numbers are skipped! */
+const migrations = {
+  // migrate from format version 0 to 1
+  1: (oldData: Record<string, unknown>) => {
+    return {
+      foo: oldData.foo,
+      bar: oldData.bar,
+      baz: "world",
+    };
+  },
+  // asynchronously migrate from format version 1 to 2
+  2: async (oldData: Record<string, unknown>) => {
+    // using arbitrary async operations for the new format:
+    const qux = await grabQuxDataAsync();
+    return {
+      foo: oldData.foo,
+      bar: oldData.bar,
+      baz: oldData.baz,
+      qux,
+    };
+  },
+};
+
+// You probably want to export this instance (or helper functions) so you can use it anywhere in your script:
+export const manager = new DataStore({
+  /** A unique ID for this instance */
+  id: "my-script-config",
+  /** Default, initial and fallback data */
+  defaultData,
+  /** The current version of the data format - should be a whole number that is only ever incremented */
+  formatVersion,
+  /**
+   * The engine is responsible for the actual data storage.  
+   * Certain environments require certain engines, for example BrowserStorageEngine should be used in a DOM environment.  
+   * JSONFileStorageEngine will require Node.js or a newer version of Deno with Node compatibility.
+   */
+  storageEngine: () => new JSONFileStorageEngine({
+    // missing directories will be created automatically
+    filePath: (id) => `./.data-stores/${id}.dat`,
+  }),
+  /** Data format migration functions called when the formatVersion is increased */
+  migrations,
+  /**
+   * If the data was saved under different ID(s) before, providing them here will make
+   * sure the data is migrated to the current ID when `loadData()` is called
+   */
+  migrateIds: ["my-data", "config"],
+
+  // Compression example:
+  // Adding the following will save space at the cost of a little bit of performance (only for the initial loading and every time new data is saved)
+  // Feel free to use your own functions here, as long as they take in the stringified JSON and return another string, either synchronously or asynchronously
+  // Either both of these properties or none of them should be set
+
+  /** Compresses the data using the "deflate-raw" algorithm and digests it as a string */
+  encodeData: (data) => compress(data, "deflate-raw", "string"),
+  /** Decompresses the "deflate-raw" encoded data as a string */
+  decodeData: (data) => decompress(data, "deflate-raw", "string"),
+  // ensure the algorithm always stays the same!
+});
+
+/** Entrypoint of the script */
+async function init() {
+  // wait for the data to be loaded from persistent storage
+  // if no data was saved in persistent storage before or getData() is called before loadData(), the value of options.defaultData will be returned
+  // if the previously saved data needs to be migrated to a newer version, it will happen inside this function call
+  const configData = await manager.loadData();
+
+  console.log(configData.foo); // "hello"
+
+  // update the data
+  configData.foo = "world";
+  configData.bar = 123;
+
+  // save the updated data - synchronously to the cache and asynchronously to persistent storage
+  manager.saveData(configData).then(() => {
+    console.log("Data saved to persistent storage!");
+  });
+
+  // the internal cache is updated synchronously, so the updated data can be accessed before the Promise resolves:
+  console.log(manager.getData().foo); // "world"
+}
+
+init();
+```
+</details>
+
+<br>
+
+### Methods
+
+<br>
+
+### `DataStore.loadData()`
+Signature:
+```ts
+loadData(): Promise<TData>;
+```
+  
+Asynchronously loads the data from persistent storage and returns it.  
+If no data was saved in persistent storage before, the value of `options.defaultData` will be returned and also written to persistent storage before resolving.  
+If the `options.migrateIds` property is present and this is the first time calling this function in this session, the data will be migrated from the old ID(s) to the current one.  
+Then, if the `formatVersion` of the saved data is lower than the current one and the `options.migrations` property is present, the instance will try to migrate the data to the latest format before resolving, updating the in-memory cache and persistent storage.  
+
+<br>
+
+### `DataStore.getData()`
+Signature:
+```ts
+getData(): TData;
+```
+  
+Synchronously returns the current data that is stored in the internal cache.  
+If no data was loaded from persistent storage yet using `loadData()`, the value of `options.defaultData` will be returned.
+
+<br>
+
+### `DataStore.setData()`
+Signature:
+```ts
+setData(data: TData): Promise<void>;
+```
+  
+Writes the given data synchronously to the internal cache and asynchronously to persistent storage.
+
+<br>
+
+### `DataStore.saveDefaultData()`
+Signature:
+```ts
+saveDefaultData(): Promise<void>;
+```
+  
+Writes the default data given in `options.defaultData` synchronously to the internal cache and asynchronously to persistent storage.
+
+<br>
+
+### `DataStore.deleteData()`
+Signature:
+```ts
+deleteData(): Promise<void>;
+```
+  
+Fully deletes the data from persistent storage only.  
+The internal cache will be left untouched, so any subsequent calls to `getData()` will return the data that was last loaded.  
+If `loadData()` or `setData()` are called after this, the persistent storage will be populated with the value of `options.defaultData` again.  
+This is why you should either immediately repopulate the cache and persistent storage or the page should probably be reloaded or closed after this method is called.
+
+<br>
+
+### `DataStore.runMigrations()`
+Signature:
+```ts
+runMigrations(oldData: any, oldFmtVer: number, resetOnError?: boolean): Promise<TData>;
+```
+  
+Runs all necessary migration functions to migrate the given `oldData` to the latest format.  
+If `resetOnError` is set to `false`, the migration will be aborted and a [`MigrationError`](#class-migrationerror) is thrown and no data will be committed. If it is set to `true` (default) and an error is encountered, it will be suppressed and the `defaultData` will be saved to persistent storage and returned.
+
+<br>
+
+### `DataStore.migrateId()`
+Signature:
+```ts
+migrateId(oldIds: string | string[]): Promise<void>;
+```
+  
+Tries to migrate the currently saved persistent data from one or more old IDs to the ID set in the constructor.  
+If no data exist for the old ID(s), nothing will be done, but some time may still pass trying to fetch the non-existent data.  
+Instead of calling this manually, consider setting the `migrateIds` property in the constructor to automatically migrate the data once per session in the call to `loadData()`, unless you know that you need to migrate the ID(s) manually.
+
+<br>
+
+### `DataStore.encodingEnabled()`
+Signature:
+```ts
+encodingEnabled(): boolean;
+```
+  
+Returns `true` if both `options.encodeData` and `options.decodeData` are set, else `false`.  
+Uses TypeScript's type guard notation for easier use in conditional statements.
+
+<br><br>
+
+### `type DataStoreOptions`
+The options object for the [`DataStore` class.](#class-datastore)  
+It has the following properties:
+| Property | Description |
+| :-- | :-- |
+| `id` | A unique internal identification string for this instance. If two DataStores share the same ID, they will overwrite each other's data. |
+| `defaultData` | The default data to use if no data is saved in persistent storage yet. Until the data is loaded from persistent storage, this will be the data returned by `getData()`. For TypeScript, the type of the data passed here is what will be used for all other methods of the instance. |
+| `formatVersion` | An incremental version of the data format. If the format of the data is changed in any way, this number should be incremented, in which case all necessary functions of the migrations dictionary will be run consecutively. *Never decrement this number!* |
+| `storageEngine` | Either a storage engine instance or a function that creates and returns a new storage engine instance. The engine dictates where the data will be persisted. See the [Storage Engines section.](#storage-engines) |
+| `migrations?` | (Optional) A dictionary of functions that can be used to migrate data from older versions of the data to newer ones. The keys of the dictionary should be the format version number that the function migrates to, from the previous whole integer value. The values should be functions that take the data in the old format and return the data in the new format. The functions will be run in order from the oldest to the newest version. If the current format version is not in the dictionary, no migrations will be run. |
+| `migrateIds?` | (Optional) A string or array of strings that migrate from one or more old IDs to the ID set in the constructor. If no data exist for the old ID(s), nothing will be done, but some time may still pass trying to fetch the non-existent data. The ID migration will be done once per session in the call to [`loadData()`](#datastoreloaddata). |
+| `encodeData?` | (Optional, but required when `decodeData` is also set) Function that encodes the data before saving - you can use [compress()](#function-compress) here to save space at the cost of a little bit of performance |
+| `decodeData?` | (Optional, but required when `encodeData` is also set) Function that decodes the data when loading - you can use [decompress()](#function-decompress) here to decode the data that was previously compressed with [compress()](#function-compress) |
+
+<br><br>
+
+### `class DataStoreSerializer`
+Usage:
+```ts
+const serializer = new DataStoreSerializer(stores: DataStore[], options?: DataStoreSerializerOptions);
+```
+  
+A class that manages serializing and deserializing (exporting and importing) one to infinite DataStore instances.  
+The serialized data is a JSON string that can be saved to a file, copied to the clipboard, or stored in any other way.  
+Each DataStore instance's settings like data encoding are respected and saved next to the exported data.  
+Also, by default a checksum is calculated and importing data with a mismatching checksum will throw an error.  
+  
+The class' internal methods are all declared as protected, so you can extend this class and override them if you need to add your own functionality.  
+  
+⚠️ Needs to run in a secure context (HTTPS) due to the use of the SubtleCrypto API.  
+  
+<details><summary><b>Example - click to view</b></summary>
+
+```ts
+import { DataStore, DataStoreSerializer, compress, decompress } from "@sv443-network/userutils";
+
+/** This store doesn't have migrations to run and also has no encodeData and decodeData functions */
+const fooStore = new DataStore({
+  id: "foo-data",
+  defaultData: {
+    foo: "hello",
+  },
+  formatVersion: 1,
+  storageEngine: new BrowserStorageEngine(),
+});
+
+/** This store has migrations to run and also has encodeData and decodeData functions */
+const barStore = new DataStore({
+  id: "bar-data",
+  defaultData: {
+    foo: "hello",
+  },
+  formatVersion: 2,
+  storageEngine: new BrowserStorageEngine(),
+  migrations: {
+    2: (oldData) => ({
+      ...oldData,
+      bar: "world",
+    }),
+  },
+  // ensure the algorithm always stays the same!
+  encodeData: (data) => compress(data, "deflate-raw", "string"),
+  decodeData: (data) => decompress(data, "deflate-raw", "string"),
+});
+
+const serializer = new DataStoreSerializer([fooStore, barStore], {
+  addChecksum: true,
+  ensureIntegrity: true,
+});
+
+async function exportMyDataPls() {
+  // first, make sure the persistent data of all stores is loaded into their caches:
+  await serializer.loadStoresData();
+
+  // now serialize the data:
+  const serializedData = await serializer.serialize();
+  // create a file and download it:
+  const blob = new Blob([serializedData], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `data_export-${new Date().toISOString()}.json`;
+  a.click();
+  a.remove();
+
+  // `serialize()` exports a stringified object that looks similar to this:
+  // [
+  //   {
+  //     "id": "foo-data",
+  //     "data": "{\"foo\":\"hello\"}", // not compressed or encoded because encodeData and decodeData are not set
+  //     "formatVersion": 1,
+  //     "encoded": false,
+  //     "checksum": "420deadbeef69"
+  //   },
+  //   {
+  //     "id": "bar-data",
+  //     "data": "eJyrVkrKTFeyUkrOKM1LLy1WqgUAMvAF6g==", // compressed because encodeData and decodeData are set
+  //     "formatVersion": 2,
+  //     "encoded": true,
+  //     "checksum": "69beefdead420"
+  //   }
+  // ]
+}
+
+async function importMyDataPls() {
+  // grab the data from the file by using the system file picker or a text field or something similar
+  const data = await getDataFromSomewhere();
+
+  try {
+    // import the data and run migrations if necessary
+    await serializer.deserialize(data);
+  }
+  catch(err) {
+    console.error(err);
+    alert(`Data import failed: ${err}`);
+  }
+}
+
+async function resetMyDataPls() {
+  // reset the data of all stores in both the cache and the persistent storage
+  await serializer.resetStoresData();
+}
+
+async function exportOnlyFoo() {
+  // with the `serializePartial()` method, you can export only the data of specific stores:
+  const serializedExample1 = await serializer.serializePartial(["foo-data"]);
+
+  // or using a matcher function:
+  const serializedExample2 = await serializer.serializePartial((id) => id.startsWith("foo"));
+}
+```
+</details>
+
+<br>
+
+### Methods
+
+<br>
+
+### `DataStoreSerializer.serialize()`
+Signature:
+```ts
+serialize(useEncoding?: boolean, stringified?: boolean): Promise<string | SerializedDataStore[]>;
+```
+  
+Serializes all DataStore instances passed in the constructor and returns the serialized data as a JSON string by deafault.  
+If `useEncoding` is set to `true` (default), the data will be encoded using the `encodeData` function set on the DataStore instance.  
+If `stringified` is set to `true` (default), the serialized data will be returned as a stringified JSON array, otherwise the unencoded objects will be returned in an array.  
+  
+If you need a partial export, use the method [`DataStoreSerializer.serializePartial()`](#datastoreserializerserializepartial) instead.  
+  
+<details><summary>Click to view the structure of the returned data.</summary>  
+
+```jsonc
+[
+  {
+    "id": "foo-data",                               // the ID property given to the DataStore instance
+    "data": "eJyrVkrKTFeyUkrOKM1LLy1WqgUAMvAF6g==", // serialized data (may be compressed / encoded or not)
+    "formatVersion": 2,                             // the format version of the data
+    "encoded": true,                                // only set to true if both encodeData and decodeData are set in the DataStore instance
+    "checksum": "420deadbeef69",                    // property will be missing if addChecksum is set to false
+  },
+  {
+    "id": "bar-data",
+    "data": "{\"foo\":\"hello\",\"bar\":\"world\"}", // for unencoded stores, the data will be a stringified JSON object
+    "formatVersion": 1,
+    "encoded": false,
+    "checksum": "69beefdead420"
+  }
+]
+```
+</details>  
+
+<br>
+
+### `DataStoreSerializer.serializePartial()`
+Signature:
+```ts
+serializePartial(stores: string[] | ((id: string) => boolean), useEncoding?: boolean, stringified?: boolean): Promise<string | SerializedDataStore[]>;
+```
+  
+Serializes only the DataStore instances that have an ID that is included in the `stores` array.  
+  
+The `stores` argument can be an array containing the IDs of the DataStore instances, or a function that takes each ID as an argument and returns a boolean, indicating whether the store should be serialized.  
+If `useEncoding` is set to `true` (default), the data will be encoded using the `encodeData` function set on the DataStore instance.  
+If `stringified` is set to `true` (default), the serialized data will be returned as a stringified JSON array, otherwise the unencoded objects will be returned in an array.  
+  
+For more information or to export all DataStore instances, refer to the method [`DataStoreSerializer.serialize()`](#datastoreserializerserialize)
+
+<br>
+
+### `DataStoreSerializer.deserialize()`
+Signature:
+```ts
+deserialize(data: string | SerializedDataStore[]): Promise<void>;
+```
+  
+Deserializes the given string or array of serialized DataStores that was created with `serialize()` or `serializePartial()` and imports the contained data into each matching DataStore instance.  
+In the process of importing the data, the migrations will be run, if the `formatVersion` property is lower than the one set on the DataStore instance.  
+  
+The `data` parameter can be the data as a string or an array of serialized DataStores, as returned by the `serialize()` or `serializePartial()` methods.  
+  
+If `ensureIntegrity` is set to `true` and the checksum doesn't match, a [`ChecksumMismatchError`](#class-checksummismatcherror) will be thrown.  
+If `ensureIntegrity` is set to `false`, the checksum check will be skipped entirely.  
+If the `checksum` property is missing on the imported data, the checksum check will also be skipped.  
+If `encoded` is set to `true`, the data will be decoded using the `decodeData` function set on the DataStore instance.  
+  
+For only importing a subset of the serialized data, use the method [`DataStoreSerializer.deserializePartial()`](#datastoreserializerdeserializepartial) instead.
+
+<br>
+
+### `DataStoreSerializer.deserializePartial()`
+Signature:
+```ts
+deserializePartial(stores: string[] | ((id: string) => boolean), data: string | SerializedDataStore[]): Promise<void>;
+```
+  
+Deserializes only the DataStore instances that have an ID that is included in the `stores` array.  
+In the process of importing the data, the migrations will be run, if the `formatVersion` property is lower than the one set on the DataStore instance.  
+  
+The `stores` parameter can be an array containing the IDs of the DataStore instances, or a function that takes each ID as an argument and returns a boolean, indicating whether the store should be deserialized.  
+The `data` parameter can be the data as a string or an array of serialized DataStores, as returned by the `serialize()` or `serializePartial()` methods.  
+  
+If `ensureIntegrity` is set to `true` and the checksum doesn't match, a [`ChecksumMismatchError`](#class-checksummismatcherror) will be thrown.  
+If `ensureIntegrity` is set to `false`, the checksum check will be skipped entirely.  
+If the `checksum` property is missing on the imported data, the checksum check will also be skipped.  
+If `encoded` is set to `true`, the data will be decoded using the `decodeData` function set on the DataStore instance.  
+  
+If you want to import all serialized data, refer to the method [`DataStoreSerializer.deserialize()`](#datastoreserializerdeserialize)
+
+<br>
+
+### `DataStoreSerializer.loadStoresData()`
+Signature:
+```ts
+loadStoresData(stores?: string[] | ((id: string) => boolean)): PromiseSettledResult<{ id: string, data: object }>[];;
+```
+  
+Loads the persistent data of the DataStore instances with IDs matching the `stores` parameter into the in-memory cache of each DataStore instance.  
+If no stores are specified, all stores will be loaded.  
+Also triggers the migration process if the data format has changed.  
+See the [`DataStore.loadData()`](#datastoreloaddata) method for more information.  
+  
+<details><summary>Click to view the structure of the returned data.</summary>  
+
+```jsonc
+[
+  {
+    "status": "fulfilled",
+    "value": {
+      "id": "foo-data",
+      "data": {
+        "foo": "hello",
+        "bar": "world"
+      }
+    }
+  },
+  {
+    "status": "rejected",
+    "reason": "Checksum mismatch for DataStore with ID \"bar-data\"!\nExpected: 69beefdead420\nHas: abcdef42"
+  }
+]
+```
+
+</details>
+
+<br>
+
+### `DataStoreSerializer.resetStoresData()`
+Signature:
+```ts
+resetStoresData(stores?: string[] | ((id: string) => boolean)): PromiseSettledResult[];;
+```
+  
+Resets the persistent data of the DataStore instances with IDs matching the `stores` parameter to their default values.  
+If no stores are specified, all stores will be reset.  
+This affects both the in-memory cache and the persistent storage.  
+Any call to `serialize()` will then use the value of `options.defaultData` of the respective DataStore instance.  
+
+<br>
+
+### `DataStoreSerializer.deleteStoresData()`
+Signature:
+```ts
+deleteStoresData(stores?: string[] | ((id: string) => boolean)): PromiseSettledResult[];;
+```
+  
+Deletes the persistent data of the DataStore instances with IDs matching the `stores` parameter from the set storage method.  
+If no stores are specified, all stores' persistent data will be deleted.  
+Leaves the in-memory cache of the DataStore instances untouched.  
+Any call to `setData()` on the instances will recreate their own persistent storage data.
+
+<br><br>
+
+### `type DataStoreSerializerOptions`
+The options object for the [`DataStoreSerializer` class.](#class-datastoreserializer)  
+It has the following properties:  
+| Property | Description |
+| :-- | :-- |
+| `addChecksum?` | (Optional) If set to `true` (default), a SHA-256 checksum will be calculated and saved with the serialized data. If set to `false`, no checksum will be calculated and saved. |
+| `ensureIntegrity?` | (Optional) If set to `true` (default), the checksum will be checked when importing data and an error will be thrown if it doesn't match. If set to `false`, the checksum will not be checked and no error will be thrown. If no checksum property exists on the imported data (for example because it wasn't enabled in a previous data format version), the checksum check will be skipped regardless of this setting. |
+
+<br>
+
+### `type LoadStoresDataResult`
+```ts
+type LoadStoresDataResult = {
+  /** The ID of the DataStore instance */
+  id: string;
+  /** The in-memory data object */
+  data: object;
+}
+```
+  
+Result of calling [`DataStoreSerializer.loadStoresData()`.](#datastoreserializerloadstoresdata)
+
+<br>
+
+### `type SerializedDataStore`
+```ts
+type SerializedDataStore = {
+  /** The ID of the DataStore instance */
+  id: string;
+  /** The serialized data */
+  data: string;
+  /** The format version of the data */
+  formatVersion: number;
+  /** Whether the data is encoded */
+  encoded: boolean;
+  /** The checksum of the data - key is not present when `addChecksum` is `false` */
+  checksum?: string;
+};
+```
+  
+Meta object and serialized data of a [`DataStore` class](#class-datastore) instance.
+
+<br>
+
+### `type StoreFilter`
+```ts
+type StoreFilter = string[] | ((id: string) => boolean);
+```
+  
+Argument for filtering DataStore instances in the methods [`DataStoreSerializer.serializePartial()`](#datastoreserializerserializepartial) and [`DataStoreSerializer.deserializePartial()`](#datastoreserializerdeserializepartial).
+
+<br><br>
+
+### `class DataStoreEngine`
+Signature:
+```ts
+abstract class DataStoreEngine<TData extends object = object>;
+```
+  
+Usage:
+```ts
+class MyStorageEngine<TData extends object = object> extends DataStoreEngine<TData> {
+  protected options: MyStorageEngineOptions;
+  constructor(options: MyStorageEngineOptions) {
+    super();
+    this.options = options;
+  }
+}
+```
+  
+Base class for storage engines used by the [`DataStore` class.](#class-datastore)  
+This architecture allows different engines to be used in different environments, like the frontend or backend.  
+While this library offers some premade engines [in the Storage Engines section,](#storage-engines) you can also create your own engine by extending this class and implementing at least the required (abstract) methods (see the example).  
+  
+<details><summary>Example - click to view</summary>
+
+```ts
+import { DataStoreEngine } from "@sv443-network/userutils";
+
+class MyStorageEngine<TData extends object = object> extends DataStoreEngine<TData> {
+  protected options: MyStorageEngineOptions;
+
+  constructor(options: MyStorageEngineOptions) {
+    super();
+    this.options = options;
+  }
+
+  async getValue(name: string, defaultValue: string): Promise<string> {
+    // implement your own logic in here
+
+    // this.dataStoreOptions will be set by the DataStore instance before any of these methods are called:
+    const value = await grabMyValue(`${this.dataStoreOptions.id}-${name}`);
+    return value ?? defaultValue;
+  }
+
+  async setValue(name: string, value: string): Promise<void> {
+    // implement your own logic in here
+
+    await saveMyValue(`${this.dataStoreOptions.id}-${name}`, value);
+  }
+
+  async deleteValue(name: string): Promise<void> {
+    // implement your own logic in here
+
+    await deleteMyValue(`${this.dataStoreOptions.id}-${name}`);
+  }
+}
+```
+</details>
+
+<br>
+
+### Methods
+
+<br>
+
+### `DataStoreEngine.getValue()`
+Signature:
+```ts
+abstract getValue<TValue extends SerializableVal = string>(name: string, defaultValue: TValue): Promise<string | TValue>;
+```
+  
+Must be implemented by the engine subclass.  
+Is called to get the value of the given name from persistent storage.  
+If the value doesn't exist, `defaultValue` should be returned.  
+The value needs to be deserialized to the correct type in the [`SerializableVal` union](#type-serializableval). This is up to your implementation.
+
+<br>
+
+### `DataStoreEngine.setValue()`
+Signature:
+```ts
+abstract setValue(name: string, value: SerializableVal): Promise<void>;
+```
+  
+Must be implemented by the engine subclass.  
+Is called to set the value of the given name in persistent storage.  
+The value can be any type in the [`SerializableVal` union](#type-serializableval), so it needs to be safely serialized, so that [`DataStoreEngine.getValue()`](#datastoreenginegetvalue) can deserialize it again.
+
+<br>
+
+### `DataStoreEngine.deleteValue()`
+Signature:
+```ts
+abstract deleteValue(name: string): Promise<void>;
+```
+  
+Must be implemented by the engine subclass.  
+Is called to delete the value of the given name from persistent storage.  
+
+<br>
+
+### `DataStoreEngine.serializeData()`
+Signature:
+```ts
+serializeData(data: TData, useEncoding?: boolean): Promise<string>;
+```
+  
+Is called to serialize the data before it will be saved.  
+In the default implementation, if `useEncoding` is set to `true`, the data will be encoded using the `dataStoreOptions.encodeData` function.
+
+<br>
+
+### `DataStoreEngine.deserializeData()`
+Signature:
+```ts
+deserializeData(data: string, useEncoding?: boolean): Promise<TData>;
+```
+  
+Is called to deserialize the data that was previously serialized with `serializeData()`.  
+In the default implementation, if `useEncoding` is set to `true`, the data will be decoded using the `dataStoreOptions.decodeData` function.
+
+<br>
+
+### `DataStoreEngine.deepCopy()`
+Signature:
+```ts
+deepCopy<T>(obj: T): T;
+```
+  
+Creates a deep copy of the given object.  
+The default implementation uses the [`structuredClone()` function](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm) if available, which is the most efficient way to clone many types of objects.  
+If it isn't available, it defaults to a more primitive `JSON.parse(JSON.stringify(obj))` clone.
+
+<br>
+
+### `DataStoreEngine.setDataStoreOptions()`
+Signature:
+```ts
+setDataStoreOptions(dataStoreOptions: DataStoreOptions<TData>): void;
+```
+  
+Called by the [`DataStore` class](#class-datastore) instance to pass its options object.  
+Either overwrite this method or wait for the member `dataStoreOptions` to be set by it and use that.
+
+<br><br>
+
+<!-- #region DataStoreEngines -->
+### Storage Engines
+
+<br>
+
+### `class BrowserStorageEngine`
+Signature:
+```ts
+class BrowserStorageEngine<TData extends object = object>
+  extends DataStoreEngine<TData>;
+```
+  
+Usage:
+```ts
+const engine = new BrowserStorageEngine(options: BrowserStorageEngineOptions);
+```
+  
+Storage engine for the [`DataStore` class](#class-datastore) that uses the browser's LocalStorage or SessionStorage to store data.  
+  
+⚠️ Requires a secure DOM environment (HTTPS)  
+⚠️ Don't reuse this engine across multiple [`DataStore`](#class-datastore) instances
+  
+<details><summary>Example - click to view</summary>
+
+```ts
+import { DataStore, BrowserStorageEngine } from "@sv443-network/userutils";
+
+// this DataStore will only work in the browser, because it uses the BrowserStorageEngine
+const myStore = new DataStore({
+  id: "my-data",
+  defaultData: {
+    foo: 1,
+  },
+  formatVersion: 1,
+  storageEngine: new BrowserStorageEngine({
+    // LocalStorage will persist across sessions, SessionStorage will be cleared when the page is closed
+    type: "localStorage", // or "sessionStorage"
+  }),
+  // ensure the algorithm always stays the same!
+  encodeData: (data) => compress(data, "deflate-raw", "string"),
+  decodeData: (data) => decompress(data, "deflate-raw", "string"),
+});
+
+async function init() {
+  // wait for the data to be loaded from the file or for the defaultData to be saved
+  const configData = await myStore.loadData();
+
+  console.log(configData.foo); // 1
+}
+
+init();
+```
+</details>
+
+<br>
+
+### `type BrowserStorageEngineOptions`
+```ts
+type BrowserStorageEngineOptions = {
+  /** Whether to store the data in LocalStorage (default) or SessionStorage */
+  type?: "localStorage" | "sessionStorage";
+};
+```
+  
+Options for the [`BrowserStorageEngine` class.](#class-browserstorageengine)  
+  
+The `type` option can be set to `"localStorage"` (default) or `"sessionStorage"` to store the data in the respective storage type.  
+Note that the session storage will be cleared when the page is closed, while the local storage will persist until it is manually cleared.
+
+<br><br>
+
+### `class JSONFileStorageEngine`
+Signature:
+```ts
+class JSONFileStorageEngine<TData extends object = object>
+  extends DataStoreEngine<TData>;
+```
+  
+Usage:
+```ts
+const engine = new JSONFileStorageEngine(options: JSONFileStorageEngineOptions);
+```
+  
+Storage engine for the [`DataStore` class](#class-datastore) that uses a JSON file to store data.  
+  
+⚠️ Requires Node.js or Deno with Node compatibility  
+⚠️ Don't reuse this engine across multiple [`DataStore`](#class-datastore) instances  
+  
+<details><summary>Example - click to view</summary>
+
+```ts
+import { DataStore, JSONFileStorageEngine } from "@sv443-network/userutils";
+
+// this DataStore will only work in Node.js or Deno with Node compatibility
+const myStore = new DataStore({
+  id: "my-data",
+  defaultData: {
+    foo: 1,
+  },
+  formatVersion: 1,
+  storageEngine: new JSONFileStorageEngine({
+    // missing directories will be created automatically
+    // since the data is encoded, the file contains raw data instead of JSON, so it's saved as .dat
+    filePath: (id) => `./.data-stores/${id}.dat`,
+  }),
+  // ensure the algorithm always stays the same!
+  encodeData: (data) => compress(data, "deflate-raw", "string"),
+  decodeData: (data) => decompress(data, "deflate-raw", "string"),
+});
+
+async function init() {
+  // wait for the data to be loaded from the file or for the defaultData to be saved
+  const configData = await myStore.loadData();
+
+  console.log(configData.foo); // 1
+}
+
+init();
+```
+</details>
+
+<br>
+
+### `type JSONFileStorageEngineOptions`
+```ts
+type JSONFileStorageEngineOptions = {
+  /** Function that returns a string or a plain string that is the data file path, including name and extension. Defaults to `.ds-${dataStoreID}` */
+  filePath?: ((dataStoreID: string) => string) | string;
+};
+```
+  
+Options for the [`JSONFileStorageEngine` class.](#class-jsonfilestorageengine)  
+  
+The `filePath` option can be a function that returns a string or a plain string that is the data file path, including name and extension.  
+By default, the file will be created as `.ds-${dataStoreID}` in the current working directory.  
+Missing directories will be created automatically.  
 
 <br><br>
 
@@ -985,7 +1846,7 @@ This error may be thrown by the [`DataStoreSerializer` class](#class-datastorese
 
 <br>
 
-### `class DataStoreError`
+### `class MigrationError`
 Signature:
 ```ts
 class MigrationError
@@ -994,7 +1855,7 @@ class MigrationError
 ```
   
 Error while migrating data.  
-This error may be thrown by [`DataStore.loadData()`](#datastore-loaddata) and [`DataStoreSerializer.loadStoresData()`](#datastoreserializer-loadstoresdata) if the imported data's version doesn't match the current version, or there was an error in a migration function.  
+This error may be thrown by [`DataStore.loadData()`](#datastoreloaddata) and [`DataStoreSerializer.loadStoresData()`](#datastoreserializerloadstoresdata) if the imported data's version doesn't match the current version, or there was an error in a migration function.  
 
 <br><br>
 
@@ -1919,5 +2780,20 @@ const str = "Lorem ipsum dolor sit amet.";
 console.log(truncStr(str, 10, "…")); // "Lorem ips…"
 ```
 </details>
+
+<br><br>
+
+<!-- #region types -->
+
+## Types
+
+<br>
+
+### `type SerializableVal
+```ts
+type SerializableVal = string | number | boolean | null | SerializableVal[] | { [key: string]: SerializableVal };
+```
+  
+Any value that can be serialized to JSON with `JSON.stringify()`.  
 
 <br><br>

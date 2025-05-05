@@ -9,7 +9,10 @@ import type { SerializableVal } from "./types.js";
 
 //#region >> DataStoreEngine
 
-/** Base class for creating {@linkcode DataStore} storage engine middlewares. */
+/**
+ * Base class for creating {@linkcode DataStore} storage engines.  
+ * This acts as an interchangeable API for writing and reading persistent data in various environments.
+ */
 export abstract class DataStoreEngine<TData extends object = object> {
   protected dataStoreOptions!: DataStoreOptions<TData>; // setDataStoreOptions() is called from inside the DataStore constructor to set this value
 
@@ -19,6 +22,7 @@ export abstract class DataStoreEngine<TData extends object = object> {
   }
 
   //#region storage api
+
   /** Fetches a value from persistent storage */
   public abstract getValue<TValue extends SerializableVal = string>(name: string, defaultValue: TValue): Promise<string | TValue>;
   /** Sets a value in persistent storage */
@@ -77,18 +81,18 @@ export type BrowserStorageEngineOptions = {
 
 /**
  * Storage engine for the {@linkcode DataStore} class that uses the browser's LocalStorage or SessionStorage to store data.  
- * Can be reused by multiple {@linkcode DataStore} instances.  
  *   
  * ⚠️ Requires a DOM environment
+ * ⚠️ Don't reuse this engine across multiple {@linkcode DataStore} instances
  */
 export class BrowserStorageEngine<TData extends object = object> extends DataStoreEngine<TData> {
   protected options: Required<BrowserStorageEngineOptions>;
 
   /**
    * Creates an instance of `BrowserStorageEngine`.  
-   * Can be reused by multiple {@linkcode DataStore} instances.  
    *   
-   * ⚠️ Requires a DOM environment
+   * ⚠️ Requires a DOM environment  
+   * ⚠️ Don't reuse this engine across multiple {@linkcode DataStore} instances
    */
   constructor(options: BrowserStorageEngineOptions) {
     super();
@@ -142,7 +146,7 @@ export type JSONFileStorageEngineOptions = {
 /**
  * Storage engine for the {@linkcode DataStore} class that uses a JSON file to store data.  
  *   
- * ⚠️ Requires Node.js  
+ * ⚠️ Requires Node.js or Deno with Node compatibility  
  * ⚠️ Don't reuse this engine across multiple {@linkcode DataStore} instances
  */
 export class JSONFileStorageEngine<TData extends object = object> extends DataStoreEngine<TData> {
@@ -151,7 +155,7 @@ export class JSONFileStorageEngine<TData extends object = object> extends DataSt
   /**
    * Creates an instance of `JSONFileStorageEngine`.  
    *   
-   * ⚠️ Requires Node.js  
+   * ⚠️ Requires Node.js or Deno with Node compatibility  
    * ⚠️ Don't reuse this engine across multiple {@linkcode DataStore} instances
    */
   constructor(options: JSONFileStorageEngineOptions) {
