@@ -67,18 +67,18 @@ For submitting bug reports or feature requests, please use the [GitHub issue tra
     - 🔷 [`type DebouncerType`](#type-debouncertype) - The triggering type for the debouncer
     - 🔷 [`type DebouncedFunction`](#type-debouncedfunction) - Function type that is returned by the [`debounce()` function](#debounce)
     - 🔷 [`type DebouncerEventMap`](#type-debouncereventmap) - 
-  - *[**Errors:**](#errors)
-    - 🟧 *[`class DatedError`](#class-datederror) - Base error class with a `date` property
-    - 🟧 *[`class ChecksumMismatchError`](#class-checksummismatcherror) - Error thrown when two checksums don't match
-    - 🟧 *[`class MigrationError`](#class-migrationerror) - Error thrown in a failed data migration
+  - [**Errors:**](#errors)
+    - 🟧 [`class DatedError`](#class-datederror) - Base error class with a `date` property
+    - 🟧 [`class ChecksumMismatchError`](#class-checksummismatcherror) - Error thrown when two checksums don't match
+    - 🟧 [`class MigrationError`](#class-migrationerror) - Error thrown in a failed data migration
   - [**Math:**](#math)
     - 🟣 [`function bitSetHas()`](#function-bitsethas) - Checks if a bit is set in a bitset
-    - 🟣 *[`function clamp()`](#function-clamp) - Clamps a number between a given range
-    - 🟣 *[`function digitCount()`](#function-digitcount) - Returns the number of digits in a number
+    - 🟣 [`function clamp()`](#function-clamp) - Clamps a number between a given range
+    - 🟣 [`function digitCount()`](#function-digitcount) - Returns the number of digits in a number
     - 🟣 [`function formatNumber()`](#function-formatnumber) - Formats a number to a string using the given locale and format identifier
       - 🔷 [`type NumberFormat`](#type-numberformat) - Number format identifier
-    - 🟣 *[`function mapRange()`](#function-maprange) - Maps a number from one range to another
-    - 🟣 *[`function randRange()`](#function-randrange) - Returns a random number in the given range
+    - 🟣 [`function mapRange()`](#function-maprange) - Maps a number from one range to another
+    - 🟣 [`function randRange()`](#function-randrange) - Returns a random number in the given range
     - 🟣 [`function roundFixed()`](#function-roundfixed) - Rounds the given number to the given number of decimal places
     - 🟣 [`function valsWithin()`](#function-valswithin) - Checks if the given numbers are within a certain range of each other
   - *[**Misc:**](#misc)
@@ -921,6 +921,79 @@ This is the event map for the [`Debouncer` class.](#class-debouncer)
 
 <br><br>
 
+<!-- #region errors -->
+## Errors
+
+<br>
+
+### `class DatedError`
+Signature:
+```ts
+class DatedError
+  extends Error;
+```
+  
+Base class for all custom error classes of this library.  
+Adds a `date` prop set to the time when the error was created.  
+  
+<details><summary>Example - click to view</summary>
+
+```ts
+import { DatedError } from "@sv443-network/coreutils";
+
+const datedErr = new DatedError("This is a dated error!");
+
+// or create your own error classes:
+
+class MyError extends DatedError {
+  constructor(message: string) {
+    super(message);
+    this.name = "MyError";
+  }
+}
+
+try {
+  throw new MyError("This is a custom error!", { cause: datedErr });
+}
+catch(err) {
+  console.error(err);
+  // MyError: This is a custom error!
+  // Caused by: DatedError: This is a dated error!
+
+  if(err instanceof DatedError)
+    console.error("Error created at", err.date);
+}
+```
+</details>
+
+<br>
+
+### `class ChecksumMismatchError`
+Signature:
+```ts
+class ChecksumMismatchError
+  extends DatedError
+    extends Error;
+```
+  
+Error while validating a checksum.  
+This error may be thrown by the [`DataStoreSerializer` class](#class-datastoreserializer) if the imported data's checksum doesn't match its checksum value.  
+
+<br>
+
+### `class DataStoreError`
+Signature:
+```ts
+class MigrationError
+  extends DatedError
+    extends Error;
+```
+  
+Error while migrating data.  
+This error may be thrown by [`DataStore.loadData()`](#datastore-loaddata) and [`DataStoreSerializer.loadStoresData()`](#datastoreserializer-loadstoresdata) if the imported data's version doesn't match the current version, or there was an error in a migration function.  
+
+<br><br>
+
 <!-- #region math -->
 ## Math
 
@@ -951,6 +1024,73 @@ console.log(bitSetHas(myBitSet, checkFoo)); // true
 console.log(bitSetHas(myBitSet, checkBar)); // false
 
 console.log(bitSetHas(BigInt(myBitSet), checkBig)); // true
+```
+</details>
+
+<br>
+
+### `function clamp()`
+Signatures:
+```ts
+// with min:
+clamp(num: number, min: number, max: number): number
+// without min:
+clamp(num: number, max: number): number
+```
+  
+Clamps a number between a min and max boundary (inclusive).  
+If only the `num` and `max` arguments are passed, the `min` boundary will be set to 0.  
+  
+<details><summary>Example - click to view</summary>
+
+```ts
+import { clamp } from "@sv443-network/coreutils";
+
+clamp(7, 0, 10);     // 7
+clamp(7, 10);        // 7 (equivalent to the above)
+clamp(-1, 10);       // 0
+clamp(5, -5, 0);     // 0
+clamp(99999, 0, 10); // 10
+
+// use Infinity to clamp without a min or max boundary:
+clamp(Number.MAX_SAFE_INTEGER, Infinity);     // 9007199254740991
+clamp(Number.MIN_SAFE_INTEGER, -Infinity, 0); // -9007199254740991
+```
+</details>
+
+<br>
+
+### `function digitCount()`
+Signature:
+```ts
+digitCount(num: number | Stringifiable, withDecimals = true): number
+```
+  
+Calculates and returns the amount of digits in the given number (floating point or integer).  
+If it isn't a number already, the value will be converted by being passed to `String()` and then `Number()` before the calculation.  
+  
+Returns `NaN` if the number is invalid or `Infinity` if the number is too large to be represented as a regular number.  
+  
+If `withDecimals` is set to false, the decimal point and everything after it will be ignored.  
+  
+<details><summary><b>Example - click to view</b></summary>
+
+```ts
+import { digitCount } from "@sv443-network/userutils";
+
+const num1 = 123;
+const num2 = 123456789;
+const num3 = "  123456789    ";
+const num4 = Number.MAX_SAFE_INTEGER;
+const num5 = "a123b456c789d";
+const num6 = parseInt("0x123456789abcdef", 16);
+
+digitCount(num1); // 3
+digitCount(num2); // 9
+digitCount(num3); // 9
+digitCount(num4); // 16
+digitCount(num5); // NaN (because hex conversion has to be done through parseInt(str, 16)), like below:
+digitCount(num6); // 17
 ```
 </details>
 
@@ -989,6 +1129,80 @@ type NumberFormat = "long" | "short";
 The format identifier for the [`formatNumber()`](#function-formatnumber) function.  
 - `long` - Formats the number using the locale's default formatting rules (e.g. `1,234,567.89` in `en-US`).
 - `short` - Formats the number using a short format (e.g. `1.23M` in `en-US`).
+
+<br>
+
+### `function mapRange()`
+Signatures:
+```ts
+// with min arguments:
+mapRange(value: number, range1min: number, range1max: number, range2min: number, range2max: number): number
+// without min arguments:
+mapRange(value: number, range1max: number, range2max: number): number
+```
+  
+Maps a number from one range to the spot it would be in another range.  
+If only the `max` arguments are passed, the function will set the `min` for both ranges to 0.  
+  
+<details><summary><b>Example - click to view</b></summary>
+
+```ts
+import { mapRange } from "@sv443-network/userutils";
+
+mapRange(5, 0, 10, 0, 100); // 50
+mapRange(5, 0, 10, 0, 50);  // 25
+mapRange(5, 10, 50);        // 25
+
+// to calculate a percentage from arbitrary values, use 0 and 100 as the second range
+// for example, if 4 files of a total of 13 were downloaded:
+mapRange(4, 0, 13, 0, 100); // 30.76923076923077
+```
+</details>
+
+<br>
+
+### `function randRange()`
+Signatures:
+```ts
+// with min:
+randRange(min: number, max: number, enhancedEntropy?: boolean): number
+// without min:
+randRange(max: number, enhancedEntropy?: boolean): number
+```
+  
+Returns a random number between `min` and `max` (inclusive).  
+If only one argument is passed, it will be used as the `max` value and `min` will be set to 0.  
+  
+If `enhancedEntropy` is set to true (false by default), the [Web Crypto API](https://developer.mozilla.org/en-US/docs/Web/API/Crypto/getRandomValues) is used for generating the random numbers.  
+Note that this makes the function call take longer, but the generated IDs will have a higher entropy.  
+  
+<details><summary><b>Example - click to view</b></summary>
+
+```ts
+import { randRange } from "@sv443-network/userutils";
+
+randRange(0, 10);       // 4
+randRange(10, 20);      // 17
+randRange(10);          // 7
+randRange(0, 10, true); // 4 (the devil is in the details)
+
+
+function benchmark(enhancedEntropy: boolean) {
+  const timestamp = Date.now();
+  for(let i = 0; i < 100_000; i++)
+    randRange(0, 100, enhancedEntropy);
+  console.log(`Generated 100k in ${Date.now() - timestamp}ms`)
+}
+
+// using Math.random():
+benchmark(false); // Generated 100k in 90ms
+
+// using crypto.getRandomValues():
+benchmark(true);  // Generated 100k in 461ms
+
+// about a 4-5x slowdown, but the generated numbers are more entropic
+```
+</details>
 
 <br>
 
