@@ -1,4 +1,3 @@
-import type { ValueGen } from "./misc.js";
 import type { ListLike, Prettify, Stringifiable } from "./types.js";
 
 /**
@@ -42,28 +41,6 @@ export function autoPlural(term: Stringifiable, num: number | ListLike, pluralTy
 /** Capitalizes the first letter of a string */
 export function capitalize(text: string): string {
   return text.charAt(0).toUpperCase() + text.slice(1);
-}
-
-/**
- * A StringGen value is either a string, anything that can be converted to a string, or a function that returns one of the previous two, either synchronous or asynchronous, or a promise that returns a string.  
- * StringGen allows for the utmost flexibility when dealing with strings, as long as {@linkcode consumeStringGen()} is used to get the final string.
- */
-export type StringGen = ValueGen<Stringifiable>;
-
-/**
- * Turns a {@linkcode StringGen} into its final string value.  
- * @template TStrUnion The union of strings that the StringGen should yield - this allows for finer type control compared to {@linkcode consumeGen()}
- */
-export async function consumeStringGen<TStrUnion extends string>(strGen: StringGen): Promise<TStrUnion> {
-  return (
-    typeof strGen === "string"
-      ? strGen
-      : String(
-        typeof strGen === "function"
-          ? await strGen()
-          : strGen
-      )
-  ) as TStrUnion;
 }
 
 /** The default progress bar characters used by {@linkcode createProgressBar()} */

@@ -105,21 +105,23 @@ For submitting bug reports or feature requests, please use the [GitHub issue tra
     - 🟣 [`function secsToTimeStr()`](#function-sectostimestr) - Turns the given number of seconds into a string in the format `(hh:)mm:ss` with intelligent zero-padding
     - 🟣 [`function truncStr()`](#function-truncstr) - Truncates the given string to the given length
   <!-- - *[**TieredCache:**](#tieredcache) -->
-  - *[**Translate:**](#translate)
+  <!-- - *[**Translate:**](#translate)
     - 🟧 *[`class Translate`](#class-translate) - JSON-based translation system supporting transformation hooks, value injection, nested objects, etc.
     - 🔷 *[`type TransformFn`](#type-transformfn) - The type of the transformation hook functions
     - 🔷 *[`type TransformFnProps`](#type-transformfnprops) - The properties passed to the transformation functions
     - 🔷 *[`type TranslateOptions`](#type-translateoptions) - The options for the [`Translate` class](#class-translate)
     - 🔷 *[`type TrKeys`](#type-trkeys) - Generic type that gives you a union of keys from the passed [`TrObject` object](#type-trobject)
-    - 🔷 *[`type TrObject`](#type-trobject) - The translation object for a specific language
+    - 🔷 *[`type TrObject`](#type-trobject) - The translation object for a specific language -->
   - [**Misc. Types:**](#types)
-    TODO:
     - 🔷 [`type ListLike`](#type-listlike) - Any value with a quantifiable `length`, `count` or `size` property
-    - 🔷 [`type ValueGen`](#type-valuegen) - A value that can be either the generic type T, or a sync or async function that returns T
-    - 🔷 [`type StringGen`](#type-stringgen) - A value that can be either of type string, or a sync or async function that returns a string
+    - 🔷 [`type NonEmptyArray`](#type-nonemptyarray) - Non-empty array type
+    - 🔷 [`type NumberFormat`](#type-numberformat) - Number format identifier
     - 🔷 [`type SerializableVal`](#type-serializableval) - Any value that can be serialized to JSON
+    - 🔷 [`type StringGen`](#type-stringgen) - A value that can be either of type string, or a sync or async function that returns a string
+    - 🔷 [`type ValueGen`](#type-valuegen) - A value that can be either the generic type T, or a sync or async function that returns T
 
 <br><br><br>
+
 
 <!-- #region Features -->
 ## Features:
@@ -291,6 +293,7 @@ foo([]);             // TypeError
 
 <br><br>
 
+
 <!-- #region colors -->
 ## Colors
 
@@ -385,6 +388,7 @@ console.log(rgbToHex());                                // #nannannan
 </details>
 
 <br><br>
+
 
 <!-- #region crypto -->
 ## Crypto
@@ -577,6 +581,7 @@ benchmark(true, true);   // Generated 10k in 1054ms
 
 <br><br>
 
+
 <!-- #region DataStore -->
 ## DataStore
 
@@ -722,8 +727,6 @@ init();
 <br>
 
 ### Methods
-
-<br>
 
 ### `DataStore.loadData()`
 Signature:
@@ -952,8 +955,6 @@ async function exportOnlyFoo() {
 <br>
 
 ### Methods
-
-<br>
 
 ### `DataStoreSerializer.serialize()`
 Signature:
@@ -1224,8 +1225,6 @@ class MyStorageEngine<TData extends object = object> extends DataStoreEngine<TDa
 
 ### Methods
 
-<br>
-
 ### `DataStoreEngine.getValue()`
 Signature:
 ```ts
@@ -1446,6 +1445,7 @@ Missing directories will be created automatically.
 
 <br><br>
 
+
 <!-- #region Debouncer -->
 ## Debouncer
 
@@ -1534,7 +1534,7 @@ deb.on("change", (timeout, type) => {
 
 <br>
 
-### Events:
+### Events
 The Debouncer class inherits from [`NanoEmitter`](#class-nanoemitter), so you can use all of its inherited methods to listen to the following events:
 | Event | Arguments | Description |
 | :-- | :-- | :-- |
@@ -1543,11 +1543,9 @@ The Debouncer class inherits from [`NanoEmitter`](#class-nanoemitter), so you ca
 
 <br>
 
-### Methods:
+### Methods
 
-<br>
-
-#### `Debouncer.addListener()`
+### `Debouncer.addListener()`
 Signature:
 ```ts
 addListener(fn: ((...args: TArgs[]) => void | unknown)): void;
@@ -1558,7 +1556,7 @@ You can attach as many listeners as you want and they will all be called synchro
 
 <br>
 
-#### `Debouncer.removeListener()`
+### `Debouncer.removeListener()`
 Signature:
 ```ts
 removeListener(fn: ((...args: TArgs[]) => void | unknown)): void;
@@ -1568,7 +1566,7 @@ Removes the listener with the specified function reference.
 
 <br>
 
-#### `Debouncer.removeAllListeners()`
+### `Debouncer.removeAllListeners()`
 Signature:
 ```ts
 removeAllListeners(): void;
@@ -1578,7 +1576,7 @@ Removes all listeners.
 
 <br>
 
-#### `Debouncer.call()`
+### `Debouncer.call()`
 Signature:
 ```ts
 call(...args: TArgs[]): void;
@@ -1590,7 +1588,7 @@ If the timeout is active, the call will be queued until it either gets overridde
 
 <br>
 
-#### `Debouncer.getListeners()`
+### `Debouncer.getListeners()`
 Signature:
 ```ts
 getListeners(): ((...args: TArgs[]) => void | unknown)[];
@@ -1600,7 +1598,7 @@ Returns an array of all registered listener functions.
 
 <br>
 
-#### `Debouncer.setTimeout()`
+### `Debouncer.setTimeout()`
 Signature:
 ```ts
 setTimeout(timeout: number): void;
@@ -1610,7 +1608,7 @@ Changes the timeout for the debouncer.
 
 <br>
 
-#### `Debouncer.getTimeout()`
+### `Debouncer.getTimeout()`
 Signature:
 ```ts
 getTimeout(): number;
@@ -1620,7 +1618,7 @@ Returns the current timeout.
 
 <br>
 
-#### `Debouncer.isTimeoutActive()`
+### `Debouncer.isTimeoutActive()`
 Signature:
 ```ts
 isTimeoutActive(): boolean;
@@ -1630,7 +1628,7 @@ Returns `true` if the timeout is currently active, meaning any call to the `call
 
 <br>
 
-#### `Debouncer.setType()`
+### `Debouncer.setType()`
 Signature:
 ```ts
 setType(type: "immediate" | "idle"): void;
@@ -1640,7 +1638,7 @@ Changes the edge type for the debouncer.
 
 <br>
 
-#### `Debouncer.getType()`
+### `Debouncer.getType()`
 Signature:
 ```ts
 getType(): "immediate" | "idle";
@@ -1786,6 +1784,7 @@ This is the event map for the [`Debouncer` class.](#class-debouncer)
 
 <br><br>
 
+
 <!-- #region errors -->
 ## Errors
 
@@ -1858,6 +1857,7 @@ Error while migrating data.
 This error may be thrown by [`DataStore.loadData()`](#datastoreloaddata) and [`DataStoreSerializer.loadStoresData()`](#datastoreserializerloadstoresdata) if the imported data's version doesn't match the current version, or there was an error in a migration function.  
 
 <br><br>
+
 
 <!-- #region math -->
 ## Math
@@ -2400,6 +2400,7 @@ console.log(emptyObj.toString); // undefined
 
 <br><br>
 
+
 <!--- #region NanoEmitter -->
 ## NanoEmitter
 
@@ -2526,7 +2527,8 @@ doStuff();
 <br>
   
 ### Methods
-#### `NanoEmitter.on()`  
+
+### `NanoEmitter.on()`  
 Signature:
 ```ts
 NanoEmitter.on<K extends keyof TEventMap>(event: K, listener: TEventMap[K]): void
@@ -2537,7 +2539,7 @@ May be called multiple times for the same event.
   
 <br>
 
-#### `NanoEmitter.once()`
+### `NanoEmitter.once()`
 Signature:
 ```ts
 NanoEmitter.once<K extends keyof TEventMap>(event: K, listener: TEventMap[K]): void
@@ -2547,7 +2549,7 @@ Registers a listener function for the given event that will only be called once.
 
 <br>
 
-#### `NanoEmitter.emit()`
+### `NanoEmitter.emit()`
 Signature:
 ```ts
 NanoEmitter.emit<K extends keyof TEventMap>(event: K, ...args: Parameters<TEventMap[K]>): boolean
@@ -2559,7 +2561,7 @@ If it is set to `false`, it will always return `false` and you will need to use 
 
 <br>
 
-#### `NanoEmitter.unsubscribeAll()`
+### `NanoEmitter.unsubscribeAll()`
 Signature:
 ```ts
 NanoEmitter.unsubscribeAll(): void
@@ -2567,7 +2569,7 @@ NanoEmitter.unsubscribeAll(): void
   
 Removes all listeners from all events.
 
-<br>
+<br><br>
 
 ### `type NanoEmitterOptions`
 The options object for the [`NanoEmitter` class.](#class-nanoemitter)  
@@ -2783,13 +2785,14 @@ console.log(truncStr(str, 10, "…")); // "Lorem ips…"
 
 <br><br>
 
+
 <!-- #region types -->
 
 ## Types
 
 <br>
 
-### `type SerializableVal
+### `type SerializableVal`
 ```ts
 type SerializableVal = string | number | boolean | null | SerializableVal[] | { [key: string]: SerializableVal };
 ```
