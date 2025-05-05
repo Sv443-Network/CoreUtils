@@ -1,5 +1,6 @@
 # CoreUtils Documentation
-Core library used by [@sv443-network/userutils](https://github.com/Sv443-Network/UserUtils) and [@sv443-network/djsutils](https://github.com/Sv443-Network/DJSUtils)  
+Cross-platform, general-purpose, JavaScript core library for Node, Deno and the browser.  
+Intended to be used in conjunction with [`@sv443-network/userutils`](https://github.com/Sv443-Network/UserUtils) and [`@sv443-network/djsutils`](https://github.com/Sv443-Network/DJSUtils), but can be used independently as well.  
   
 If you like using this library, please consider [supporting the development ❤️](https://github.com/sponsors/Sv443)
 
@@ -59,7 +60,7 @@ For submitting bug reports or feature requests, please use the [GitHub issue tra
     - [Storage Engines:](#storage-engines)
       - 🟧 [`class BrowserStorageEngine`](#class-browserstorageengine) - Storage engine for browser environments (localStorage, sessionStorage)
         - 🔷 [`type BrowserStorageEngineOptions`](#browserstorageengineoptions) - Options for the browser storage engine
-      - 🟧 [`class JSONFileStorageEngine`](#class-JSONFileStorageEngine) - Storage engine for Node.js environments (JSON file)
+      - 🟧 [`class JSONFileStorageEngine`](#class-JSONFileStorageEngine) - Storage engine for Node.js and Deno (JSON file)
         - 🔷 [`type JSONFileStorageEngineOptions`](#JSONFileStorageEngineoptions) - Options for the JSON file engine
   - [**Debouncer:**](#debouncer)
     - 🟣 [`function debounce()`](#function-debounce) - Function wrapper for the [`Debouncer` class](#class-debouncer)
@@ -104,7 +105,8 @@ For submitting bug reports or feature requests, please use the [GitHub issue tra
     - 🟣 [`function joinArrayReadable()`](#function-joinarrayreadable) - Joins the given array into a string, using the given separators and last separator
     - 🟣 [`function secsToTimeStr()`](#function-sectostimestr) - Turns the given number of seconds into a string in the format `(hh:)mm:ss` with intelligent zero-padding
     - 🟣 [`function truncStr()`](#function-truncstr) - Truncates the given string to the given length
-  <!-- - *[**TieredCache:**](#tieredcache) -->
+  <!-- - *[**TieredCache:**](#tieredcache)
+    - 🟧 *[`class TieredCache`](#class-tieredcache) - A multi-tier cache that uses multiple storage engines with different expiration times -->
   <!-- - *[**Translate:**](#translate)
     - 🟧 *[`class Translate`](#class-translate) - JSON-based translation system supporting transformation hooks, value injection, nested objects, etc.
     - 🔷 *[`type TransformFn`](#type-transformfn) - The type of the transformation hook functions
