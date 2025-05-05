@@ -3,13 +3,13 @@ import { DataStoreSerializer } from "./DataStoreSerializer.js";
 import { DataStore } from "./DataStore.js";
 import { beforeEach } from "node:test";
 import { compress, decompress } from "./crypto.js";
-import { JSONFileEngine } from "./DataStoreEngine.js";
+import { JSONFileStorageEngine } from "./DataStoreEngine.js";
 
 const store1 = new DataStore({
   id: "dss-test-1",
   defaultData: { a: 1, b: 2 },
   formatVersion: 1,
-  storageEngine: () => new JSONFileEngine({
+  storageEngine: () => new JSONFileStorageEngine({
     filePath: "./test.json",
   }),
 });
@@ -18,7 +18,7 @@ const store2 = new DataStore({
   id: "dss-test-2",
   defaultData: { c: 1, d: 2 },
   formatVersion: 1,
-  storageEngine: () => new JSONFileEngine({
+  storageEngine: () => new JSONFileStorageEngine({
     filePath: "./test.json",
   }),
   encodeData: async (data) => await compress(data, "deflate-raw", "string"),

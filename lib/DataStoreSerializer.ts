@@ -1,5 +1,5 @@
 /**
- * @module lib/DataStoreSerializer
+ * @module DataStoreSerializer
  * This module contains the DataStoreSerializer class, which allows you to import and export serialized DataStore data - [see the documentation for more info](https://github.com/Sv443-Network/UserUtils/blob/main/docs.md#datastoreserializer)
  */
 

@@ -55,7 +55,7 @@ export type DataStoreOptions<TData extends object> = Prettify<
     migrateIds?: string | string[];
     /**
      * The engine middleware to use for persistent storage.  
-     * Create an instance of {@linkcode JSONFileEngine} (Node.js), {@linkcode BrowserStorageEngine} (DOM) or your own engine class that extends {@linkcode DataStoreEngine} and pass it here.  
+     * Create an instance of {@linkcode JSONFileStorageEngine} (Node.js), {@linkcode BrowserStorageEngine} (DOM) or your own engine class that extends {@linkcode DataStoreEngine} and pass it here.  
      *   
      * ⚠️ Don't reuse the same engine instance for multiple DataStores, unless it explicitly supports it!
      */

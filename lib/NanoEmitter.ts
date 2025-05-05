@@ -1,5 +1,5 @@
 /**
- * @module lib/NanoEmitter
+ * @module NanoEmitter
  * This module contains the NanoEmitter class, which is a tiny event emitter powered by [nanoevents](https://www.npmjs.com/package/nanoevents) - [see the documentation for more info](https://github.com/Sv443-Network/UserUtils/blob/main/docs.md#nanoemitter)
  */
 
