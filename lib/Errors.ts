@@ -4,7 +4,7 @@
  */
 
 /** Base class for all custom error classes - adds a `date` prop set to the time when the error was thrown */
-export abstract class DatedError extends Error {
+export class DatedError extends Error {
   public readonly date: Date;
   constructor(message: string, options?: ErrorOptions) {
     super(message, options);

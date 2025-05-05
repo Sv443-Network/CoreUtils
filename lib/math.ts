@@ -1,9 +1,14 @@
 /**
  * @module math
- * This module contains general-purpose math functions like clamping, mapping and random number generation - [see the documentation for more info](https://github.com/Sv443-Network/DJSUtils/blob/main/docs.md#math)
+ * This module contains general-purpose math functions like clamping, mapping and random number generation - [see the documentation for more info](https://github.com/Sv443-Network/CoreUtils/blob/main/docs.md#math)
  */
 
-import type { Stringifiable } from "./types.js";
+import type { NumberFormat, Stringifiable } from "./types.js";
+
+/** Checks if the given {@linkcode bitSet} contains the given {@linkcode checkVal} */
+export function bitSetHas<TType extends number | bigint>(bitSet: TType, checkVal: TType): boolean {
+  return (bitSet & checkVal) === checkVal;
+}
 
 /** Ensures the passed {@linkcode value} always stays between {@linkcode min} and {@linkcode max} */
 export function clamp(value: number, min: number, max: number): number
@@ -16,6 +21,54 @@ export function clamp(value: number, min: number, max?: number): number {
     min = 0;
   }
   return Math.max(Math.min(value, max), min);
+}
+
+/**
+ * Calculates the amount of digits in the given number - the given number or string will be passed to the `Number()` constructor.  
+ * Returns NaN if the number is invalid.  
+ * @param num The number to count the digits of
+ * @param withDecimals Whether to count the decimal places as well (defaults to true)
+ * @example ```ts
+* digitCount();         // NaN
+* digitCount(0);        // 1
+* digitCount(123);      // 3
+* digitCount(123.456);  // 6
+* digitCount(Infinity); // Infinity
+* ```
+*/
+export function digitCount(num: number | Stringifiable, withDecimals = true): number {
+  num = Number((!["string", "number"].includes(typeof num)) ? String(num) : num);
+
+  if(typeof num === "number" && isNaN(num))
+    return NaN;
+
+  const [intPart, decPart] = num.toString().split(".");
+
+  const intDigits = intPart === "0"
+    ? 1
+    : Math.floor(Math.log10(Math.abs(Number(intPart))) + 1);
+  const decDigits = withDecimals && decPart
+    ? decPart.length
+    : 0;
+
+  return intDigits + decDigits;
+}
+
+/** Formats a number with the given locale and format */
+export function formatNumber(number: number, locale: string, format: NumberFormat): string {
+  return number.toLocaleString(locale,
+    (format === "short"
+      ? {
+        notation: "compact",
+        compactDisplay: "short",
+        maximumFractionDigits: 1,
+      }
+      : {
+        style: "decimal",
+        maximumFractionDigits: 0,
+      }
+    ),
+  );
 }
 
 /**
@@ -100,37 +153,6 @@ export function randRange(...args: (number | boolean | undefined)[]): number {
 }
 
 /**
- * Calculates the amount of digits in the given number - the given number or string will be passed to the `Number()` constructor.  
- * Returns NaN if the number is invalid.  
- * @param num The number to count the digits of
- * @param withDecimals Whether to count the decimal places as well (defaults to true)
- * @example ```ts
- * digitCount();         // NaN
- * digitCount(0);        // 1
- * digitCount(123);      // 3
- * digitCount(123.456);  // 6
- * digitCount(Infinity); // Infinity
- * ```
- */
-export function digitCount(num: number | Stringifiable, withDecimals = true): number {
-  num = Number((!["string", "number"].includes(typeof num)) ? String(num) : num);
-
-  if(typeof num === "number" && isNaN(num))
-    return NaN;
-
-  const [intPart, decPart] = num.toString().split(".");
-
-  const intDigits = intPart === "0"
-    ? 1
-    : Math.floor(Math.log10(Math.abs(Number(intPart))) + 1);
-  const decDigits = withDecimals && decPart
-    ? decPart.length
-    : 0;
-
-  return intDigits + decDigits;
-}
-
-/**
  * Rounds {@linkcode num} to a fixed amount of decimal places, specified by {@linkcode fractionDigits} (supports negative values to round to the nearest power of 10).
  * @example ```ts
  * roundFixed(234.567, -2); // 200
@@ -144,29 +166,6 @@ export function digitCount(num: number | Stringifiable, withDecimals = true): nu
 export function roundFixed(num: number, fractionDigits: number): number {
   const scale = 10 ** fractionDigits;
   return Math.round(num * scale) / scale;
-}
-
-/** Checks if the given {@linkcode bitSet} contains the given {@linkcode checkVal} */
-export function bitSetHas<TType extends number | bigint>(bitSet: TType, checkVal: TType): boolean {
-  return (bitSet & checkVal) === checkVal;
-}
-
-/** String constant that decides which set of number formatting options to use */
-export type NumberFormat = "short" | "long";
-
-/** Formats a number with the given locale and format */
-export function formatNumber(number: number, locale: string, format: NumberFormat): string {
-  return number.toLocaleString(locale, format === "short"
-    ? {
-      notation: "compact",
-      compactDisplay: "short",
-      maximumFractionDigits: 1,
-    }
-    : {
-      style: "decimal",
-      maximumFractionDigits: 0,
-    }
-  );
 }
 
 /** Rounds the given values at the given decimal place and checks if they are within the given range (0.5 by default) */

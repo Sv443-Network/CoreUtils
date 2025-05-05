@@ -1,6 +1,6 @@
 /**
  * @module crypto
- * This module contains various cryptographic functions, like compression and ArrayBuffer encoding - [see the documentation for more info](https://github.com/Sv443-Network/DJSUtils/blob/main/docs.md#crypto)
+ * This module contains various cryptographic functions, like compression and ArrayBuffer encoding - [see the documentation for more info](https://github.com/Sv443-Network/CoreUtils/blob/main/docs.md#crypto)
  */
 
 import { mapRange, randRange } from "./math.js";

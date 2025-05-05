@@ -1,6 +1,6 @@
 /**
  * @module Translate
- * This module contains a sophisticated but still lightweight, JSON-based translation system - [see the documentation for more info](https://github.com/Sv443-Network/DJSUtils/blob/main/docs.md#class-translate)
+ * This module contains a sophisticated but still lightweight, JSON-based translation system - [see the documentation for more info](https://github.com/Sv443-Network/CoreUtils/blob/main/docs.md#class-translate)
  */
 
 import type { Stringifiable } from "./types.js";

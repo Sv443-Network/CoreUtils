@@ -7,6 +7,7 @@ import { computeHash } from "./crypto.js";
 import { ChecksumMismatchError } from "./Errors.js";
 import type { DataStore } from "./DataStore.js";
 
+/** Options for the DataStoreSerializer class */
 export type DataStoreSerializerOptions = {
   /** Whether to add a checksum to the exported data. Defaults to `true` */
   addChecksum?: boolean;
@@ -14,7 +15,7 @@ export type DataStoreSerializerOptions = {
   ensureIntegrity?: boolean;
 };
 
-/** Serialized data of a DataStore instance */
+/** Meta object and serialized data of a DataStore instance */
 export type SerializedDataStore = {
   /** The ID of the DataStore instance */
   id: string;
@@ -36,7 +37,7 @@ export type LoadStoresDataResult = {
   data: object;
 }
 
-/** A filter for selecting data stores */
+/** Filter for selecting data stores */
 export type StoreFilter = string[] | ((id: string) => boolean);
 
 /**

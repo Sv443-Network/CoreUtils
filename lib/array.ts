@@ -1,6 +1,6 @@
 /**
  * @module array
- * This module contains various functions for working with arrays - [see the documentation for more info](https://github.com/Sv443-Network/DJSUtils/blob/main/docs.md#arrays)
+ * This module contains various functions for working with arrays - [see the documentation for more info](https://github.com/Sv443-Network/CoreUtils/blob/main/docs.md#arrays)
  */
 
 import { randRange } from "./math.js";
@@ -26,17 +26,6 @@ export function randomItemIndex<TItem = unknown>(array: TItem[]): [item?: TItem,
   return [array[idx]!, idx];
 }
 
-/** Returns a random item from the passed array and mutates the array to remove the item */
-export function takeRandomItem<TItem = unknown>(arr: TItem[]): TItem | undefined {
-  const [itm, idx] = randomItemIndex<TItem>(arr);
-
-  if(idx === undefined)
-    return undefined;
-
-  arr.splice(idx, 1);
-  return itm as TItem;
-}
-
 /** Returns a copy of the array with its items in a random order */
 export function randomizeArray<TItem = unknown>(array: TItem[]): TItem[] {
   const retArray = [...array]; // so array and retArray don't point to the same memory address
@@ -51,4 +40,20 @@ export function randomizeArray<TItem = unknown>(array: TItem[]): TItem[] {
   }
 
   return retArray;
+}
+
+/** Returns a random item from the passed array and mutates the array to remove the item */
+export function takeRandomItem<TItem = unknown>(arr: TItem[]): TItem | undefined {
+  return takeRandomItemIndex<TItem>(arr)?.[0];
+}
+
+/** Returns a random item and its index as a tuple from the passed array and mutates the array to remove the item */
+export function takeRandomItemIndex<TItem = unknown>(arr: TItem[]): [item?: TItem, index?: number] {
+  const [itm, idx] = randomItemIndex<TItem>(arr);
+
+  if(idx === undefined)
+    return [undefined, undefined];
+
+  arr.splice(idx, 1);
+  return [itm, idx];
 }

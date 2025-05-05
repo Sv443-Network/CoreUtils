@@ -98,8 +98,9 @@ export function getListLength(listLike: ListLike, zeroOnInvalid = true): number 
 /**
  * Turns the passed object into a "pure" object without a prototype chain, meaning it won't have any default properties like `toString`, `__proto__`, `__defineGetter__`, etc.  
  * This makes the object immune to prototype pollution attacks and allows for cleaner object literals, at the cost of being harder to work with in some cases.  
- * It also effectively transforms a `Stringifiable` value into one that will throw a TypeError when stringified instead of defaulting to `[object Object]`
+ * It also effectively transforms a `Stringifiable` value into one that will throw a TypeError when stringified instead of defaulting to `[object Object]`  
+ * If no object is passed, it will return an empty object without prototype chain.
  */
-export function purifyObj<TObj extends object>(obj: TObj): TObj {
-  return Object.assign(Object.create(null), obj);
+export function pureObj<TObj extends object>(obj?: TObj): TObj {
+  return Object.assign(Object.create(null), obj ?? {}) as TObj;
 }

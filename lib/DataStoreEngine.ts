@@ -1,13 +1,11 @@
 /**
  * @module DataStoreEngine
  * This module contains the `DataStoreEngine` class and some of its subclasses like `JSONFileEngine` and `BrowserStorageEngine`.  
- * [See the documentation for more info.](https://github.com/Sv443-Network/DJSUtils/blob/main/docs.md#class-datastoreengine)
+ * [See the documentation for more info.](https://github.com/Sv443-Network/CoreUtils/blob/main/docs.md#class-datastoreengine)
  */
 
 import type { DataStoreOptions } from "./DataStore.js";
 import type { SerializableVal } from "./types.js";
-
-let fs: typeof import("node:fs/promises") | undefined;
 
 //#region >> DataStoreEngine
 
@@ -53,8 +51,16 @@ export abstract class DataStoreEngine<TData extends object = object> {
 
   //#region misc api
 
-  /** Copies a JSON-compatible object and loses all its internal references in the process */
+  /**
+   * Copies a JSON-compatible object and loses all its internal references in the process.  
+   * Uses [`structuredClone()`](https://developer.mozilla.org/en-US/docs/Web/API/structuredClone) if available, otherwise falls back to `JSON.parse(JSON.stringify(obj))`.
+   */
   public deepCopy<T>(obj: T): T {
+    try {
+      if("structuredClone" in globalThis)
+        return structuredClone(obj) as T;
+    }
+    catch { void 0; }
     return JSON.parse(JSON.stringify(obj));
   }
 }
@@ -124,6 +130,9 @@ export class BrowserStorageEngine<TData extends object = object> extends DataSto
 
 //#region >> JSONFileEngine
 
+/** `node:fs/promises` import */
+let fs: typeof import("node:fs/promises") | undefined;
+
 /** Options for the {@linkcode JSONFileEngine} class */
 export type JSONFileEngineOptions = {
   /** Function that returns a string or a plain string that is the data file path, including name and extension. Defaults to `.ds-${dataStoreID}` */
@@ -161,12 +170,10 @@ export class JSONFileEngine<TData extends object = object> extends DataStoreEngi
       if(!fs)
         fs = (await import("node:fs/promises"))?.default;
 
-      const data = await fs.readFile(
-        typeof this.options.filePath === "string"
-          ? this.options.filePath
-          : this.options.filePath(this.dataStoreOptions.id),
-        "utf-8",
-      );
+      const path = typeof this.options.filePath === "string"
+        ? this.options.filePath
+        : this.options.filePath(this.dataStoreOptions.id);
+      const data = await fs.readFile(path, "utf-8");
       if(!data)
         return undefined;
       return JSON.parse(await this.dataStoreOptions?.decodeData?.(data) ?? data) as TData;

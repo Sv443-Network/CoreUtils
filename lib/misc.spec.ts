@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { consumeGen, fetchAdvanced, getListLength, pauseFor, purifyObj } from "./misc.js";
+import { consumeGen, fetchAdvanced, getListLength, pauseFor, pureObj } from "./misc.js";
 import { autoPlural, insertValues, consumeStringGen } from "./text.js";
 
 //#region autoPlural
@@ -129,11 +129,11 @@ describe("misc/getListLength", () => {
   });
 });
 
-//#region purifyObj
-describe("misc/purifyObj", () => {
+//#region pureObj
+describe("misc/pureObj", () => {
   it("Removes the prototype chain of a passed object", () => {
     const obj = { a: 1, b: 2 };
-    const pure = purifyObj(obj);
+    const pure = pureObj(obj);
 
     // @ts-expect-error
     expect(obj.__proto__).toBeDefined();

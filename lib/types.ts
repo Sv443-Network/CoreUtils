@@ -2,7 +2,7 @@
 
 /**
  * @module types
- * This module contains various utility types - [see the documentation for more info](https://github.com/Sv443-Network/DJSUtils/blob/main/docs.md#types)
+ * This module contains various utility types - [see the documentation for more info](https://github.com/Sv443-Network/CoreUtils/blob/main/docs.md#types)
  */
 
 /** Any value that is list-like, i.e. has a quantifiable length, count or size property */
@@ -39,6 +39,9 @@ export type Newable<T> = new (...args: any[]) => T;
  * }
  */
 export type NonEmptyString<TString extends string> = TString extends "" ? never : TString;
+
+/** String constant that decides which set of number formatting options to use */
+export type NumberFormat = "short" | "long";
 
 /**
  * Makes the structure of a type more readable by expanding it.  

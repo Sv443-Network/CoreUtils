@@ -1,6 +1,6 @@
 /**
  * @module DataStore
- * This module contains the DataStore class, which is a general purpose, sync and async persistent database for JSON-serializable data - [see the documentation for more info](https://github.com/Sv443-Network/DJSUtils/blob/main/docs.md#class-datastore)
+ * This module contains the DataStore class, which is a general purpose, sync and async persistent database for JSON-serializable data - [see the documentation for more info](https://github.com/Sv443-Network/CoreUtils/blob/main/docs.md#class-datastore)
  */
 
 import { MigrationError } from "./Errors.js";
