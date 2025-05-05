@@ -6,16 +6,16 @@
 import { mapRange, randRange } from "./math.js";
 import type { Stringifiable } from "./types.js";
 
-/** Converts an ArrayBuffer to a base64-encoded string */
-export function ab2str(buf: ArrayBuffer): string {
+/** Converts an ArrayBuffer to a base64-encoded (ASCII) string */
+export function abtoa(buf: ArrayBuffer): string {
   return btoa(
     new Uint8Array(buf)
       .reduce((data, byte) => data + String.fromCharCode(byte), ""),
   );
 }
 
-/** Converts a base64-encoded string to an ArrayBuffer representation of its bytes */
-export function str2ab(str: string): ArrayBuffer {
+/** Converts a base64-encoded (ASCII) string to an ArrayBuffer representation of its bytes */
+export function atoab(str: string): ArrayBuffer {
   return Uint8Array.from(atob(str), c => c.charCodeAt(0));
 }
 
@@ -35,7 +35,7 @@ export async function compress(input: Stringifiable | ArrayBuffer, compressionFo
   const buf = await (new Response(comp.readable).arrayBuffer());
   return outputType === "arrayBuffer"
     ? buf
-    : ab2str(buf);
+    : abtoa(buf);
 }
 
 /** Decompresses a previously compressed base64 string or ArrayBuffer, with the format passed by {@linkcode compressionFormat}, converted to a string */
@@ -46,7 +46,7 @@ export async function decompress(input: Stringifiable | ArrayBuffer, compression
 export async function decompress(input: Stringifiable | ArrayBuffer, compressionFormat: CompressionFormat, outputType: "string" | "arrayBuffer" = "string"): Promise<ArrayBuffer | string> {
   const byteArray = input instanceof ArrayBuffer
     ? input
-    : str2ab(input?.toString() ?? String(input));
+    : atoab(input?.toString() ?? String(input));
   const decomp = new DecompressionStream(compressionFormat);
   const writer = decomp.writable.getWriter();
   writer.write(byteArray);
