@@ -40,13 +40,13 @@ For submitting bug reports or feature requests, please use the [GitHub issue tra
     - 🟣 [`function hexToRgb()`](#function-hextorgb) - Converts a hex color string to an RGB object
     - 🟣 [`function lightenColor()`](#function-lightencolor) - Lightens the given color by the given percentage
     - 🟣 [`function rgbToHex()`](#function-rgbtohex) - Converts an RGB object to a hex color string
-  - *[**Crypto:**](#crypto)
-    - 🟣 *[`function ab2str()`](#function-ab2str) - Converts an ArrayBuffer to a string
-    - 🟣 *[`function str2ab()`](#function-str2ab) - Converts a string to an ArrayBuffer
-    - 🟣 *[`function compress()`](#function-compress) - Compresses the given string using the given algorithm (gzip/deflate) and encoding
-    - 🟣 *[`function decompress()`](#function-decompress) - Decompresses the given string using the given algorithm (gzip/deflate) and encoding
-    - 🟣 *[`function computeHash()`](#function-computehash) - Computes a string's hash using the given algorithm (SHA-x, MD5, ...)
-    - 🟣 *[`function randomId()`](#function-randomid) - Generates a random ID of the given length
+  - [**Crypto:**](#crypto)
+    - 🟣 [`function abtoa()`](#function-abtoa) - Converts an ArrayBuffer to a string
+    - 🟣 [`function atoab()`](#function-atoab) - Converts a string to an ArrayBuffer
+    - 🟣 [`function compress()`](#function-compress) - Compresses the given string using the given algorithm (gzip/deflate) and encoding
+    - 🟣 [`function decompress()`](#function-decompress) - Decompresses the given string using the given algorithm (gzip/deflate) and encoding
+    - 🟣 [`function computeHash()`](#function-computehash) - Computes a string's hash using the given algorithm (SHA-x, MD5, ...)
+    - 🟣 [`function randomId()`](#function-randomid) - Generates a random ID of the given length
   - *[**DataStore:**](#datastore) - Cross-platform, general-purpose, sync/async hybrid, JSON-serializable database infrastructure
     - 🟧 *[`class DataStore`](#class-datastore) - The main class for the data store
       - 🔷 *[`type DataStoreOptions`](#type-datastoreoptions) - Options for the data store
@@ -376,6 +376,197 @@ import { rgbToHex } from "@sv443-network/coreutils";
 console.log(rgbToHex(18, 52, 86, 0.47058823529411764)); // #12345678
 console.log(rgbToHex(18, 52, 86));                      // #123456
 console.log(rgbToHex());                                // #nannannan
+```
+</details>
+
+<br><br>
+
+<!-- #region crypto -->
+## Crypto
+
+<br>
+
+### `function abtoa()`
+Signature:
+```ts
+function abtoa(buf: ArrayBuffer): string;
+```
+  
+Converts an ArrayBuffer to a base64-encoded (ASCII) string.  
+Used to encode a value to be later decoded with the [`atoab()` function](#function-atoab).  
+  
+<details><summary>Example - click to view</summary>
+
+```ts
+import { abtoa } from "@sv443-network/coreutils";
+
+const buffer = new ArrayBuffer(8);
+const view = new Uint8Array(buffer);
+view.set([1, 2, 3, 4, 5, 6, 7, 8]);
+const base64 = abtoa(buffer);
+console.log(base64); // AQIDBAUGBwg=
+```
+</details>
+
+<br>
+
+### `function atoab()`
+Signature:
+```ts
+function atoab(str: string): ArrayBuffer;
+```
+  
+Converts a base64-encoded (ASCII) string to an ArrayBuffer.  
+Used to decode a value previously encoded with the [`abtoa()` function](#function-abtoa).  
+  
+<details><summary>Example - click to view</summary>
+
+```ts
+import { atoab } from "@sv443-network/coreutils";
+
+const base64 = "AQIDBAUGBwg="; // see abtoa() example
+const buffer = atoab(base64);
+const view = new Uint8Array(buffer);
+console.log(view); // Uint8Array(8) [ 1, 2, 3, 4, 5, 6, 7, 8 ]
+```
+</details>
+
+<br>
+
+### `function compress()`
+Signature:
+```ts
+function compress(input: Stringifiable | ArrayBuffer, compressionFormat: CompressionFormat, outputType: "string" | "arrayBuffer" = "string"): Promise<ArrayBuffer | string>;
+```
+  
+Compresses the given string or ArrayBuffer using the given algorithm and encoding.  
+The `input` argument can be a [`Stringifiable`](#type-stringifiable) object or an ArrayBuffer.  
+The `compressionFormat` argument can usually be either `gzip`, `deflate` or `deflate-raw`.  
+The `outputType` argument determines if the returned value should be a base64-encoded string or an ArrayBuffer.  
+  
+<details><summary>Example - click to view</summary>
+
+```ts
+import { compress, decompress } from "@sv443-network/coreutils";
+
+const str = "Hello, world!".repeat(1000);
+const compressed = await compress(str, "gzip");
+console.log(compressed); // "H4sIAAAAAAAACu3HoQ0AIAwAsFfAc8gOAbdkyQzvcwWudY2TWWvc6twzRERERERERERERERERERERERERERERERERP7kAddDUSnIMgAA"
+
+const decompressed = await decompress(compressed, "gzip");
+console.log(str === decompressed); // true
+```
+</details>
+
+<br>
+
+### `function decompress()`
+Signature:
+```ts
+function decompress(input: Stringifiable | ArrayBuffer, compressionFormat: CompressionFormat, outputType: "string" | "arrayBuffer" = "string"): Promise<ArrayBuffer | string>;
+```
+  
+Decompresses the previously compressed string or ArrayBuffer using the given algorithm and encoding.  
+The `input` argument can be a [`Stringifiable`](#type-stringifiable) object or an ArrayBuffer.  
+The `compressionFormat` argument can usually be either `gzip`, `deflate` or `deflate-raw`.  
+The `outputType` argument determines if the returned value should be a base64-encoded string or an ArrayBuffer.  
+  
+<details><summary>Example - click to view</summary>
+
+```ts
+import { compress, decompress } from "@sv443-network/coreutils";
+
+const str = "Hello, world!".repeat(1000);
+const compressed = await compress(str, "gzip");
+console.log(compressed); // "H4sIAAAAAAAACu3HoQ0AIAwAsFfAc8gOAbdkyQzvcwWudY2TWWvc6twzRERERERERERERERERERERERERERERERERP7kAddDUSnIMgAA"
+
+const decompressed = await decompress(compressed, "gzip");
+console.log(str === decompressed); // true
+```
+</details>
+
+<br>
+
+### `function computeHash()`
+Signature:
+```ts
+function computeHash(input: string | ArrayBuffer, algorithm = "SHA-256"): Promise<string>;
+```
+<!-- Creates a hash / checksum of the given {@linkcode input} string or ArrayBuffer using the specified {@linkcode algorithm} ("SHA-256" by default).  
+ *   
+ * - ⚠️ Uses the SubtleCrypto API so it needs to run in a secure context (HTTPS).  
+ * - ⚠️ If you use this for cryptography, make sure to use a secure algorithm (under no circumstances use SHA-1) and to [salt](https://en.wikipedia.org/wiki/Salt_(cryptography)) your input data. -->
+  
+Creates a hash / checksum of the given string or ArrayBuffer using the specified algorithm ("SHA-256" by default).  
+  
+- ⚠️ Uses the SubtleCrypto API so in a DOM environment this needs to run in a secure context (HTTPS).
+- ⚠️ If you use this for cryptography, make sure to use a secure algorithm (under no circumstances use SHA-1) and to [salt your input.](https://en.wikipedia.org/wiki/Salt_(cryptography))
+
+<details><summary>Example - click to view</summary>
+
+```ts
+const sha256 = await computeHash("Hello, world!");
+const sha512 = await computeHash("Hello, world!", "SHA-512");
+
+console.log(sha256); // "315f5bdb76d078c43b8ac0064e4a0164612b1fce77c869345bfc94c75894edd3"
+console.log(sha512); // "c1527cd893c124773d811911970c8fe6e857d6df5dc9226bd8a160614c0cd963a4ddea2b94bb7d36021ef9d865d5cea294a82dd49a0bb269f51f6e7a57f79421"
+```
+</details>
+
+<br>
+
+### `function randomId()`
+Signature:
+```ts
+function randomId(length = 16, radix = 16, enhancedEntropy = false, randomCase = true): string;
+```
+  
+Generates a random ID of a given length and [radix (base).](https://en.wikipedia.org/wiki/Radix)  
+  
+The default length is 16 and the default radix is 16 (hexadecimal).  
+You may change the radix to get digits from different numerical systems.  
+Use 2 for binary, 8 for octal, 10 for decimal, 16 for hexadecimal and 36 for alphanumeric.  
+  
+If `enhancedEntropy` is set to true (false by default), the [Web Crypto API](https://developer.mozilla.org/en-US/docs/Web/API/Crypto/getRandomValues) is used for generating the random numbers.  
+Note that this makes the function call take longer, but the generated IDs will have a higher entropy.  
+  
+If `randomCase` is set to true (which it is by default), the generated ID will contain both upper and lower case letters.  
+This randomization is also affected by the `enhancedEntropy` setting, unless there are no alphabetic characters in the output in which case it will be skipped.  
+  
+Throws a RangeError if the length is less than 1 or the radix is less than 2 or greater than 36.  
+  
+⚠️ This is not suitable for generating anything related to cryptography! Use [SubtleCrypto's `generateKey()`](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/generateKey) for that instead.  
+  
+<details><summary>Example - click to view</summary>
+
+```ts
+import { randomId } from "@sv443-network/coreutils";
+
+randomId();                    // "1bda419a73629d4f" (length 16, radix 16)
+randomId(10);                  // "f86cd354a4"       (length 10, radix 16)
+randomId(10, 2);               // "1010001101"       (length 10, radix 2)
+randomId(10, 10);              // "0183428506"       (length 10, radix 10)
+randomId(10, 36, false, true); // "z46jFPa37R"       (length 10, radix 36, random case)
+
+
+// performance benchmark:
+
+function benchmark(enhancedEntropy: boolean, randomCase: boolean) {
+  const timestamp = Date.now();
+  for(let i = 0; i < 10_000; i++)
+    randomId(16, 36, enhancedEntropy, randomCase);
+  console.log(`Generated 10k in ${Date.now() - timestamp}ms`)
+}
+
+// using Math.random():
+benchmark(false, false); // Generated 10k in 239ms
+benchmark(false, true);  // Generated 10k in 248ms
+
+// using crypto.getRandomValues():
+benchmark(true, false);  // Generated 10k in 1076ms
+benchmark(true, true);   // Generated 10k in 1054ms
+
+// 3rd and 4th have a similar time, but in reality the 4th blocks the event loop for much longer
 ```
 </details>
 
