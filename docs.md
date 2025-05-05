@@ -59,8 +59,8 @@ For submitting bug reports or feature requests, please use the [GitHub issue tra
       - 🔷 *[`type DataStoreEngineOptions`](#type-datastoreengineoptions) - Options for the data store engine
     - 🟧 *[`class BrowserStorageEngine`](#class-browserstorageengine) - Storage engine for browser environments (localStorage, sessionStorage)
       - 🔷 *[`type BrowserStorageEngineOptions`](#browserstorageengineoptions) - Options for the browser storage engine
-    - 🟧 *[`class JSONFileEngine`](#class-jsonfileengine) - Storage engine for Node.js environments (JSON file)
-      - 🔷 *[`type JSONFileEngineOptions`](#jsonfileengineoptions) - Options for the JSON file engine
+    - 🟧 *[`class JSONFileStorageEngine`](#class-JSONFileStorageEngine) - Storage engine for Node.js environments (JSON file)
+      - 🔷 *[`type JSONFileStorageEngineOptions`](#JSONFileStorageEngineoptions) - Options for the JSON file engine
   - [**Debouncer:**](#debouncer)
     - 🟣 [`function debounce()`](#function-debounce) - Function wrapper for the [`Debouncer` class](#class-debouncer)
     - 🟧 [`class Debouncer`](#class-debouncer) - Class that manages listeners whose calls are rate-limited
