@@ -61,12 +61,12 @@ For submitting bug reports or feature requests, please use the [GitHub issue tra
       - 🔷 *[`type BrowserStorageEngineOptions`](#browserstorageengineoptions) - Options for the browser storage engine
     - 🟧 *[`class JSONFileEngine`](#class-jsonfileengine) - Storage engine for Node.js environments (JSON file)
       - 🔷 *[`type JSONFileEngineOptions`](#jsonfileengineoptions) - Options for the JSON file engine
-  - *[**Debouncer:**](#debouncer)
-    - 🟧 *[`class Debouncer`](#class-debouncer) - Class that manages listeners whose calls are debounced
-    - 🟣 *[`function debounce()`](#function-debounce) - Function wrapper for the [`Debouncer` class](#class-debouncer)
-      - 🔷 *[`type DebouncerType`](#type-debouncertype) - The triggering type for the debouncer
-      - 🔷 *[`type DebouncedFunction`](#type-debouncedfunction) - Function type that is returned by the [`debounce()` function](#debounce)
-      - 🔷 *[`type DebouncerEventMap`](#type-debouncereventmap) - 
+  - [**Debouncer:**](#debouncer)
+    - 🟣 [`function debounce()`](#function-debounce) - Function wrapper for the [`Debouncer` class](#class-debouncer)
+    - 🟧 [`class Debouncer`](#class-debouncer) - Class that manages listeners whose calls are rate-limited
+    - 🔷 [`type DebouncerType`](#type-debouncertype) - The triggering type for the debouncer
+    - 🔷 [`type DebouncedFunction`](#type-debouncedfunction) - Function type that is returned by the [`debounce()` function](#debounce)
+    - 🔷 [`type DebouncerEventMap`](#type-debouncereventmap) - 
   - *[**Errors:**](#errors)
     - 🟧 *[`class DatedError`](#class-datederror) - Base error class with a `date` property
     - 🟧 *[`class ChecksumMismatchError`](#class-checksummismatcherror) - Error thrown when two checksums don't match
@@ -81,7 +81,7 @@ For submitting bug reports or feature requests, please use the [GitHub issue tra
     - 🟣 *[`function randRange()`](#function-randrange) - Returns a random number in the given range
     - 🟣 [`function roundFixed()`](#function-roundfixed) - Rounds the given number to the given number of decimal places
     - 🟣 [`function valsWithin()`](#function-valswithin) - Checks if the given numbers are within a certain range of each other
-  - [**Misc:**](#misc)
+  - *[**Misc:**](#misc)
     - 🟣 *[`function pauseFor()`](#function-pausefor) - Pauses async execution for the given amount of time
     - 🟣 *[`function fetchAdvanced()`](#function-fetchadvanced) - Wrapper around [`fetch()`](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) with options like a timeout
       - 🔷 *[`type FetchAdvancedOpts`](#type-fetchadvancedopts) - Options for the [`fetchAdvanced()`](#function-fetchadvanced) function
@@ -572,6 +572,355 @@ benchmark(true, true);   // Generated 10k in 1054ms
 
 <br><br>
 
+<!-- #region DataStore -->
+## DataStore
+
+<br>
+
+<!-- TODO: -->
+
+<br><br>
+
+<!-- #region Debouncer -->
+## Debouncer
+
+<br>
+
+### `class Debouncer`
+Signature:
+```ts
+class Debouncer<TFunc extends (...args: any) => any>
+  extends NanoEmitter<DebouncerEventMap<TFunc>>;
+```
+  
+Usage:
+```ts
+const debouncer = new Debouncer(timeout = 200, type: DebouncerType = "immediate");
+```
+  
+Creates a new Debouncer instance.  
+This class manages listeners whose calls are debounced, meaning their frequency is limited to a certain time interval.  
+For example you might use this in event listeners that fire frequently (like scroll, resize or mousemove events) to avoid performance issues.  
+  
+If creating a whole class is too much overhead for your use case, you can also use the standalone [`debounce()` function.](#function-debounce)  
+It works similarly to other debounce implementations like `_.debounce()` from Lodash.  
+  
+If `timeout` is not provided, it will default to 200 milliseconds.  
+If `type` isn't provided, it will default to `"immediate"`.  
+  
+The `type` parameter can be set to `"immediate"` (default and recommended) to let the first call through immediately and then queue the following calls until the timeout is over.  
+  
+If set to `"idle"`, the debouncer will wait until there is a pause of the given timeout length before executing the queued call.  
+Note that this might make the calls be queued up for all eternity if there isn't a long enough gap between them.  
+
+See the below diagram for a visual representation of the different types.  
+  
+<details><summary><b>Diagram - click to view</b></summary>
+
+![Debouncer type diagram](./.github/assets/debounce.png)
+
+</details>
+
+<details><summary>Example - click to view</summary>
+
+```ts
+import { Debouncer } from "@sv443-network/coreutils";
+
+const deb = new Debouncer(); // defaults to 200ms and "immediate"
+
+// register a function to be called when the debouncer triggers
+deb.addListener(onResize);
+
+window.addEventListener("resize", (evt) => {
+  // arguments will be passed along to all registered listeners
+  deb.call(evt);
+});
+
+function onResize(evt: Event) {
+  console.log("Resized to:", window.innerWidth, "x", window.innerHeight);
+
+  // timeout and type can be modified after the fact:
+  deb.setTimeout(500);
+  deb.setType("idle");
+}
+
+// call these from anywhere else to detach the registered listeners:
+
+function removeResizeListener() {
+  deb.removeListener(onResize);
+}
+
+function removeAllListeners() {
+  deb.removeAllListeners();
+}
+
+// or using NanoEmitter's event system:
+
+deb.on("call", (...args) => {
+  console.log("Debounced call executed with:", args);
+});
+
+deb.on("change", (timeout, type) => {
+  console.log("Timeout changed to:", timeout);
+  console.log("Edge type changed to:", type);
+});
+```
+</details>
+
+<br>
+
+### Events:
+The Debouncer class inherits from [`NanoEmitter`](#nanoemitter), so you can use all of its inherited methods to listen to the following events:
+| Event | Arguments | Description |
+| :-- | :-- | :-- |
+| `call` | `...TArgs[]`, same as `addListener()` and `call()` | Emitted when the debouncer triggers and calls all listener functions, as an event-driven alternative to the callback-based `addListener()` method. |
+| `change` | `timeout: number`, `type: "immediate" \| "idle"` | Emitted when the timeout or type settings were changed. |
+
+<br>
+
+### Methods:
+
+<br>
+
+#### `Debouncer.addListener()`
+Signature:
+```ts
+addListener(fn: ((...args: TArgs[]) => void | unknown)): void;
+```
+  
+Adds a listener function that will be called on timeout.  
+You can attach as many listeners as you want and they will all be called synchronously in the order they were added.
+
+<br>
+
+#### `Debouncer.removeListener()`
+Signature:
+```ts
+removeListener(fn: ((...args: TArgs[]) => void | unknown)): void;
+```
+  
+Removes the listener with the specified function reference.
+
+<br>
+
+#### `Debouncer.removeAllListeners()`
+Signature:
+```ts
+removeAllListeners(): void;
+```
+  
+Removes all listeners.
+
+<br>
+
+#### `Debouncer.call()`
+Signature:
+```ts
+call(...args: TArgs[]): void;
+```
+  
+Use this to call the debouncer with the specified arguments that will be passed to all listener functions registered with `addListener()`.  
+Not every call will trigger the listeners - only when there is no active timeout.  
+If the timeout is active, the call will be queued until it either gets overridden by the next call or the timeout is over.
+
+<br>
+
+#### `Debouncer.getListeners()`
+Signature:
+```ts
+getListeners(): ((...args: TArgs[]) => void | unknown)[];
+```
+  
+Returns an array of all registered listener functions.
+
+<br>
+
+#### `Debouncer.setTimeout()`
+Signature:
+```ts
+setTimeout(timeout: number): void;
+```
+  
+Changes the timeout for the debouncer.
+
+<br>
+
+#### `Debouncer.getTimeout()`
+Signature:
+```ts
+getTimeout(): number;
+```
+  
+Returns the current timeout.
+
+<br>
+
+#### `Debouncer.isTimeoutActive()`
+Signature:
+```ts
+isTimeoutActive(): boolean;
+```
+  
+Returns `true` if the timeout is currently active, meaning any call to the `call()` method will be queued.
+
+<br>
+
+#### `Debouncer.setType()`
+Signature:
+```ts
+setType(type: "immediate" | "idle"): void;
+```
+  
+Changes the edge type for the debouncer.
+
+<br>
+
+#### `Debouncer.getType()`
+Signature:
+```ts
+getType(): "immediate" | "idle";
+```
+  
+Returns the current edge type.
+
+<br><br>
+
+### `function debounce()`
+Signature:
+```ts
+debounce<
+  TFunc extends ((...args: TArgs[]) => void | unknown),
+  TArgs = any,
+> (
+  fn: TFunc,
+  timeout?: number,
+  type?: "immediate" | "idle",
+): TFunc & { debouncer: Debouncer }
+```
+  
+A standalone function that debounces a given function to prevent it from being executed too often.  
+The function will wait for the specified timeout between calls before executing the function.  
+This is especially useful when dealing with events that fire rapidly, like "scroll", "resize", "mousemove", etc.  
+  
+This function works in the same way as the [`Debouncer` class](#class-debouncer), but is a more convenient wrapper for less complex use cases.  
+Still, you will have access to the created Debouncer instance via the `debouncer` prop on the returned function should you need it.  
+  
+If `timeout` is not provided, it will default to 200 milliseconds.  
+If `type` isn't provided, it will default to `"immediate"`.  
+  
+The `type` parameter can be set to `"immediate"` (default and recommended) to let the first call through immediately and then queue the following calls until the timeout is over.  
+  
+If set to `"idle"`, the debouncer will wait until there is a pause of the given timeout length before executing the queued call.  
+Note that this might make the calls be queued up for all eternity if there isn't a long enough gap between them.  
+
+See the below diagram for a visual representation of the different types.  
+  
+<details><summary><b>Diagram - click to view</b></summary>
+
+![Debouncer type diagram](./.github/assets/debounce.png)
+
+</details>
+
+<details><summary><b>Example - click to view</b></summary>
+
+```ts
+import { debounce } from "@sv443-network/userutils";
+
+// simple example:
+window.addEventListener("resize", debounce((evt) => {
+  console.log("Resized to:", window.innerWidth, "x", window.innerHeight);
+}));
+
+// or if you need access to the Debouncer instance:
+
+function myFunc(iteration: number) {
+  // for the edge type "immediate", iteration 0 and 19 will *always* be called
+  // this is so you can react immediately and always have the latest data at the end
+  console.log(`Call #${iteration} went through!`);
+}
+
+// debouncedFunction can be called at very short intervals but will never let calls through twice within 0.5s:
+const debouncedFunction = debounce(myFunc, 500);
+
+function increaseTimeout() {
+  // instance can be accessed on the function returned by debounce()
+  debouncedFunction.debouncer.setTimeout(debouncedFunction.debouncer.getTimeout() + 100);
+}
+
+// and now call the function a bunch of times with varying intervals:
+
+let i = 0;
+function callFunc() {
+  debouncedFunction(i, Date.now());
+
+  i++;
+  // call the function 20 times with a random interval between 0 and 1s (weighted towards the lower end):
+  if(i < 20)
+    setTimeout(callFunc, Math.floor(1000 * Math.pow(Math.random(), 2.5)));
+}
+
+// same as with Debouncer, you can use NanoEmitter's event system:
+
+debouncedFunction.debouncer.on("call", (...args) => {
+  console.log("Debounced call executed with:", args);
+});
+
+debouncedFunction.debouncer.on("change", (timeout, type) => {
+  console.log("Timeout changed to:", timeout);
+  console.log("Edge type changed to:", type);
+});
+```
+
+</details>
+
+<br>
+
+### `type DebouncerType`
+```ts
+type DebouncerType = "immediate" | "idle";
+```
+The type of edge to use for the debouncer.  
+See the diagram below the table for a visual representation of the different types.  
+
+| Type | Description | Pros | Cons |
+| :-- | :-- | :-- | :-- |
+| `immediate` | Calls the listeners at the very first call ("rising" edge) and queues the latest call until the timeout expires | First call is let through immediately | After all calls stop, the JS engine's event loop will continue to run until the last timeout expires (doesn't really matter on the web, but could cause a process exit delay in Node.js) |
+| `idle` | Queues all calls until there are no more calls in the given timeout duration ("falling" edge), and only then executes the very last call | Makes sure there are zero calls in the given `timeoutDuration` before executing the last call | - Calls are always delayed by at least `1 * timeoutDuration`<br>- Calls could get stuck in the queue indefinitely if there is no downtime between calls that is greater than the `timeoutDuration` |
+
+<details><summary><b>Diagram - click to view</b></summary>
+
+![Debouncer type diagram](./.github/assets/debounce.png)
+
+</details>
+
+<br>
+
+### `type DebouncedFunction`
+```ts
+type DebouncedFunction<TFunc extends (...args: any) => any> =
+  & ((...args: Parameters<TFunc>) => ReturnType<TFunc>)
+  & { debouncer: Debouncer<TFunc> };
+```
+  
+The debounced function type that is returned by the [`debounce()` function.](#function-debounce)  
+This type is a function that resembles the function to debounce, but it has an additional property `debouncer` that contains the Debouncer instance.  
+
+<br>
+
+### `type DebouncerEventMap`
+```ts
+type DebouncerEventMap<TFunc extends (...args: any) => any> = {
+  /** Emitted when the debouncer calls all registered listeners, as a pub-sub alternative */
+  call: TFunc;
+  /** Emitted when the timeout or edge type is changed after the instance was created */
+  change: (timeout: number, type: DebouncerType) => void;
+};
+```
+  
+This is the event map for the [`Debouncer` class.](#class-debouncer)
+
+<br><br>
+
 <!-- #region math -->
 ## Math
 
@@ -815,7 +1164,9 @@ Signature:
 type ProgressBarChars = Record<100 | 75 | 50 | 25 | 0, string>;
 ```
   
-This type defines the characters used in the function [`createProgressBar()`](#function-createprogressbar).
+This type defines the characters used in the function [`createProgressBar()`](#function-createprogressbar).  
+Each property is a number that represents the percentage of each segment of the progress bar.  
+So a progress bar with a length of 2 and value of 25% would be represented by the characters `50` and `0`.  
 
 <br>
 

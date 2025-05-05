@@ -25,13 +25,13 @@ import { NanoEmitter } from "./NanoEmitter.js";
  */
 export type DebouncerType = "immediate" | "idle";
 
-type AnyFunc = (...args: any) => any;
+type AnyFn = (...args: any) => any;
 
 /** The debounced function type that is returned by the {@linkcode debounce} function */
-export type DebouncedFunction<TFunc extends AnyFunc> = ((...args: Parameters<TFunc>) => ReturnType<TFunc>) & { debouncer: Debouncer<TFunc> };
+export type DebouncedFunction<TFunc extends AnyFn> = ((...args: Parameters<TFunc>) => ReturnType<TFunc>) & { debouncer: Debouncer<TFunc> };
 
 /** Event map for the {@linkcode Debouncer} */
-export type DebouncerEventMap<TFunc extends AnyFunc> = {
+export type DebouncerEventMap<TFunc extends AnyFn> = {
   /** Emitted when the debouncer calls all registered listeners, as a pub-sub alternative */
   call: TFunc;
   /** Emitted when the timeout or edge type is changed after the instance was created */
@@ -49,7 +49,7 @@ export type DebouncerEventMap<TFunc extends AnyFunc> = {
  * - `call` - emitted when the debouncer calls all listeners - use this as a pub-sub alternative to the default callback-style listeners
  * - `change` - emitted when the timeout or edge type is changed after the instance was created
  */
-export class Debouncer<TFunc extends AnyFunc> extends NanoEmitter<DebouncerEventMap<TFunc>> {
+export class Debouncer<TFunc extends AnyFn> extends NanoEmitter<DebouncerEventMap<TFunc>> {
   /** All registered listener functions and the time they were attached */
   protected listeners: TFunc[] = [];
 
