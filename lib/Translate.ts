@@ -50,10 +50,10 @@ export type TransformFnProps<TTrKey extends string = string> = {
 export type TransformFn<TTrKey extends string = string> = (props: TransformFnProps<TTrKey>) => Stringifiable;
 
 /**
- * Pass a recursive or flat translation object to this generic type to get all keys in the object.  
+ * Pass a nested or flat translation object to this generic type to recursively get all keys in the object.  
  * @example ```ts
- * type Keys = TrKeys<{ a: { b: "foo" }, c: "bar" }>;
- * // result: type Keys = "a.b" | "c"
+ * type Keys = TrKeys<{ a: { b: { c: "bar" }, d: "foo" }, e: "baz" }>;
+ * //    ^? type Keys = "a.b.c" | "a.d" | "e"
  * ```
  */
 export type TrKeys<TTrObj, P extends string = ""> = {

@@ -1,6 +1,6 @@
 # CoreUtils Documentation
 Cross-platform, general-purpose, JavaScript core library for Node, Deno and the browser.  
-Intended to be used in conjunction with [`@sv443-network/userutils`](https://github.com/Sv443-Network/UserUtils) and [`@sv443-network/djsutils`](https://github.com/Sv443-Network/DJSUtils), but can be used independently as well.  
+Intended to be used in conjunction with [`@sv443-network/coreutils`](https://github.com/Sv443-Network/UserUtils) and [`@sv443-network/djsutils`](https://github.com/Sv443-Network/DJSUtils), but can be used independently as well.  
   
 If you like using this library, please consider [supporting the development ❤️](https://github.com/sponsors/Sv443)
 
@@ -115,12 +115,17 @@ For submitting bug reports or feature requests, please use the [GitHub issue tra
     - 🔷 *[`type TrKeys`](#type-trkeys) - Generic type that gives you a union of keys from the passed [`TrObject` object](#type-trobject)
     - 🔷 *[`type TrObject`](#type-trobject) - The translation object for a specific language -->
   - [**Misc. Types:**](#types)
+    - 🔷 [`type LooseUnion`](#type-looseunion) - A union type that allows for autocomplete suggestions as well as substitutions of the same type
     - 🔷 [`type ListLike`](#type-listlike) - Any value with a quantifiable `length`, `count` or `size` property
+    - 🔷 [`type Newable`](#type-newable) - Any class reference that can be instantiated with `new`
     - 🔷 [`type NonEmptyArray`](#type-nonemptyarray) - Non-empty array type
+    - 🔷 [`type NonEmptyString`](#type-nonemptystring) - String type with at least one character
     - 🔷 [`type NumberFormat`](#type-numberformat) - Number format identifier
+    - 🔷 [`type Prettify`](#type-prettify) - Makes the structure of a type more readable by fully expanding it (recursively)
     - 🔷 [`type SerializableVal`](#type-serializableval) - Any value that can be serialized to JSON
     - 🔷 [`type StringGen`](#type-stringgen) - A value that can be either of type string, or a sync or async function that returns a string
     - 🔷 [`type ValueGen`](#type-valuegen) - A value that can be either the generic type T, or a sync or async function that returns T
+    - 🔷 [`type Stringifiable`](#type-stringifiable) - Any value that can be implicitly converted to a string
 
 <br><br><br>
 
@@ -269,30 +274,6 @@ console.log(arr); // []
 ```
 </details>
 
-<br>
-
-### `type NonEmptyArray`
-```ts
-type NonEmptyArray<TArray = unknown> = [TArray, ...TArray[]];
-```
-  
-Describes an array with at least one item.  
-  
-<details><summary>Example - click to view</summary>
-
-```ts
-import type { NonEmptyArray } from "@sv443-network/coreutils";
-
-function foo(arr: NonEmptyArray<string>) {
-  console.log(arr.join(", "));
-}
-
-foo(["foo", "bar"]); // "foo, bar"
-// @ts-expect-error
-foo([]);             // TypeError
-```
-</details>
-
 <br><br>
 
 
@@ -323,8 +304,11 @@ darkenColor("#1affe3", 20, true);             // #15CCB6
 darkenColor("1affe369", 20);                  // 15ccb669
 darkenColor("rgb(26, 255, 227)", 20);       // rgb(20.8, 204, 181.6)
 darkenColor("rgba(26, 255, 227, 0.2)", 20); // rgba(20.8, 204, 181.6, 0.2)
-darkenColor("rgba()", 20); // TypeError: Invalid RGB/RGBA color format
+
+// invalid:
 darkenColor("#1affe3");    // #nannannan
+// @ts-expect-error
+darkenColor("rgba()", 20); // TypeError: Invalid RGB/RGBA color format
 ```
 </details>
 
@@ -614,14 +598,14 @@ To make your own engine, refer to the [`DataStoreEngine` class.](#class-datastor
 If you have multiple DataStore instances and you want to be able to easily and safely export and import their data, take a look at the [DataStoreSerializer class.](#class-datastoreserializer)  
 It combines the data of multiple DataStore instances into a single object that can be exported and imported as a whole, including partial im- and exports.  
   
-If you were using the `DataStore` class from the `@sv443-network/userutils` package before, all your data should be migrated automatically on the first call to `loadData()`.  
+If you were using the `DataStore` class from the `@sv443-network/coreutils` package before, all your data should be migrated automatically on the first call to `loadData()`.  
   
 ⚠️ The data is serialized as a JSON string, so only JSON-compatible data can be used. Circular structures and complex objects (containing functions, symbols, etc.) will either throw an error on load and save or cause otherwise unexpected behavior. Properties with a value of `undefined` will be removed from the data prior to saving it, so use `null` instead.  
   
 <details><summary><b>Example - click to view</b></summary>
 
 ```ts
-import { DataStore, compress, decompress } from "@sv443-network/userutils";
+import { DataStore, compress, decompress } from "@sv443-network/coreutils";
 
 /** Example: Script configuration data */
 interface MyConfig {
@@ -855,7 +839,7 @@ The class' internal methods are all declared as protected, so you can extend thi
 <details><summary><b>Example - click to view</b></summary>
 
 ```ts
-import { DataStore, DataStoreSerializer, compress, decompress } from "@sv443-network/userutils";
+import { DataStore, DataStoreSerializer, compress, decompress } from "@sv443-network/coreutils";
 
 /** This store doesn't have migrations to run and also has no encodeData and decodeData functions */
 const fooStore = new DataStore({
@@ -1190,7 +1174,7 @@ While this library offers some premade engines [in the Storage Engines section,]
 <details><summary>Example - click to view</summary>
 
 ```ts
-import { DataStoreEngine } from "@sv443-network/userutils";
+import { DataStoreEngine } from "@sv443-network/coreutils";
 
 class MyStorageEngine<TData extends object = object> extends DataStoreEngine<TData> {
   protected options: MyStorageEngineOptions;
@@ -1333,7 +1317,7 @@ Storage engine for the [`DataStore` class](#class-datastore) that uses the brows
 <details><summary>Example - click to view</summary>
 
 ```ts
-import { DataStore, BrowserStorageEngine } from "@sv443-network/userutils";
+import { DataStore, BrowserStorageEngine } from "@sv443-network/coreutils";
 
 // this DataStore will only work in the browser, because it uses the BrowserStorageEngine
 const myStore = new DataStore({
@@ -1399,7 +1383,7 @@ Storage engine for the [`DataStore` class](#class-datastore) that uses a JSON fi
 <details><summary>Example - click to view</summary>
 
 ```ts
-import { DataStore, JSONFileStorageEngine } from "@sv443-network/userutils";
+import { DataStore, JSONFileStorageEngine } from "@sv443-network/coreutils";
 
 // this DataStore will only work in Node.js or Deno with Node compatibility
 const myStore = new DataStore({
@@ -1966,10 +1950,10 @@ digitCount(num6); // 17
 ### `function formatNumber()`
 Signature:
 ```ts
-formatNumber(number: number, locale: DiscordLocale, format: NumberFormat): string;
+formatNumber(number: number, locale: string, format: NumberFormat): string;
 ```
   
-Formats a number to a string using the given [`DiscordLocale`](#type-discordlocale) and [`NumberFormat`](#type-numberformat).  
+Formats a number to a string using the given BCP 47 locale identifier and [`NumberFormat`](#type-numberformat).  
   
 <details><summary>Example - click to view</summary>
 
@@ -2391,6 +2375,7 @@ const pureObj = pureObj(impureObj);
 console.log(pureObj.toString);         // undefined
 console.log(pureObj.__proto__);        // undefined
 console.log(pureObj.__defineGetter__); // undefined
+// @ts-expect-error
 console.log(`${pureObj}`);             // TypeError: Cannot convert object to string
 
 const emptyObj = pureObj();
@@ -2757,6 +2742,7 @@ console.log(secsToTimeStr(3599)); // 59:59
 console.log(secsToTimeStr(3600)); // 1:00:00
 console.log(secsToTimeStr(3601)); // 1:00:01
 
+// @ts-expect-error
 secsToTimeStr(-1); // TypeError: Seconds must be a positive number
 ```
 </details>
@@ -2794,11 +2780,176 @@ console.log(truncStr(str, 10, "…")); // "Lorem ips…"
 
 <br>
 
+### `type LooseUnion`
+```ts
+type LooseUnion<TUnion extends string | number | object> = TUnion | (
+  TUnion extends string
+    ? (string & {})
+    : (
+      TUnion extends number
+        ? (number & {})
+        : (
+          TUnion extends Record<keyof any, unknown>
+            ? (object & {})
+            : never
+        )
+    )
+);
+```
+  
+Describes a union of `string`s, `number`s or `object`s that can be used in a loose way.  
+This means the IDE will still show the autocomplete options, but TS will also allow passing any other value of the same type.  
+  
+<details><summary><b>Example - click to view</b></summary>
+
+```ts
+import type { LooseUnion } from "@sv443-network/coreutils";
+
+function foo(bar: LooseUnion<"a" | "b" | "c">) {
+  console.log(bar);
+}
+
+// when typing the following, autocomplete suggests "a", "b" and "c"
+// foo("
+
+foo("a"); // included in autocomplete, no type error
+foo("");  // *not* included in autocomplete, still no type error
+foo(1);   // type error: Argument of type '1' is not assignable to parameter of type 'LooseUnion<"a" | "b" | "c">'
+```
+</details>
+
+<br>
+
+### `type NonEmptyArray`
+```ts
+type NonEmptyArray<TArray = unknown> = [TArray, ...TArray[]];
+```
+  
+Describes an array with at least one item.  
+  
+<details><summary>Example - click to view</summary>
+
+```ts
+import type { NonEmptyArray } from "@sv443-network/coreutils";
+
+function foo(arr: NonEmptyArray<string>) {
+  console.log(arr.join(", "));
+}
+
+foo(["foo", "bar"]); // "foo, bar"
+// @ts-expect-error
+foo([]);             // TypeError
+```
+</details>
+
+<br>
+
+### `type Newable`
+```ts
+type Newable<T> = new (...args: any[]) => T;
+```
+  
+Any newable / class reference (anything that can be instantiated with `new Foo()`).  
+This doesn't refer to an instance of the class, just the reference to the newable/class itself.  
+
+<br>
+
+### `type NonEmptyString`
+```ts
+type NonEmptyString<TString extends string> = TString extends "" ? never : TString;
+```
+  
+This generic type describes a string that has at least one character.  
+It needs to be passed the string type itself via an `as const` assertion or a template literal type, like in the example below.  
+  
+<details><summary><b>Example - click to view</b></summary>
+
+```ts
+import type { NonEmptyString } from "@sv443-network/coreutils";
+
+function convertToNumber<T extends string>(str: NonEmptyString<T>) {
+  console.log(parseInt(str));
+}
+
+convertToNumber("04abc"); // 4
+// @ts-expect-error
+convertToNumber("");      // TypeError: Argument of type 'string' is not assignable to parameter of type 'never'
+```
+</details>
+
+<br>
+
+### `type Prettify`
+```ts
+type Prettify<T> = {
+  [K in keyof T]: T[K];
+} & {};
+```
+  
+A utility type that makes a type more readable by resolving all named types to their actual values.  
+  
+<details><summary><b>Example - click to view</b></summary>
+
+```ts
+import type { Prettify } from "@sv443-network/coreutils";
+
+// tooltip shows all constituent types, leaving you to figure it out yourself:
+// type Foo = {
+//   a: number;
+// } & Omit<{
+//   b: string;
+//   c: boolean;
+// }, "c">
+type Foo = {
+  a: number;
+} & Omit<{
+  b: string;
+  c: boolean;
+}, "c">;
+
+// tooltip shows just the type name, making you manually traverse to the type definition:
+// const foo: Foo
+const foo: Foo = {
+  a: 1,
+  b: "2"
+};
+
+// now with Prettify, the tooltips show the actual type structure:
+
+// type Bar = {
+//   a: number;
+//   b: string;
+// }
+type Bar = Prettify<Foo>;
+
+// const bar: {
+//   a: number;
+//   b: string;
+// }
+const bar: Bar = {
+  a: 1,
+  b: "2"
+};
+```
+</details>
+
+<br>
+
 ### `type SerializableVal`
 ```ts
 type SerializableVal = string | number | boolean | null | SerializableVal[] | { [key: string]: SerializableVal };
 ```
   
 Any value that can be serialized to JSON with `JSON.stringify()`.  
+
+<br>
+
+### `type Stringifiable`
+```ts
+type Stringifiable = string | number | boolean | null | undefined | { toString(): string } | Stringifiable[];
+```
+  
+Any value that can be *implicitly* converted to a string with `String(val)`, `val.toString()` or `${val}`  
+Objects like [Symbols](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol) or objects returned by [`pureObj()`](#function-pureobj) are excluded from this type and will throw a TypeError when implicitly stringified with `${val}` (as opposed to explicitly with `String(val)` or `val.toString()`).
 
 <br><br>
