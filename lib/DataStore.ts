@@ -68,7 +68,7 @@ export type DataStoreOptions<TData extends object> = Prettify<
        * Function to use to encode the data prior to saving it in persistent storage.  
        * If this is specified, make sure to declare {@linkcode decodeData()} as well.  
        *   
-       * You can make use of UserUtils' [`compress()`](https://github.com/Sv443-Network/UserUtils?tab=readme-ov-file#compress) function here to make the data use up less space at the cost of a little bit of performance.
+       * You can make use of [`compress()` function](https://github.com/Sv443-Network/CoreUtils/blob/main/docs.md#function-compress) here to make the data use up less space at the cost of a little bit of performance.
        * @param data The input data as a serialized object (JSON string)
        */
       encodeData: (data: string) => string | Promise<string>,
@@ -76,7 +76,7 @@ export type DataStoreOptions<TData extends object> = Prettify<
        * Function to use to decode the data after reading it from persistent storage.  
        * If this is specified, make sure to declare {@linkcode encodeData()} as well.  
        *   
-       * You can make use of UserUtils' [`decompress()`](https://github.com/Sv443-Network/UserUtils?tab=readme-ov-file#decompress) function here to make the data use up less space at the cost of a little bit of performance.
+       * You can make use of [`decompress()` function](https://github.com/Sv443-Network/CoreUtils/blob/main/docs.md#function-decompress) here to make the data use up less space at the cost of a little bit of performance.
        * @returns The resulting data as a valid serialized object (JSON string)
        */
       decodeData: (data: string) => string | Promise<string>,
@@ -153,9 +153,9 @@ export class DataStore<TData extends object = object> {
    */
   public async loadData(): Promise<TData> {
     try {
-      // migrate from UserUtils <=9.x format
       if(firstInit) {
         firstInit = false;
+        // migrate from UserUtils <=9.x format:
         const dsVer = Number(await this.engine.getValue("__ds_fmt_ver", 0));
         if(isNaN(dsVer) || dsVer < 1) {
           const oldData = await this.engine.getValue(`_uucfg-${this.id}`, null);
@@ -182,6 +182,9 @@ export class DataStore<TData extends object = object> {
           }
           await this.engine.setValue("__ds_fmt_ver", dsFmtVer);
         }
+        // if(dsVer < 2) {
+        //   // migrations for dsFmtVer 2 in here
+        // }
       }
 
       // migrate ids

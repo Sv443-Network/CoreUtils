@@ -94,7 +94,7 @@ For submitting bug reports or feature requests, please use the [GitHub issue tra
     - 🟣 [`function pauseFor()`](#function-pausefor) - Pauses async execution for the given amount of time
     - 🟣 [`function pureObj()`](#function-pureobj) - Applies an object's props to a null object (object without prototype chain) or just returns a new null object
   - [**NanoEmitter:**](#nanoemitter)
-    - 🟧 [`class NanoEmitter`](#class-nanoemitter) - Simple, lightweight event emitter class based on [`node:events`' `EventEmitter`](https://nodejs.org/api/events.html#class-eventemitter) and [`nanoevents`](https://npmjs.com/package/nanoevents) that can be used in both FP and OOP
+    - 🟧 [`class NanoEmitter`](#class-nanoemitter) - Simple, lightweight event emitter class that can be used in both FP and OOP, inspired by [`node:events`' `EventEmitter`](https://nodejs.org/api/events.html#class-eventemitter), based on [`nanoevents`](https://npmjs.com/package/nanoevents)
       - 🔷 [`type NanoEmitterOptions`](#type-nanoemitteroptions) - Options for the [`NanoEmitter` class](#class-nanoemitter)
   - [**Text:**](#text)
     - 🟣 [`function autoPlural()`](#function-autoplural) - Turns the given term into its plural form, depending on the given number or list length
