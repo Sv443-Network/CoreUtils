@@ -2509,14 +2509,15 @@ class MyClass extends NanoEmitter<TEventMap = EventsMap> {
 ```
   
 A class that provides a minimalistic event emitter with a tiny footprint powered by [the nanoevents library.](https://npmjs.com/package/nanoevents)  
-The `TEventMap` generic is used to define the events that can be emitted and listened to.  
   
 The main intention behind this class is to extend it in your own classes to provide a simple event system directly built into the class.  
 However in a functional environment you can also just create instances for use as standalone event emitters throughout your project.  
   
 For the options object, refer to the [`NanoEmitterOptions` type.](#type-nanoemitteroptions)  
   
-<br>
+The `TEventMap` generic is used to define the events that can be emitted and listened to.  
+It is an object where keys are the event names and values are the listener function types.  
+The arguments of the function are the arguments that will be passed to the listener when the event is emitted. The function should always return `void`.  
   
 <details><summary><b>Object oriented example - click to view</b></summary>
 
