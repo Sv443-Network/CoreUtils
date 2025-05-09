@@ -126,3 +126,55 @@ export function pauseFor(time: number, signal?: AbortSignal, rejectOnAbort = fal
 export function pureObj<TObj extends object>(obj?: TObj): TObj {
   return Object.assign(Object.create(null), obj ?? {}) as TObj;
 }
+
+/**
+ * Works similarly to `setInterval()`, but the callback is also called immediately and can be aborted with an `AbortSignal`.  
+ * Uses `setInterval()` internally, which might cause overlapping calls if the callback's synchronous execution takes longer than the given interval time.  
+ * This function will prevent skewing the interval time, contrary to {@linkcode setImmediateTimeoutLoop()}.  
+ * Returns a cleanup function that will stop the interval if called.
+ */
+export function setImmediateInterval(
+  callback: () => void | unknown,
+  interval: number,
+  signal?: AbortSignal,
+): void {
+  // eslint-disable-next-line prefer-const
+  let intervalId: ReturnType<typeof setInterval> | undefined;
+
+  const cleanup = (): void => clearInterval(intervalId);
+
+  const loop = (): void => {
+    if(signal?.aborted)
+      return cleanup();
+    callback();
+  };
+
+  signal?.addEventListener("abort", cleanup);
+  loop();
+  intervalId = setInterval(loop, interval);
+}
+
+/**
+ * Works similarly to `setInterval()`, but the callback is also called immediately and can be aborted with an `AbortSignal`.  
+ * Uses `setTimeout()` internally to avoid overlapping calls, though this will skew the given interval time by however long the callback takes to execute synchronously.  
+ * Returns a cleanup function that will stop the interval if called.
+ */
+export function setImmediateTimeoutLoop(
+  callback: () => void | unknown,
+  interval: number,
+  signal?: AbortSignal,
+): void {
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+
+  const cleanup = (): void => clearTimeout(timeout);
+
+  const loop = (): void => {
+    if(signal?.aborted)
+      return cleanup();
+    callback();
+    timeout = setTimeout(loop, interval);
+  };
+
+  signal?.addEventListener("abort", cleanup);
+  loop();
+}
