@@ -5,57 +5,74 @@
 
 import { compress, decompress } from "./crypto.js";
 import { DataStore, DataStoreOptions } from "./DataStore.js";
+import { ValidationError } from "./Errors.js";
+import { NanoEmitter, type NanoEmitterOptions } from "./NanoEmitter.js";
+import { autoPlural } from "./text.js";
+import type { DataStoreEngine } from "./DataStoreEngine.js";
 import type { Prettify } from "./types.js";
 
 //#region types
 
-/** Options for the TieredCache class. */
+/** Options for the {@linkcode TieredCache} class. */
 export type TieredCacheOptions<TData extends object> = Prettify<{
   /** Unique identifier for this cache. */
   id: string;
   /** The available cache tiers. */
   tiers: TieredCacheTierOptions<TData>[];
+  /** Optional options to pass to the {@linkcode NanoEmitter} constructor. */
+  nanoEmitterOptions?: NanoEmitterOptions;
 }>;
 
-/** Options object returned by the {@linkcode TieredCache.getTierOpts()} method. */
+/** Options object as resolved by the {@linkcode TieredCache.resolveTierOpts()} method. */
 type TieredCacheResolvedTierOpts<TData extends object> = Prettify<
   & TieredCacheTierOptions<TData>
-  & Pick<Required<TieredCacheTierOptions<TData>>, "memCache" | "compressionFormat">
+  & Pick<Required<TieredCacheTierOptions<TData>>, "compressionFormat">
 >;
 
-/** Options for each cache tier. */
+/** Options for when a {@linkcode TieredCache} entry goes stale. */
+export type TieredCacheStaleOptions = Prettify<{
+  /** The method to use for determining which entries are stale. `recency` = least recently used, `frequency` = least frequently used, `relevance` = combination of both (default). */
+  method?: "relevance" | "recency" | "frequency";
+  /** Maximum time to live for the data in this tier in seconds. */
+  ttl?: number;
+  /** Maximum amount of entries to keep in this tier. */
+  amount?: number;
+  /** The index of the cache tier to send the entry to when it goes stale. Defaults to the next available tier, or deletes the entry if there is none. */
+  sendToTier?: number;
+}>;
+
+/** Options for entry propagation between {@linkcode TieredCache} tiers. */
+export type TieredCachePropagateTierOptions = Prettify<{
+  /** The index of the cache tier to propagate the entry to. Use negative numbers for accessing from the end, just like `Array.prototype.at()`. Use `1` for the second tier, use `-1` for the last. */
+  index: number;
+  /** Whether to propagate created entries to the cache with this index. Defaults to true. */
+  created?: boolean;
+  /** Whether to propagate updated entries to the cache with this index. Defaults to true. */
+  updated?: boolean;
+  /** Whether to propagate deleted entries to the cache with this index. Defaults to true. */
+  deleted?: boolean;
+  /** Whether to propagate accessed entries to the cache with this index. Defaults to true. */
+  accessed?: boolean;
+}>;
+
+/** Options for each {@linkcode TieredCache} tier. */
 export type TieredCacheTierOptions<TData extends object> = Prettify<{
-  /** Options for the DataStore instance used for persisting this tier's data. If none is specified, data is only kept in volatile memory. */
-  storeOptions?: Omit<DataStoreOptions<TData>, "id">;
-  /** Whether to cache the data in memory. Defaults to false. */
-  memCache?: boolean;
+  /**
+   * Engine used for persistent storage. Can be a function that returns a DataStoreEngine or a DataStoreEngine instance.  
+   * If this property is not set, this tier will not persist data and only keeps it in memory.  
+   * ⚠️ **Don't reuse instances in multiple tiers and make sure the ID is always unique!**
+   */
+  engine?: (() => DataStoreEngine<TData>) | DataStoreEngine<TData>;
   /** Which compression format to use for this tier's persistent storage. Defaults to `deflate-raw` - set to `null` to disable compression. */
   compressionFormat?: CompressionFormat | null;
   /** Options for when an entry goes stale, making it move to a lower tier or get fully deleted. */
-  staleOptions?: {
-    /** The method to use for determining which entries are stale. Defaults to `hybrid`. lru = least recently used, lfu = least frequently used, hybrid = combination of both. */
-    method?: "hybrid" | "lru" | "lfu";
-    /** Maximum time to live for the data in this tier in seconds. */
-    ttl?: number;
-    /** Maximum amount of entries to keep in this tier. */
-    amount?: number;
-    /** The index of the cache tier to send the entry to when it goes stale. Defaults to the next available tier, or entry deletion. */
-    sendToTier?: number;
-  };
+  staleOptions?: TieredCacheStaleOptions;
   /** To which tiers to propagate created and updated entries. Defaults to the next tier and all properties set to their default. */
-  propagateTiers?: Array<{
-    /** The index of the cache tier to propagate the entry to. Use negative numbers for accessing from the end, just like `Array.prototype.at()`. Use `1` for the second tier, use `-1` for the last. */
-    index: number;
-    /** Whether to propagate created entries to the cache with this index. Defaults to true. */
-    created?: boolean;
-    /** Whether to propagate updated entries to the cache with this index. Defaults to true. */
-    updated?: boolean;
-    /** Whether to propagate deleted entries to the cache with this index. Defaults to true. */
-    deleted?: boolean;
-    /** Whether to propagate accessed entries to the cache with this index. Defaults to true. */
-    accessed?: boolean;
-  }>;
+  propagateTiers?: TieredCachePropagateTierOptions[];
 }>;
+
+/** Events that can be emitted by the {@linkcode TieredCache} class. */
+export type TieredCacheEventMap = {};
 
 //#region class TieredCache
 
@@ -64,7 +81,7 @@ export type TieredCacheTierOptions<TData extends object> = Prettify<{
  * Persists data using DataStore and DataStoreEngines.  
  * The zeroth tier contains the most accessed data, and the last tier contains the least accessed data, so it is recommended to use slower storage engines for the last tier(s).
  */
-export class TieredCache<TData extends object> {
+export class TieredCache<TData extends object> extends NanoEmitter<TieredCacheEventMap> {
   protected options: TieredCacheOptions<TData>;
   protected stores = new Map<number, DataStore<TData>>();
 
@@ -72,25 +89,75 @@ export class TieredCache<TData extends object> {
    * Creates a new TieredCache instance.  
    * It is a cache that can have multiple tiers with different max TTLs, with data being moved between tiers based on what is fetched the most.  
    * It persists data using DataStore and DataStoreEngines.  
-   * The zeroth tier contains the most accessed data, and the last tier contains the least accessed data, so it is recommended to use slower storage engines for the last tier(s).
+   * The zeroth tier contains the most accessed data, and the last tier contains the least accessed data, so it is recommended to use slower storage engines for the last tier(s).  
+   * If the given {@linkcode options} are invalid, a {@linkcode ValidationError} is thrown.
    */
   constructor(options: TieredCacheOptions<TData>) {
+    super(options.nanoEmitterOptions);
+
+    this.validateOptions(options);
     this.options = options;
 
     // initialize stores:
     for(let i = 0; i < this.options.tiers.length; i++) {
-      const tierOpts = this.getTierOpts(i);
+      const tierOpts = this.resolveTierOpts(i);
       if(!tierOpts)
         continue;
       const store = new DataStore<TData>({
-        ...tierOpts.storeOptions,
-        id: `_tc_${this.options.id}-${i}`,
+        id: `__tc-${this.options.id}-${i}`,
+        // TODO:
+        formatVersion: 1,
+        defaultData: {},
+        engine: typeof tierOpts.engine === "function" ? tierOpts.engine() : tierOpts.engine,
         ...(typeof tierOpts.compressionFormat === "string" ? {
           encodeData: (data: string) => compress(data, tierOpts.compressionFormat!, "string"),
           decodeData: (data: string) => decompress(data, tierOpts.compressionFormat!, "string"),
         } : {}),
       } as DataStoreOptions<TData>);
       this.stores.set(i, store);
+    }
+  }
+
+  //#region validation
+
+  /** Validates the options for this cache and throws an Error containing all problems if they're invalid. Should be called once in the constructor. */
+  protected validateOptions(opts: TieredCacheOptions<TData>): void {
+    const errors: string[] = [];
+
+    if(!opts.id || typeof opts.id !== "string")
+      errors.push("'id' must be a non-empty string");
+    if(!opts.tiers || !Array.isArray(opts.tiers) || opts.tiers.length === 0 || opts.tiers.some(tier => !tier || typeof tier !== "object"))
+      errors.push("'tiers' must be a non-empty array of objects");
+    else {
+      for(let i = 0; i < opts.tiers.length; i++) {
+        const tierOpts = opts.tiers[i];
+        if(!tierOpts)
+          continue;
+
+        if("staleOptions" in tierOpts) {
+          const staleOpts = tierOpts.staleOptions!;
+
+          if("sendToTier" in staleOpts && staleOpts.sendToTier !== undefined) {
+            if(!Number.isInteger(staleOpts.sendToTier) || typeof staleOpts.sendToTier !== "number" || staleOpts.sendToTier < 0 || staleOpts.sendToTier >= opts.tiers.length)
+              errors.push(`'tier[${i}].staleOptions.sendToTier' must be an integer index between 0 and ${opts.tiers.length - 1}`);
+          }
+        }
+
+        if("propagateTiers" in tierOpts && Array.isArray(tierOpts.propagateTiers)) {
+          for(let j = 0; j < tierOpts.propagateTiers.length; j++) {
+            const propagateTier = tierOpts.propagateTiers[j];
+            if(!propagateTier || typeof propagateTier.index !== "number" || !Number.isInteger(propagateTier.index) || propagateTier.index < 0 || propagateTier.index >= opts.tiers.length)
+              errors.push(`'tier[${i}].propagateTiers[${j}].index' must be an integer index between 0 and ${opts.tiers.length - 1}`);
+          }
+        }
+      }
+    }
+
+    if(errors.length > 0) {
+      const errStr = errors.length > 1
+        ? errors.reduce((a, c, i) => `${a}${i > 0 ? "\n" : ""}- ${c}`, "")
+        : errors[0];
+      throw new ValidationError(`TieredCache options validation ${autoPlural("error", errors)}:\n${errStr}`);
     }
   }
 
@@ -115,7 +182,7 @@ export class TieredCache<TData extends object> {
   public async loadData(): Promise<PromiseSettledResult<TData>[]> {
     const loadPromises: Promise<TData>[] = [];
     for(let i = 0; i < this.options.tiers.length; i++) {
-      const tierOpts = this.getTierOpts(i);
+      const tierOpts = this.resolveTierOpts(i);
       const store = this.stores.get(i);
       if(!tierOpts || !store)
         continue;
@@ -128,7 +195,7 @@ export class TieredCache<TData extends object> {
   //#region protected
 
   /** Returns the options for the specified tier, after filling in all defaults. */
-  protected getTierOpts(index: number): Prettify<TieredCacheResolvedTierOpts<TData>> | undefined {
+  protected resolveTierOpts(index: number): Prettify<TieredCacheResolvedTierOpts<TData>> | undefined {
     if(index < 0 || index >= this.options.tiers.length)
       return undefined;
 
@@ -137,10 +204,9 @@ export class TieredCache<TData extends object> {
       return undefined;
 
     return {
-      memCache: false,
       compressionFormat: "deflate-raw",
       ...tierOpts,
-    } satisfies ReturnType<typeof this.getTierOpts>;
+    } satisfies ReturnType<typeof this.resolveTierOpts>;
   }
 }
 
@@ -155,7 +221,7 @@ const lyricsUrlCache = new TieredCache({
     // persisted to memory and localStorage on each cache update
     {
       persistStore: {
-        // (id: "_tc_lyricsUrl-0")
+        // (id: "__tc-lyricsUrl-0")
         formatVersion: 1,
         migrations: {},
         engine: new BrowserStorageEngine({
@@ -177,9 +243,9 @@ const lyricsUrlCache = new TieredCache({
     // loaded from JSON file via Node/Deno on each cache request
     // persisted to JSON file via Node/Deno on each cache update
     {
-      // (id = "_tc_lyricsUrl-1")
+      // (id = "__tc-lyricsUrl-1")
       memCache: false,
-      engine: () => new JSONFileStorageEngine({
+      engine: () => new FileStorageEngine({
         filePath: (id) => `./.cache/tc-${id}.json`,
       }),
       staleOptions: {
@@ -231,7 +297,7 @@ async function fetchLyricsUrl(artists: string, title: string) {
 // example TieredCache data storage overview:
 /*
 
-_tc_lyricsUrl: {
+__tc-lyricsUrl: {
   items: [
     {
       k: "artist1-title1",                    // key / compound key
