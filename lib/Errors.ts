@@ -27,3 +27,11 @@ export class MigrationError extends DatedError {
     this.name = "MigrationError";
   }
 }
+
+/** Error while validating data */
+export class ValidationError extends DatedError {
+  constructor(message: string, options?: ErrorOptions) {
+    super(message, options);
+    this.name = "ValidationError";
+  }
+}
