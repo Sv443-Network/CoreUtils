@@ -1,6 +1,6 @@
 /**
  * @module DataStoreEngine
- * This module contains the `DataStoreEngine` class and some of its subclasses like `JSONFileStorageEngine` and `BrowserStorageEngine`.  
+ * This module contains the `DataStoreEngine` class and some of its subclasses like `FileStorageEngine` and `BrowserStorageEngine`.  
  * [See the documentation for more info.](https://github.com/Sv443-Network/CoreUtils/blob/main/docs.md#class-datastoreengine)
  */
 
@@ -38,7 +38,7 @@ export abstract class DataStoreEngine<TData extends object = object> {
     if(!useEncoding || !this.dataStoreOptions?.encodeData || !this.dataStoreOptions?.decodeData)
       return stringData;
 
-    const encRes = this.dataStoreOptions?.encodeData?.(stringData);
+    const encRes = this.dataStoreOptions?.encodeData?.[1]?.(stringData);
     if(encRes instanceof Promise)
       return await encRes;
     return encRes;
@@ -46,7 +46,7 @@ export abstract class DataStoreEngine<TData extends object = object> {
 
   /** Deserializes the given string to a JSON object, optionally decoded with `options.decodeData` if {@linkcode useEncoding} is set to true */
   public async deserializeData(data: string, useEncoding?: boolean): Promise<TData> {
-    let decRes = this.dataStoreOptions?.decodeData && useEncoding ? this.dataStoreOptions.decodeData(data) : undefined;
+    let decRes = this.dataStoreOptions?.decodeData && useEncoding ? this.dataStoreOptions.decodeData?.[1]?.(data) : undefined;
     if(decRes instanceof Promise)
       decRes = await decRes;
 
@@ -94,7 +94,7 @@ export class BrowserStorageEngine<TData extends object = object> extends DataSto
    * ⚠️ Requires a DOM environment  
    * ⚠️ Don't reuse this engine across multiple {@linkcode DataStore} instances
    */
-  constructor(options: BrowserStorageEngineOptions) {
+  constructor(options?: BrowserStorageEngineOptions) {
     super();
     this.options = {
       type: "localStorage",
@@ -132,13 +132,13 @@ export class BrowserStorageEngine<TData extends object = object> extends DataSto
 
 
 
-//#region >> JSONFileStorageEngine
+//#region >> FileStorageEngine
 
 /** `node:fs/promises` import */
 let fs: typeof import("node:fs/promises") | undefined;
 
-/** Options for the {@linkcode JSONFileStorageEngine} class */
-export type JSONFileStorageEngineOptions = {
+/** Options for the {@linkcode FileStorageEngine} class */
+export type FileStorageEngineOptions = {
   /** Function that returns a string or a plain string that is the data file path, including name and extension. Defaults to `.ds-${dataStoreID}` */
   filePath?: ((dataStoreID: string) => string) | string;
 };
@@ -149,16 +149,16 @@ export type JSONFileStorageEngineOptions = {
  * ⚠️ Requires Node.js or Deno with Node compatibility  
  * ⚠️ Don't reuse this engine across multiple {@linkcode DataStore} instances
  */
-export class JSONFileStorageEngine<TData extends object = object> extends DataStoreEngine<TData> {
-  protected options: Required<JSONFileStorageEngineOptions>;
+export class FileStorageEngine<TData extends object = object> extends DataStoreEngine<TData> {
+  protected options: Required<FileStorageEngineOptions>;
 
   /**
-   * Creates an instance of `JSONFileStorageEngine`.  
+   * Creates an instance of `FileStorageEngine`.  
    *   
    * ⚠️ Requires Node.js or Deno with Node compatibility  
    * ⚠️ Don't reuse this engine across multiple {@linkcode DataStore} instances
    */
-  constructor(options: JSONFileStorageEngineOptions) {
+  constructor(options?: FileStorageEngineOptions) {
     super();
     this.options = {
       filePath: (id) => `.ds-${id}`,
@@ -180,7 +180,7 @@ export class JSONFileStorageEngine<TData extends object = object> extends DataSt
       const data = await fs.readFile(path, "utf-8");
       if(!data)
         return undefined;
-      return JSON.parse(await this.dataStoreOptions?.decodeData?.(data) ?? data) as TData;
+      return JSON.parse(await this.dataStoreOptions?.decodeData?.[1]?.(data) ?? data) as TData;
     }
     catch {
       return undefined;
@@ -197,7 +197,7 @@ export class JSONFileStorageEngine<TData extends object = object> extends DataSt
         ? this.options.filePath
         : this.options.filePath(this.dataStoreOptions.id);
       await fs.mkdir(path.slice(0, path.lastIndexOf("/")), { recursive: true });
-      await fs.writeFile(path, await this.dataStoreOptions?.encodeData?.(JSON.stringify(data)) ?? JSON.stringify(data, undefined, 2), "utf-8");
+      await fs.writeFile(path, await this.dataStoreOptions?.encodeData?.[1]?.(JSON.stringify(data)) ?? JSON.stringify(data, undefined, 2), "utf-8");
     }
     catch(err) {
       console.error("Error writing file:", err);

@@ -5,7 +5,8 @@
 
 import { MigrationError } from "./Errors.js";
 import type { DataStoreEngine } from "./DataStoreEngine.js";
-import type { Prettify, SerializableVal } from "./types.js";
+import type { LooseUnion, Prettify, SerializableVal } from "./types.js";
+import { compress } from "./crypto.js";
 
 //#region types
 
@@ -39,6 +40,13 @@ export type DataStoreOptions<TData extends object> = Prettify<
      */
     formatVersion: number;
     /**
+     * The engine middleware to use for persistent storage.  
+     * Create an instance of {@linkcode FileStorageEngine} (Node.js), {@linkcode BrowserStorageEngine} (DOM) or your own engine class that extends {@linkcode DataStoreEngine} and pass it here.  
+     *   
+     * ⚠️ Don't reuse the same engine instance for multiple DataStores, unless it explicitly supports it!
+     */
+    engine: (() => DataStoreEngine<TData>) | DataStoreEngine<TData>;
+    /**
      * A dictionary of functions that can be used to migrate data from older versions to newer ones.  
      * The keys of the dictionary should be the format version that the functions can migrate to, from the previous whole integer value.  
      * The values should be functions that take the data in the old format and return the data in the new format.  
@@ -53,37 +61,36 @@ export type DataStoreOptions<TData extends object> = Prettify<
      * To migrate IDs manually, use the method {@linkcode DataStore.migrateId()} instead.
      */
     migrateIds?: string | string[];
-    /**
-     * The engine middleware to use for persistent storage.  
-     * Create an instance of {@linkcode JSONFileStorageEngine} (Node.js), {@linkcode BrowserStorageEngine} (DOM) or your own engine class that extends {@linkcode DataStoreEngine} and pass it here.  
-     *   
-     * ⚠️ Don't reuse the same engine instance for multiple DataStores, unless it explicitly supports it!
-     */
-    storageEngine: (() => DataStoreEngine<TData>) | DataStoreEngine<TData>;
   }
   & (
     // make sure that encodeData and decodeData are *both* either defined or undefined
     | {
+      encodeData?: never;
+      decodeData?: never;
       /**
-       * Function to use to encode the data prior to saving it in persistent storage.  
-       * If this is specified, make sure to declare {@linkcode decodeData()} as well.  
-       *   
-       * You can make use of [`compress()` function](https://github.com/Sv443-Network/CoreUtils/blob/main/docs.md#function-compress) here to make the data use up less space at the cost of a little bit of performance.
-       * @param data The input data as a serialized object (JSON string)
+       * The format to use for compressing the data. Defaults to `deflate-raw`. Explicitly set to `null` to store data uncompressed.  
+       * ⚠️ Use either this, or `encodeData` and `decodeData`, but not all three at a time!
        */
-      encodeData: (data: string) => string | Promise<string>,
-      /**
-       * Function to use to decode the data after reading it from persistent storage.  
-       * If this is specified, make sure to declare {@linkcode encodeData()} as well.  
-       *   
-       * You can make use of [`decompress()` function](https://github.com/Sv443-Network/CoreUtils/blob/main/docs.md#function-decompress) here to make the data use up less space at the cost of a little bit of performance.
-       * @returns The resulting data as a valid serialized object (JSON string)
-       */
-      decodeData: (data: string) => string | Promise<string>,
+      compressionFormat?: CompressionFormat | null;
     }
     | {
-      encodeData?: never,
-      decodeData?: never,
+      /**
+       * Tuple of a compression format identifier and a function to use to encode the data prior to saving it in persistent storage.  
+       * If this is specified, `compressionFormat` can't be used. Also make sure to declare {@linkcode decodeData()} as well.  
+       *   
+       * You can make use of the [`compress()` function](https://github.com/Sv443-Network/CoreUtils/blob/main/docs.md#function-compress) here to make the data use up less space at the cost of a little bit of performance.
+       * @param data The input data as a serialized object (JSON string)
+       */
+      encodeData: [format: LooseUnion<CompressionFormat>, encode: (data: string) => string | Promise<string>];
+      /**
+       * Tuple of a compression format identifier and a function to use to decode the data after reading it from persistent storage.  
+       * If this is specified, `compressionFormat` can't be used. Also make sure to declare {@linkcode encodeData()} as well.  
+       *   
+       * You can make use of the [`decompress()` function](https://github.com/Sv443-Network/CoreUtils/blob/main/docs.md#function-decompress) here to make the data use up less space at the cost of a little bit of performance.
+       * @returns The resulting data as a valid serialized object (JSON string)
+       */
+      decodeData: [format: LooseUnion<CompressionFormat>, decode: (data: string) => string | Promise<string>];
+      compressionFormat?: never;
     }
   )
 >;
@@ -115,6 +122,7 @@ export class DataStore<TData extends object = object> {
   public readonly defaultData: TData;
   public readonly encodeData: DataStoreOptions<TData>["encodeData"];
   public readonly decodeData: DataStoreOptions<TData>["decodeData"];
+  public readonly compressionFormat = "deflate-raw";
   public readonly engine;
   private cachedData: TData;
   private migrations?: DataMigrationsDict;
@@ -140,7 +148,26 @@ export class DataStore<TData extends object = object> {
       this.migrateIds = Array.isArray(opts.migrateIds) ? opts.migrateIds : [opts.migrateIds];
     this.encodeData = opts.encodeData;
     this.decodeData = opts.decodeData;
-    this.engine = typeof opts.storageEngine === "function" ? opts.storageEngine() : opts.storageEngine;
+    this.engine = typeof opts.engine === "function" ? opts.engine() : opts.engine;
+
+    if(typeof opts.compressionFormat === "undefined")
+      opts.compressionFormat = "deflate-raw";
+
+    if(typeof opts.compressionFormat === "string") {
+      this.encodeData = [opts.compressionFormat, async (data: string) => await compress(data, opts.compressionFormat!, "string")];
+      this.decodeData = [opts.compressionFormat, async (data: string) => await compress(data, opts.compressionFormat!, "string")];
+    }
+    else if("encodeData" in opts && "decodeData" in opts && Array.isArray(opts.encodeData) && Array.isArray(opts.decodeData)) {
+      this.encodeData = [opts.encodeData![0], opts.encodeData![1]];
+      this.decodeData = [opts.decodeData![0], opts.decodeData![1]];
+    }
+    else if(opts.compressionFormat === null) {
+      this.encodeData = undefined;
+      this.decodeData = undefined;
+    }
+    else
+      throw new TypeError("Either `compressionFormat` or `encodeData` and `decodeData` have to be set and valid, but not all three at a time. Please refer to the documentation for more info.");
+
     this.engine.setDataStoreOptions(opts);
   }
 
@@ -171,12 +198,12 @@ export class DataStore<TData extends object = object> {
               promises.push(this.engine.deleteValue(oldKey));
             };
 
-            oldData &&
-              migrateFmt(`_uucfg-${this.id}`, `_ds_dat-${this.id}`, oldData);
-            !isNaN(oldVer) &&
-              migrateFmt(`_uucfgver-${this.id}`, `_ds_ver-${this.id}`, oldVer);
-            typeof oldEnc === "boolean" &&
-              migrateFmt(`_uucfgenc-${this.id}`, `_ds_enc-${this.id}`, oldEnc);
+            oldData
+              && migrateFmt(`_uucfg-${this.id}`, `__ds-${this.id}-dat`, oldData);
+            !isNaN(oldVer)
+              && migrateFmt(`_uucfgver-${this.id}`, `__ds-${this.id}-ver`, oldVer);
+            typeof oldEnc === "boolean"
+              && migrateFmt(`_uucfgenc-${this.id}`, `__ds-${this.id}-enc`, oldEnc === true ? this.compressionFormat : null);
 
             await Promise.allSettled(promises);
           }
@@ -194,8 +221,8 @@ export class DataStore<TData extends object = object> {
       }
 
       // load data
-      const gmData = await this.engine.getValue(`_ds_dat-${this.id}`, JSON.stringify(this.defaultData));
-      let gmFmtVer = Number(await this.engine.getValue(`_ds_ver-${this.id}`, NaN));
+      const gmData = await this.engine.getValue(`__ds-${this.id}-dat`, JSON.stringify(this.defaultData));
+      let gmFmtVer = Number(await this.engine.getValue(`__ds-${this.id}-ver`, NaN));
 
       // save default if no data is found
       if(typeof gmData !== "string") {
@@ -204,12 +231,12 @@ export class DataStore<TData extends object = object> {
       }
 
       // check if the data is encoded
-      const isEncoded = Boolean(await this.engine.getValue(`_ds_enc-${this.id}`, false));
+      const isEncoded = Boolean(await this.engine.getValue(`__ds-${this.id}-enc`, false));
 
       // if no format version is found, save the current one
       let saveData = false;
       if(isNaN(gmFmtVer)) {
-        await this.engine.setValue(`_ds_ver-${this.id}`, gmFmtVer = this.formatVersion);
+        await this.engine.setValue(`__ds-${this.id}-ver`, gmFmtVer = this.formatVersion);
         saveData = true;
       }
 
@@ -248,9 +275,9 @@ export class DataStore<TData extends object = object> {
     const useEncoding = this.encodingEnabled();
     return new Promise<void>(async (resolve) => {
       await Promise.allSettled([
-        this.engine.setValue(`_ds_dat-${this.id}`, await this.engine.serializeData(data, useEncoding)),
-        this.engine.setValue(`_ds_ver-${this.id}`, this.formatVersion),
-        this.engine.setValue(`_ds_enc-${this.id}`, useEncoding),
+        this.engine.setValue(`__ds-${this.id}-dat`, await this.engine.serializeData(data, useEncoding)),
+        this.engine.setValue(`__ds-${this.id}-ver`, this.formatVersion),
+        this.engine.setValue(`__ds-${this.id}-enc`, useEncoding),
       ]);
       resolve();
     });
@@ -261,9 +288,9 @@ export class DataStore<TData extends object = object> {
     this.cachedData = this.defaultData;
     const useEncoding = this.encodingEnabled();
     await Promise.allSettled([
-      this.engine.setValue(`_ds_dat-${this.id}`, await this.engine.serializeData(this.defaultData, useEncoding)),
-      this.engine.setValue(`_ds_ver-${this.id}`, this.formatVersion),
-      this.engine.setValue(`_ds_enc-${this.id}`, useEncoding),
+      this.engine.setValue(`__ds-${this.id}-dat`, await this.engine.serializeData(this.defaultData, useEncoding)),
+      this.engine.setValue(`__ds-${this.id}-ver`, this.formatVersion),
+      this.engine.setValue(`__ds-${this.id}-enc`, useEncoding),
     ]);
   }
 
@@ -276,9 +303,9 @@ export class DataStore<TData extends object = object> {
    */
   public async deleteData(): Promise<void> {
     await Promise.allSettled([
-      this.engine.deleteValue(`_ds_dat-${this.id}`),
-      this.engine.deleteValue(`_ds_ver-${this.id}`),
-      this.engine.deleteValue(`_ds_enc-${this.id}`),
+      this.engine.deleteValue(`__ds-${this.id}-dat`),
+      this.engine.deleteValue(`__ds-${this.id}-ver`),
+      this.engine.deleteValue(`__ds-${this.id}-enc`),
     ]);
   }
 
@@ -325,9 +352,9 @@ export class DataStore<TData extends object = object> {
     }
 
     await Promise.allSettled([
-      this.engine.setValue(`_ds_dat-${this.id}`, await this.engine.serializeData(newData as TData)),
-      this.engine.setValue(`_ds_ver-${this.id}`, lastFmtVer),
-      this.engine.setValue(`_ds_enc-${this.id}`, this.encodingEnabled()),
+      this.engine.setValue(`__ds-${this.id}-dat`, await this.engine.serializeData(newData as TData)),
+      this.engine.setValue(`__ds-${this.id}-ver`, lastFmtVer),
+      this.engine.setValue(`__ds-${this.id}-enc`, this.encodingEnabled()),
     ]);
 
     return this.cachedData = { ...newData as TData };
@@ -340,21 +367,21 @@ export class DataStore<TData extends object = object> {
   public async migrateId(oldIds: string | string[]): Promise<void> {
     const ids = Array.isArray(oldIds) ? oldIds : [oldIds];
     await Promise.all(ids.map(async id => {
-      const data = await this.engine.getValue(`_ds_dat-${id}`, JSON.stringify(this.defaultData));
-      const fmtVer = Number(await this.engine.getValue(`_ds_ver-${id}`, NaN));
-      const isEncoded = Boolean(await this.engine.getValue(`_ds_enc-${id}`, false));
+      const data = await this.engine.getValue(`__ds-${id}-dat`, JSON.stringify(this.defaultData));
+      const fmtVer = Number(await this.engine.getValue(`__ds-${id}-ver`, NaN));
+      const isEncoded = Boolean(await this.engine.getValue(`__ds-${id}-enc`, false));
 
       if(data === undefined || isNaN(fmtVer))
         return;
 
       const parsed = await this.engine.deserializeData(data, isEncoded);
       await Promise.allSettled([
-        this.engine.setValue(`_ds_dat-${this.id}`, await this.engine.serializeData(parsed)),
-        this.engine.setValue(`_ds_ver-${this.id}`, fmtVer),
-        this.engine.setValue(`_ds_enc-${this.id}`, isEncoded),
-        this.engine.deleteValue(`_ds_dat-${id}`),
-        this.engine.deleteValue(`_ds_ver-${id}`),
-        this.engine.deleteValue(`_ds_enc-${id}`),
+        this.engine.setValue(`__ds-${this.id}-dat`, await this.engine.serializeData(parsed)),
+        this.engine.setValue(`__ds-${this.id}-ver`, fmtVer),
+        this.engine.setValue(`__ds-${this.id}-enc`, isEncoded),
+        this.engine.deleteValue(`__ds-${id}-dat`),
+        this.engine.deleteValue(`__ds-${id}-ver`),
+        this.engine.deleteValue(`__ds-${id}-enc`),
       ]);
     }));
   }

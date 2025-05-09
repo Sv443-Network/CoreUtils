@@ -4,7 +4,7 @@
 - BREAKING CHANGES:
   - Reworked DataStore
     - Added `DataStoreEngine` base class to create a persistent storage engine
-    - Added `JSONFileStorageEngine` for JSON file storage and `BrowserStorageEngine` for browser storage
+    - Added `FileStorageEngine` for file-based storage in the backend and `BrowserStorageEngine` for browser API based storage
     - The global key `__ds_fmt_ver` will now contain a global version number for DataStore-internal format integrity
   - crypto:
     - renamed `ab2str()` to `abtoa()` and `str2ab()` to `atoab()` to match `btoa()` and `atob()`

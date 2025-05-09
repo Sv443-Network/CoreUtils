@@ -1,14 +1,15 @@
 import { describe, expect, it } from "vitest";
 import { DataStore } from "./DataStore.js";
-import { compress, decompress } from "./crypto.js";
+import { BrowserStorageEngine } from "./DataStoreEngine.js";
+import type { SerializableVal } from "./types.js";
 
 class TestDataStore<TData extends object = object> extends DataStore<TData> {
-  public async test_getValue<TValue extends GM.Value = string>(name: string, defaultValue: TValue): Promise<string | TValue> {
-    return await this.getValue(name, defaultValue);
+  public async test_getValue<TValue extends SerializableVal = string>(name: string, defaultValue: TValue): Promise<string | TValue> {
+    return await this.engine.getValue(name, defaultValue);
   }
 
-  public async test_setValue(name: string, value: GM.Value): Promise<void> {
-    return await this.setValue(name, value);
+  public async test_setValue(name: string, value: SerializableVal): Promise<void> {
+    return await this.engine.setValue(name, value);
   }
 }
 
@@ -19,9 +20,9 @@ describe("DataStore", () => {
       id: "test-1",
       defaultData: { a: 1, b: 2 },
       formatVersion: 1,
-      storageMethod: "localStorage",
-      encodeData: (d) => d,
-      decodeData: (d) => d,
+      engine: new BrowserStorageEngine({ type: "localStorage" }),
+      encodeData: ["identity", (d) => d],
+      decodeData: ["identity", (d) => d],
     });
 
     // should equal defaultData:
@@ -59,9 +60,8 @@ describe("DataStore", () => {
       id: "test-2",
       defaultData: { a: 1, b: 2 },
       formatVersion: 1,
-      storageMethod: "sessionStorage",
-      encodeData: async (data) => await compress(data, "deflate-raw", "string"),
-      decodeData: async (data) => await decompress(data, "deflate-raw", "string"),
+      engine: new BrowserStorageEngine(),
+      compressionFormat: "deflate-raw",
     });
 
     await store.loadData();
@@ -84,7 +84,7 @@ describe("DataStore", () => {
       id: "test-3",
       defaultData: { a: 1, b: 2 },
       formatVersion: 1,
-      storageMethod: "sessionStorage",
+      engine: new BrowserStorageEngine({ type: "sessionStorage" }),
     });
 
     await firstStore.loadData();
@@ -97,7 +97,7 @@ describe("DataStore", () => {
       migrateIds: [firstStore.id],
       defaultData: { a: -1337, b: -1337, c: 69 },
       formatVersion: 2,
-      storageMethod: "sessionStorage",
+      engine: new BrowserStorageEngine({ type: "sessionStorage" }),
       migrations: {
         2: (oldData: Record<string, unknown>) => ({ ...oldData, c: 1 }),
       },
@@ -121,7 +121,7 @@ describe("DataStore", () => {
       id: "test-5",
       defaultData: secondStore.defaultData,
       formatVersion: 3,
-      storageMethod: "sessionStorage",
+      engine: new BrowserStorageEngine({ type: "sessionStorage" }),
     });
 
     await thirdStore.migrateId(secondStore.id);
@@ -150,7 +150,7 @@ describe("DataStore", () => {
       id: "test-migration-error",
       defaultData: { a: 1, b: 2 },
       formatVersion: 1,
-      storageMethod: "localStorage",
+      engine: new BrowserStorageEngine({ type: "localStorage" }),
     });
 
     await store1.loadData();
@@ -159,7 +159,7 @@ describe("DataStore", () => {
       id: "test-migration-error",
       defaultData: { a: 5, b: 5, c: 5 },
       formatVersion: 2,
-      storageMethod: "localStorage",
+      engine: new BrowserStorageEngine({ type: "localStorage" }),
       migrations: {
         2: (_oldData: typeof store1["defaultData"]) => {
           throw new Error("Some error in the migration function");
@@ -181,7 +181,7 @@ describe("DataStore", () => {
       id: "test-6",
       defaultData: { a: 1, b: 2 },
       formatVersion: 1,
-      storageMethod: "sessionStorage",
+      engine: new BrowserStorageEngine({ type: "sessionStorage" }),
     });
 
     await store1.loadData();
@@ -205,7 +205,7 @@ describe("DataStore", () => {
       id: "test-7",
       defaultData: { a: 1, b: 2 },
       formatVersion: 1,
-      storageMethod: "GM",
+      engine: new BrowserStorageEngine({ type: "localStorage" }),
     });
 
     await store1.setData({ ...store1.getData(), a: 2 });
