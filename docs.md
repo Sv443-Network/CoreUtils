@@ -51,6 +51,7 @@ For submitting bug reports or feature requests, please use the [GitHub issue tra
   - [**DataStore:**](#datastore) - Cross-platform, general-purpose, sync/async hybrid, JSON-serializable database infrastructure:
     - 🟧 [`class DataStore`](#class-datastore) - The main class for the data store
       - 🔷 [`type DataStoreOptions`](#type-datastoreoptions) - Options for the data store
+      - 🔷 [`type DataMigrationsDict`](#type-datamigrationsdict) - Dictionary of data migration functions
     - 🟧 [`class DataStoreSerializer`](#class-datastoreserializer) - Serializes and deserializes data for multiple DataStore instances
       - 🔷 [`type DataStoreSerializerOptions`](#type-datastoreserializeroptions) - Options for the DataStoreSerializer
       - 🔷 [`type LoadStoresDataResult`](#type-loadstoresdataresult) - Result of calling [`loadStoresData()`](#datastoreserializer-loadstoresdata)
@@ -60,18 +61,19 @@ For submitting bug reports or feature requests, please use the [GitHub issue tra
     - [Storage Engines:](#storage-engines)
       - 🟧 [`class BrowserStorageEngine`](#class-browserstorageengine) - Storage engine for browser environments (localStorage, sessionStorage)
         - 🔷 [`type BrowserStorageEngineOptions`](#browserstorageengineoptions) - Options for the browser storage engine
-      - 🟧 [`class JSONFileStorageEngine`](#class-JSONFileStorageEngine) - Storage engine for Node.js and Deno (JSON file)
-        - 🔷 [`type JSONFileStorageEngineOptions`](#JSONFileStorageEngineoptions) - Options for the JSON file engine
+      - 🟧 [`class FileStorageEngine`](#class-FileStorageEngine) - File-based storage engine for Node.js and Deno
+        - 🔷 [`type FileStorageEngineOptions`](#FileStorageEngineoptions) - Options for the file storage engine
   - [**Debouncer:**](#debouncer)
     - 🟣 [`function debounce()`](#function-debounce) - Function wrapper for the [`Debouncer` class](#class-debouncer)
     - 🟧 [`class Debouncer`](#class-debouncer) - Class that manages listeners whose calls are rate-limited
-    - 🔷 [`type DebouncerType`](#type-debouncertype) - The triggering type for the debouncer
-    - 🔷 [`type DebouncedFunction`](#type-debouncedfunction) - Function type that is returned by the [`debounce()` function](#function-debounce)
-    - 🔷 [`type DebouncerEventMap`](#type-debouncereventmap) - Event map type for the [`Debouncer` class](#class-debouncer)
+      - 🔷 [`type DebouncerType`](#type-debouncertype) - The triggering type for the debouncer
+      - 🔷 [`type DebouncedFunction`](#type-debouncedfunction) - Function type that is returned by the [`debounce()` function](#function-debounce)
+      - 🔷 [`type DebouncerEventMap`](#type-debouncereventmap) - Event map type for the [`Debouncer` class](#class-debouncer)
   - [**Errors:**](#errors)
     - 🟧 [`class DatedError`](#class-datederror) - Base error class with a `date` property
-    - 🟧 [`class ChecksumMismatchError`](#class-checksummismatcherror) - Error thrown when two checksums don't match
-    - 🟧 [`class MigrationError`](#class-migrationerror) - Error thrown in a failed data migration
+      - 🟧 [`class ChecksumMismatchError`](#class-checksummismatcherror) - Error thrown when two checksums don't match
+      - 🟧 [`class MigrationError`](#class-migrationerror) - Error thrown in a failed data migration
+      - 🟧 [`class ValidationError`](#class-validationerror) - Error while validating data
   - [**Math:**](#math)
     - 🟣 [`function bitSetHas()`](#function-bitsethas) - Checks if a bit is set in a bitset
     - 🟣 [`function clamp()`](#function-clamp) - Clamps a number between a given range
@@ -93,8 +95,10 @@ For submitting bug reports or feature requests, please use the [GitHub issue tra
       - 🔷 [`type ListLike`](#type-listlike) - Any value with a quantifiable `length`, `count` or `size` property
     - 🟣 [`function pauseFor()`](#function-pausefor) - Pauses async execution for the given amount of time
     - 🟣 [`function pureObj()`](#function-pureobj) - Applies an object's props to a null object (object without prototype chain) or just returns a new null object
+    - 🟣 [`function setImmediateInterval()`](#function-setimmediateinterval) - Like `setInterval()`, but instantly calls the callback and supports passing an [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal)
+    - 🟣 [`function setImmediateTimeoutLoop()`](#function-setimmediatetimeoutloop) - Like a recursive `setTimeout()` loop, but instantly calls the callback and supports passing an [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal)
   - [**NanoEmitter:**](#nanoemitter)
-    - 🟧 [`class NanoEmitter`](#class-nanoemitter) - Simple, lightweight event emitter class that can be used in both FP and OOP, inspired by [`node:events`' `EventEmitter`](https://nodejs.org/api/events.html#class-eventemitter), based on [`nanoevents`](https://npmjs.com/package/nanoevents)
+    - 🟧 [`class NanoEmitter`](#class-nanoemitter) - Simple, lightweight event emitter class that can be used in both FP and OOP, inspired by [`EventEmitter` from `node:events`](https://nodejs.org/api/events.html#class-eventemitter), based on [`nanoevents`](https://npmjs.com/package/nanoevents)
       - 🔷 [`type NanoEmitterOptions`](#type-nanoemitteroptions) - Options for the [`NanoEmitter` class](#class-nanoemitter)
   - [**Text:**](#text)
     - 🟣 [`function autoPlural()`](#function-autoplural) - Turns the given term into its plural form, depending on the given number or list length
@@ -105,8 +109,12 @@ For submitting bug reports or feature requests, please use the [GitHub issue tra
     - 🟣 [`function joinArrayReadable()`](#function-joinarrayreadable) - Joins the given array into a string, using the given separators and last separator
     - 🟣 [`function secsToTimeStr()`](#function-sectostimestr) - Turns the given number of seconds into a string in the format `(hh:)mm:ss` with intelligent zero-padding
     - 🟣 [`function truncStr()`](#function-truncstr) - Truncates the given string to the given length
-  <!-- - *[**TieredCache:**](#tieredcache)
-    - 🟧 *[`class TieredCache`](#class-tieredcache) - A multi-tier cache that uses multiple storage engines with different expiration times -->
+  - *[**TieredCache:**](#tieredcache)
+    - 🟧 *[`class TieredCache`](#class-tieredcache) - A multi-tier cache that uses multiple storage engines with different expiration times
+      - 🔷 *[`type TieredCacheOptions`](#type-tieredcacheoptions) - Options for the [`TieredCache` class](#class-tieredcache)
+      - 🔷 *[`type TieredCachePropagateTierOptions`](#type-tieredcachestaleoptions) - Entry propagation options for each tier
+      - 🔷 *[`type TieredCacheStaleOptions`](#type-tieredcachepropagatetieroptions) - Entry staleness options for each tier
+      - 🔷 *[`type TieredCacheTierOptions`](#type-tieredcachetieroptions) - Options for each tier of a [`TieredCache` instance](#class-tieredcache)
   <!-- - *[**Translate:**](#translate)
     - 🟧 *[`class Translate`](#class-translate) - JSON-based translation system supporting transformation hooks, value injection, nested objects, etc.
     - 🔷 *[`type TransformFn`](#type-transformfn) - The type of the transformation hook functions
@@ -658,9 +666,9 @@ export const manager = new DataStore({
   /**
    * The engine is responsible for the actual data storage.  
    * Certain environments require certain engines, for example BrowserStorageEngine should be used in a DOM environment.  
-   * JSONFileStorageEngine will require Node.js or a newer version of Deno with Node compatibility.
+   * FileStorageEngine will require Node.js or a newer version of Deno with Node compatibility.
    */
-  storageEngine: () => new JSONFileStorageEngine({
+  engine: () => new FileStorageEngine({
     // missing directories will be created automatically
     filePath: (id) => `./.data-stores/${id}.dat`,
   }),
@@ -677,10 +685,8 @@ export const manager = new DataStore({
   // Feel free to use your own functions here, as long as they take in the stringified JSON and return another string, either synchronously or asynchronously
   // Either both of these properties or none of them should be set
 
-  /** Compresses the data using the "deflate-raw" algorithm and digests it as a string */
-  encodeData: (data) => compress(data, "deflate-raw", "string"),
-  /** Decompresses the "deflate-raw" encoded data as a string */
-  decodeData: (data) => decompress(data, "deflate-raw", "string"),
+  /** Compresses the data using the "deflate-raw" algorithm before storing */
+  compressionFormat: "deflate-raw",
   // ensure the algorithm always stays the same!
 });
 
@@ -808,16 +814,28 @@ Uses TypeScript's type guard notation for easier use in conditional statements.
 ### `type DataStoreOptions`
 The options object for the [`DataStore` class.](#class-datastore)  
 It has the following properties:
-| Property | Description |
-| :-- | :-- |
-| `id` | A unique internal identification string for this instance. If two DataStores share the same ID, they will overwrite each other's data. |
-| `defaultData` | The default data to use if no data is saved in persistent storage yet. Until the data is loaded from persistent storage, this will be the data returned by `getData()`. For TypeScript, the type of the data passed here is what will be used for all other methods of the instance. |
-| `formatVersion` | An incremental version of the data format. If the format of the data is changed in any way, this number should be incremented, in which case all necessary functions of the migrations dictionary will be run consecutively. *Never decrement this number!* |
-| `storageEngine` | Either a storage engine instance or a function that creates and returns a new storage engine instance. The engine dictates where the data will be persisted. See the [Storage Engines section.](#storage-engines) |
-| `migrations?` | (Optional) A dictionary of functions that can be used to migrate data from older versions of the data to newer ones. The keys of the dictionary should be the format version number that the function migrates to, from the previous whole integer value. The values should be functions that take the data in the old format and return the data in the new format. The functions will be run in order from the oldest to the newest version. If the current format version is not in the dictionary, no migrations will be run. |
-| `migrateIds?` | (Optional) A string or array of strings that migrate from one or more old IDs to the ID set in the constructor. If no data exist for the old ID(s), nothing will be done, but some time may still pass trying to fetch the non-existent data. The ID migration will be done once per session in the call to [`loadData()`](#datastoreloaddata). |
-| `encodeData?` | (Optional, but required when `decodeData` is also set) Function that encodes the data before saving - you can use [compress()](#function-compress) here to save space at the cost of a little bit of performance |
-| `decodeData?` | (Optional, but required when `encodeData` is also set) Function that decodes the data when loading - you can use [decompress()](#function-decompress) here to decode the data that was previously compressed with [compress()](#function-compress) |
+| Property | Type | Description |
+| :-- | :-- | :-- |
+| `id` | `string` | A unique internal identification string for this instance. If two DataStores share the same ID, they will overwrite each other's data. |
+| `defaultData` | `TData` | The default data to use if no data is saved in persistent storage yet. Until the data is loaded from persistent storage, this will be the data returned by `getData()`. For TypeScript, the type of the data passed here is what will be used for all other methods of the instance. |
+| `formatVersion` | `number` | An incremental version of the data format. If the format of the data is changed in any way, this number should be incremented, in which case all necessary functions of the migrations dictionary will be run consecutively. *Never decrement this number!* |
+| `engine` | [`DataStoreEngine \| () => DataStoreEngine`](#storage-engines) | Either a storage engine instance or a function that creates and returns a new storage engine instance. The engine implements the API used to persist all key-value pairs. See the [Storage Engines section.](#storage-engines) |
+| `migrations?` | [`DataMigrationsDict`](#type-datamigrationsdict) | (Optional) A dictionary of functions that can be used to migrate data from older versions of the data to newer ones. The keys of the dictionary should be the format version number that the function migrates to, from the previous whole integer value. The values should be functions that take the data in the old format and return the data in the new format. The functions will be run in order from the oldest to the newest version. If the current format version is not in the dictionary, no migrations will be run. |
+| `migrateIds?` | `string \| string[]` | (Optional) A string or array of strings that migrate from one or more old IDs to the ID set in the constructor. If no data exist for the old ID(s), nothing will be done, but some time may still pass trying to fetch the non-existent data. The ID migration will be done once per session in the call to [`loadData()`](#datastoreloaddata). |
+| `compressionFormat?` | [`CompressionFormat`](https://developer.mozilla.org/en-US/docs/Web/API/CompressionStream/CompressionStream#format) \| `null` | (Optional, disallowed when `encodeData` and `decodeData` are set) The compression format to use when saving the data. If set, the data will be compressed before saving and decompressed after loading. The default is `"deflate-raw"`. Explicitly set to `null` to disable compression. |
+| `encodeData?` | `(data: string) => string \| Promise<string>` | (Optional, but required when `decodeData` is also set and disallowed when `compressionFormat` is set) Function that encodes the data before saving - you can use [`compress()`](#function-compress) here to save space at the cost of a little bit of performance |
+| `decodeData?` | `(data: string) => string \| Promise<string>` | (Optional, but required when `encodeData` is also set and disallowed when `compressionFormat` is set) Function that decodes the data when loading - you can use [`decompress()`](#function-decompress) here to decode the data that was previously compressed with [compress()](#function-compress) |
+
+<br>
+
+### `type DataMigrationsDict`
+A dictionary of functions that can be used to migrate data from older versions of the data to newer ones.  
+  
+The keys of the dictionary should be the format version number that the function migrates to, from the previous whole integer value.  
+Don't use negative values and don't skip numbers.  
+  
+The values are functions that take the data in the old format as the sole argument and should return the data in the new format.  
+The old data is a copy of the cached object, so you can mutate it directly, use `delete data.foo` to delete properties, etc.
 
 <br><br>
 
@@ -841,14 +859,14 @@ The class' internal methods are all declared as protected, so you can extend thi
 ```ts
 import { DataStore, DataStoreSerializer, compress, decompress } from "@sv443-network/coreutils";
 
-/** This store doesn't have migrations to run and also has no encodeData and decodeData functions */
+/** This store doesn't have migrations to run and also doesn't compress any data */
 const fooStore = new DataStore({
   id: "foo-data",
   defaultData: {
     foo: "hello",
   },
   formatVersion: 1,
-  storageEngine: new BrowserStorageEngine(),
+  engine: new BrowserStorageEngine(),
 });
 
 /** This store has migrations to run and also has encodeData and decodeData functions */
@@ -858,16 +876,20 @@ const barStore = new DataStore({
     foo: "hello",
   },
   formatVersion: 2,
-  storageEngine: new BrowserStorageEngine(),
+  engine: new BrowserStorageEngine({
+    // this engine will use the localStorage API to store the data
+    type: "localStorage",
+  }),
   migrations: {
     2: (oldData) => ({
       ...oldData,
       bar: "world",
     }),
   },
+  // this is how you can set custom encoding and decoding functions:
+  encodeData: ["gzip", (data) => compress(data, "gzip", "string")],
+  decodeData: ["gzip", (data) => decompress(data, "gzip", "string")],
   // ensure the algorithm always stays the same!
-  encodeData: (data) => compress(data, "deflate-raw", "string"),
-  decodeData: (data) => decompress(data, "deflate-raw", "string"),
 });
 
 const serializer = new DataStoreSerializer([fooStore, barStore], {
@@ -1100,10 +1122,10 @@ Any call to `setData()` on the instances will recreate their own persistent stor
 ### `type DataStoreSerializerOptions`
 The options object for the [`DataStoreSerializer` class.](#class-datastoreserializer)  
 It has the following properties:  
-| Property | Description |
-| :-- | :-- |
-| `addChecksum?` | (Optional) If set to `true` (default), a SHA-256 checksum will be calculated and saved with the serialized data. If set to `false`, no checksum will be calculated and saved. |
-| `ensureIntegrity?` | (Optional) If set to `true` (default), the checksum will be checked when importing data and an error will be thrown if it doesn't match. If set to `false`, the checksum will not be checked and no error will be thrown. If no checksum property exists on the imported data (for example because it wasn't enabled in a previous data format version), the checksum check will be skipped regardless of this setting. |
+| Property | Type | Description |
+| :-- | :-- | :-- |
+| `addChecksum?` | `boolean` | (Optional) If set to `true` (default), a SHA-256 checksum will be calculated and saved with the serialized data. If set to `false`, no checksum will be calculated and saved. |
+| `ensureIntegrity?` | `boolean` | (Optional) If set to `true` (default), the checksum will be checked when importing data and an error will be thrown if it doesn't match. If set to `false`, the checksum will not be checked and no error will be thrown. If no checksum property exists on the imported data (for example because it wasn't enabled in a previous data format version), the checksum check will be skipped regardless of this setting. |
 
 <br>
 
@@ -1306,7 +1328,7 @@ class BrowserStorageEngine<TData extends object = object>
   
 Usage:
 ```ts
-const engine = new BrowserStorageEngine(options: BrowserStorageEngineOptions);
+const engine = new BrowserStorageEngine(options?: BrowserStorageEngineOptions);
 ```
   
 Storage engine for the [`DataStore` class](#class-datastore) that uses the browser's LocalStorage or SessionStorage to store data.  
@@ -1326,7 +1348,7 @@ const myStore = new DataStore({
     foo: 1,
   },
   formatVersion: 1,
-  storageEngine: new BrowserStorageEngine({
+  engine: new BrowserStorageEngine({
     // LocalStorage will persist across sessions, SessionStorage will be cleared when the page is closed
     type: "localStorage", // or "sessionStorage"
   }),
@@ -1363,19 +1385,19 @@ Note that the session storage will be cleared when the page is closed, while the
 
 <br><br>
 
-### `class JSONFileStorageEngine`
+### `class FileStorageEngine`
 Signature:
 ```ts
-class JSONFileStorageEngine<TData extends object = object>
+class FileStorageEngine<TData extends object = object>
   extends DataStoreEngine<TData>;
 ```
   
 Usage:
 ```ts
-const engine = new JSONFileStorageEngine(options: JSONFileStorageEngineOptions);
+const engine = new FileStorageEngine(options?: FileStorageEngineOptions);
 ```
   
-Storage engine for the [`DataStore` class](#class-datastore) that uses a JSON file to store data.  
+Storage engine for the [`DataStore` class](#class-datastore) that uses a file to store data.  
   
 ⚠️ Requires Node.js or Deno with Node compatibility  
 ⚠️ Don't reuse this engine across multiple [`DataStore`](#class-datastore) instances  
@@ -1383,7 +1405,7 @@ Storage engine for the [`DataStore` class](#class-datastore) that uses a JSON fi
 <details><summary>Example - click to view</summary>
 
 ```ts
-import { DataStore, JSONFileStorageEngine } from "@sv443-network/coreutils";
+import { DataStore, FileStorageEngine } from "@sv443-network/coreutils";
 
 // this DataStore will only work in Node.js or Deno with Node compatibility
 const myStore = new DataStore({
@@ -1392,10 +1414,10 @@ const myStore = new DataStore({
     foo: 1,
   },
   formatVersion: 1,
-  storageEngine: new JSONFileStorageEngine({
+  engine: new FileStorageEngine({
     // missing directories will be created automatically
-    // since the data is encoded, the file contains raw data instead of JSON, so it's saved as .dat
-    filePath: (id) => `./.data-stores/${id}.dat`,
+    // since the data is encoded, the file contains raw data instead of JSON, so it's saved as .dat:
+    filePath: (id) => `./.data/store-${id}.dat`,
   }),
   // ensure the algorithm always stays the same!
   encodeData: (data) => compress(data, "deflate-raw", "string"),
@@ -1415,15 +1437,15 @@ init();
 
 <br>
 
-### `type JSONFileStorageEngineOptions`
+### `type FileStorageEngineOptions`
 ```ts
-type JSONFileStorageEngineOptions = {
+type FileStorageEngineOptions = {
   /** Function that returns a string or a plain string that is the data file path, including name and extension. Defaults to `.ds-${dataStoreID}` */
   filePath?: ((dataStoreID: string) => string) | string;
 };
 ```
   
-Options for the [`JSONFileStorageEngine` class.](#class-jsonfilestorageengine)  
+Options for the [`FileStorageEngine` class.](#class-filestorageengine)  
   
 The `filePath` option can be a function that returns a string or a plain string that is the data file path, including name and extension.  
 By default, the file will be created as `.ds-${dataStoreID}` in the current working directory.  
@@ -1841,6 +1863,19 @@ class MigrationError
   
 Error while migrating data.  
 This error may be thrown by [`DataStore.loadData()`](#datastoreloaddata) and [`DataStoreSerializer.loadStoresData()`](#datastoreserializerloadstoresdata) if the imported data's version doesn't match the current version, or there was an error in a migration function.  
+
+<br>
+
+### `class ValidationError`
+Signature:
+```ts
+class ValidationError
+  extends DatedError
+    extends Error;
+```
+  
+Error while validating data.  
+This error may be thrown by the [`TieredCache` constructor](#class-tieredcache) if the options object contain errors.
 
 <br><br>
 
@@ -2385,6 +2420,73 @@ console.log(emptyObj.toString); // undefined
 ```
 </details>
 
+<br>
+
+### `function setImmediateInterval`
+Signature:
+```ts
+function setImmediateInterval(
+  callback: () => void | unknown,
+  interval: number,
+  signal?: AbortSignal,
+): void;
+```
+  
+Works similarly to `setInterval()`, but the callback is also called immediately and can be aborted by passing an [`AbortSignal`.](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal)  
+Uses `setInterval()` internally, which might cause overlapping calls if the callback's synchronous execution takes longer than the given interval time.  
+This function will prevent skewing the interval time, contrary to [`setImmediateTimeoutLoop()`.](#function-setimmediatetimeoutloop)  
+  
+<details><summary><b>Example - click to view</b></summary>
+
+```ts
+import { setImmediateInterval } from "@sv443-network/coreutils";
+
+const controller = new AbortController();
+
+setImmediateInterval(() => {
+  console.log("Hello, World!");
+}, 1000, controller.signal);
+
+abortButton.addEventListener("click", () => {
+  // abort the interval:
+  controller.abort();
+});
+```
+</details>
+
+<br>
+
+### `function setImmediateTimeoutLoop`
+Signature:
+```ts
+function setImmediateTimeoutLoop(
+  callback: () => void | unknown,
+  interval: number,
+  signal?: AbortSignal,
+): void;
+```
+  
+Works similarly to a recursive `setTimeout()` loop, but the callback is also called immediately and can be aborted by passing an [`AbortSignal`.](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal)  
+Uses `setTimeout()` internally to avoid overlapping calls, though this will skew the given interval time by however long the callback takes to execute synchronously.  
+  
+<details><summary><b>Example - click to view</b></summary>
+
+```ts
+import { setImmediateTimeoutLoop } from "@sv443-network/coreutils";
+
+const controller = new AbortController();
+
+setImmediateTimeoutLoop(() => {
+  console.log("Hello, World!");
+}, 1000, controller.signal);
+
+abortButton.addEventListener("click", () => {
+  // abort the timeout loop:
+  controller.abort();
+});
+```
+</details>
+
 <br><br>
 
 
@@ -2563,7 +2665,7 @@ The options object for the [`NanoEmitter` class.](#class-nanoemitter)
 It can have the following properties:
 | Property | Type | Description |
 | :-- | :-- | :-- |
-| `publicEmit?` | boolean | If set to true, the public method `emit()` will be callable. False by default. |
+| `publicEmit?` | `boolean` | If set to true, the public method `emit()` will be callable. False by default. |
 
 <br><br>
 
@@ -2675,11 +2777,11 @@ This object contains the default characters for the progress bar.
 It is of type [`ProgressBarChars`](#type-progressbarchars) and contains the following properties:
 | Property | Value |
 | :-- | :-- |
-| `defaultPbChars[100]` | █ |
-| `defaultPbChars[75]` | ▓ |
-| `defaultPbChars[50]` | ▒ |
-| `defaultPbChars[25]` | ░ |
-| `defaultPbChars[0]` | ─ |
+| `defaultPbChars[100]` | `█` |
+| `defaultPbChars[75]` | `▓` |
+| `defaultPbChars[50]` | `▒` |
+| `defaultPbChars[25]` | `░` |
+| `defaultPbChars[0]` | `─` |
 
 <br>
 
@@ -2770,6 +2872,157 @@ const str = "Lorem ipsum dolor sit amet.";
 console.log(truncStr(str, 10, "…")); // "Lorem ips…"
 ```
 </details>
+
+<br><br>
+
+
+<!-- #region TieredCache -->
+## TieredCache
+
+<br>
+
+### `class TieredCache`
+Signature:
+```ts
+class TieredCache<TData extends object>
+  extends NanoEmitter<TieredCacheEventMap>;
+```
+  
+Usage:
+```ts
+const cache = new TieredCache<TDataType>(options: TieredCacheOptions);
+```
+  
+A class that provides a cache system with multiple tiers and persistent storage, allowing for different [storage engines](#storage-engines) and configurations for each tier.  
+Most recently used entries are kept in the highest tiers, while the least recently used entries are moved to lower tiers.
+  
+The class is built on top of the [`DataStore` class](#class-datastore), which provides the persistent storage for each cache tier.  
+  
+It inherits from [`NanoEmitter`](#class-nanoemitter), so you can listen to events emitted by the class.  
+Refer to the [`TieredCacheEventMap` type](#type-tieredcacheeventmap) for a list of events that can be emitted.
+  
+<details><summary><b>Example - click to view</b></summary>
+
+```ts
+import { TieredCache, FileStorageEngine } from "@sv443-network/coreutils";
+
+const myCache = new TieredCache({
+  // (required) unique ID for the cache, used for persistent storage
+  // must be unique across all TieredCache `engine` instances of the same type:
+  id: "my-tiered-cache",
+  // (required) cache tier configuration:
+  tiers: [
+    // L0 cache:
+    // data for tier L0 is only kept in memory because no engine prop is set:
+    {
+      // use gzip compression for the persistent storage, to exchange speed for file size:
+      compressionFormat: "gzip",
+      // options for when an entry goes stale:
+      staleOptions: {
+        method: "relevance", // least accessed and oldest entries are marked as stale first
+        ttl: 60 * 30,  // 30 minutes
+        amount: 50,    // only cache up to 50 entries
+        sendToTier: 1, // send to L1 cache when stale
+      },
+      // which tiers to propagate entries and entry metadata to:
+      propagateTiers: [
+        {
+          index: 1,
+          created: true,
+          updated: true,
+          deleted: true,
+          // don't update the accessed timestamp in L1, so its entries get marked as stale more frequently:
+          accessed: false,
+        },
+      ],
+    },
+    // L1 cache:
+    {
+      // DataStoreEngine instance for persisting this tier's data:
+      engine: new FileStorageEngine({
+        filePath: (id) => `./.cache/${id}.dat`,
+      }),
+    },
+  ],
+  nanoEmitterOptions: {
+    // allow using the public emit() method:
+    publicEmit: true,
+  },
+});
+
+// TODO:
+```
+</details>
+
+<br>
+
+### Methods
+
+<br>
+
+<!-- TODO: -->
+
+<br><br>
+
+### `type TieredCacheEventMap`
+All events that can be emitted by the [`TieredCache` class.](#class-tieredcache)  
+<!-- TODO: -->
+<!-- | Event | Arguments | Description |
+| :-- | :-- | :-- | -->
+
+<br>
+
+### `type TieredCacheOptions`
+Options object for the [`TieredCache` class.](#class-tieredcache)  
+It can have the following properties:  
+<!-- TODO: -->
+| Property | Type | Description |
+| :-- | :-- | :-- |
+| `id` | `string` | ID of the cache used in persistent storage, unique per each type of [`DataStoreEngine`](#storage-engines). |
+| `tiers` | [`TieredCacheTierOptions[]`](#type-tieredcachetieroptions) | Array of options objects to configure each cache tier. |
+
+<br>
+
+### `type TieredCachePropagateTierOptions`
+<!-- TODO: -->
+Options for entry propagation to a specific cache tier.  
+This type is a constituent part of the [`TieredCacheTierOptions`](#type-tieredcachetieroptions) type.  
+It can have the following properties:
+| Property | Type | Description |
+| :-- | :-- | :-- |
+| `index` | `number` | The index of the cache tier to propagate the entry to. Use negative numbers for accessing from the end, just like `Array.prototype.at()`. Use `1` for the second tier, use `-1` for the last. |
+| `created?` | `boolean` | Whether to propagate created entries to the cache with this index. Defaults to true. |
+| `updated?` | `boolean` | Whether to propagate updated entries to the cache with this index. Defaults to true. |
+| `deleted?` | `boolean` | Whether to propagate deleted entries to the cache with this index. Defaults to true. |
+| `accessed?` | `boolean` | Whether to propagate accessed entries to the cache with this index. Defaults to true. |
+
+<br>
+
+### `type TieredCacheStaleOptions`
+<!-- TODO: -->
+Options for when an entry goes stale, making it move to a lower tier or get fully deleted.  
+This type is a constituent part of the [`TieredCacheTierOptions`](#type-tieredcachetieroptions) type.  
+It can have the following properties:
+| Property | Type | Description |
+| :-- | :-- | :-- |
+| `method?` | `"relevance" \| "recency" \| "frequency"` | The method to use for determining which entries are stale. `recency` = least recently used, `frequency` = least frequently used, `relevance` = combination of both (default). |
+| `ttl?` | `number` | Maximum time to live for the data in this tier in seconds. |
+| `amount?` | `number` | Maximum amount of entries to keep in this tier. |
+| `sendToTier?` | `number` | The index of the cache tier to send the entry to when it goes stale. Defaults to the next available tier, or deletes the entry if there is none. |
+
+<br>
+
+### `type TieredCacheTierOptions`
+<!-- TODO: -->
+Options object for each cache tier.  
+It can have the following properties:
+| Property | Type | Description |
+| :-- | :-- | :-- |
+| `storeOptions?` | [`DataStoreOptions`](#type-datastoreoptions) | Options for the DataStore instance, minus `id` property, used for persisting this tier's data. If none is specified, data is only kept in volatile memory. |
+| `memCache?` | `boolean` | Whether to cache the data in memory. Defaults to false. |
+| `compressionFormat?` | [`CompressionFormat`](#type-compressionformat) | Which compression format to use for this tier's persistent storage. Defaults to `deflate-raw` - set to `null` to disable compression. |
+| `staleOptions?` | [`StaleOptions`](#type-tieredcachestaleoptions) | Options for when an entry goes stale, making it move to a lower tier or get fully deleted. |
+| `propagateTiers?` | [`TieredCachePropagateTierOptions[]`](#type-tieredcachepropagatetieroptions) | To which tiers to propagate created and updated entries. Defaults to the next tier in line, with all properties set to their defaults. |
 
 <br><br>
 
