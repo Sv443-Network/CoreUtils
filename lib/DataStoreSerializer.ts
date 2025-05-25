@@ -101,7 +101,7 @@ export class DataStoreSerializer {
 
     for(const storeInst of this.stores.filter(s => typeof stores === "function" ? stores(s.id) : stores.includes(s.id))) {
       const data = useEncoding && storeInst.encodingEnabled()
-        ? await storeInst.encodeData(JSON.stringify(storeInst.getData()))
+        ? await storeInst.encodeData[1](JSON.stringify(storeInst.getData()))
         : JSON.stringify(storeInst.getData());
 
       serData.push({
@@ -161,7 +161,7 @@ export class DataStoreSerializer {
       }
 
       const decodedData = storeData.encoded && storeInst.encodingEnabled()
-        ? await storeInst.decodeData(storeData.data)
+        ? await storeInst.decodeData[1](storeData.data)
         : storeData.data;
 
       if(storeData.formatVersion && !isNaN(Number(storeData.formatVersion)) && Number(storeData.formatVersion) < storeInst.formatVersion)
