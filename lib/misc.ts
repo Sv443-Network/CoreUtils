@@ -160,7 +160,7 @@ export function setImmediateInterval(
  * Returns a cleanup function that will stop the interval if called.
  */
 export function setImmediateTimeoutLoop(
-  callback: () => void | unknown,
+  callback: () => void | unknown | Promise<void | unknown>,
   interval: number,
   signal?: AbortSignal,
 ): void {
@@ -168,10 +168,10 @@ export function setImmediateTimeoutLoop(
 
   const cleanup = (): void => clearTimeout(timeout);
 
-  const loop = (): void => {
+  const loop = async (): Promise<void> => {
     if(signal?.aborted)
       return cleanup();
-    callback();
+    await callback();
     timeout = setTimeout(loop, interval);
   };
 

@@ -1,17 +1,37 @@
 import { describe, expect, it } from "vitest";
-import { DataStore } from "./DataStore.js";
+import { DataStore, type DataStoreData } from "./DataStore.js";
 import { BrowserStorageEngine } from "./DataStoreEngine.js";
 import type { SerializableVal } from "./types.js";
 
-class TestDataStore<TData extends object = object> extends DataStore<TData> {
-  public async test_getValue<TValue extends SerializableVal = string>(name: string, defaultValue: TValue): Promise<string | TValue> {
+//#region TestDataStore
+
+class TestDataStore<TData extends DataStoreData> extends DataStore<TData> {
+  public async direct_getValue<TValue extends SerializableVal = string>(name: string, defaultValue: TValue): Promise<string | TValue> {
     return await this.engine.getValue(name, defaultValue);
   }
 
-  public async test_setValue(name: string, value: SerializableVal): Promise<void> {
+  public async direct_setValue(name: string, value: SerializableVal): Promise<void> {
     return await this.engine.setValue(name, value);
   }
+
+  public async direct_renameKey(oldName: string, newName: string): Promise<void> {
+    const value = await this.engine.getValue(oldName, null);
+    if(value) {
+      await this.engine.setValue(newName, value);
+      await this.engine.deleteValue(oldName);
+    }
+  }
+
+  public async direct_deleteValue(name: string): Promise<void> {
+    return await this.engine.deleteValue(name);
+  }
+
+  public setFirstInit(value: boolean): void {
+    this.firstInit = value;
+  }
 }
+
+//#region >> tests
 
 describe("DataStore", () => {
   //#region base
@@ -27,9 +47,6 @@ describe("DataStore", () => {
 
     // should equal defaultData:
     expect(store.getData().a).toBe(1);
-
-    // deepCopy should return a new object:
-    expect(store.getData(true) === store.getData(true)).toBe(false);
 
     await store.loadData();
 
@@ -61,7 +78,7 @@ describe("DataStore", () => {
       defaultData: { a: 1, b: 2 },
       formatVersion: 1,
       engine: new BrowserStorageEngine(),
-      compressionFormat: "deflate-raw",
+      // uses deflate-raw by default
     });
 
     await store.loadData();
@@ -131,12 +148,12 @@ describe("DataStore", () => {
     expect(thirdData.b).toBe(-1337);
     expect(thirdData.c).toBe(69);
 
-    expect(await thirdStore.test_getValue("_uucfgver-test-5", "")).toBe("2");
+    expect(await thirdStore.direct_getValue("__ds-test-5-ver", "")).toBe("2");
     await thirdStore.setData(thirdStore.getData());
-    expect(await thirdStore.test_getValue("_uucfgver-test-5", "")).toBe("3");
+    expect(await thirdStore.direct_getValue("__ds-test-5-ver", "")).toBe("3");
 
-    expect(await thirdStore.test_getValue("_uucfgver-test-3", "")).toBe("");
-    expect(await thirdStore.test_getValue("_uucfgver-test-4", "")).toBe("");
+    expect(await thirdStore.direct_getValue("__ds-test-3-ver", "")).toBe("");
+    expect(await thirdStore.direct_getValue("__ds-test-4-ver", "")).toBe("");
 
     // restore initial state:
     await firstStore.deleteData();
@@ -175,6 +192,34 @@ describe("DataStore", () => {
     expect(store2.getData().c).toBe(5);
   });
 
+  //#region migrate from UU-v9 format
+  it("Migrate from UU-v9 format", async () => {
+    const store1 = new TestDataStore({
+      id: "test-migrate-from-uu-v9",
+      defaultData: { a: 1, b: 2 },
+      formatVersion: 1,
+      engine: new BrowserStorageEngine({ type: "localStorage" }),
+    });
+
+    await store1.loadData();
+    store1.setFirstInit(true);
+
+    await store1.direct_deleteValue("__ds_fmt_ver");
+    await store1.direct_renameKey(`__ds-${store1.id}-dat`, `_uucfg-${store1.id}`);
+    await store1.direct_renameKey(`__ds-${store1.id}-ver`, `_uucfgver-${store1.id}`);
+    await store1.direct_renameKey(`__ds-${store1.id}-enc`, `_uucfgenc-${store1.id}`);
+
+    // let key: string | null, i = 0;
+    // while((key = globalThis.localStorage.key(i)) !== null) {
+    //   console.log(key, globalThis.localStorage.getItem(key));
+    //   i++;
+    // }
+
+    expect(await store1.direct_getValue(`__ds-${store1.id}-ver`, null)).toBeNull();
+    await store1.loadData();
+    expect(await store1.direct_getValue(`__ds-${store1.id}-ver`, null)).toBe("1");
+  });
+
   //#region invalid persistent data
   it("Invalid persistent data", async () => {
     const store1 = new TestDataStore({
@@ -187,10 +232,16 @@ describe("DataStore", () => {
     await store1.loadData();
     await store1.setData({ ...store1.getData(), a: 2 });
 
-    await store1.test_setValue(`_uucfg-${store1.id}`, "invalid");
+    await store1.direct_setValue(`__ds-${store1.id}-dat`, "invalid");
 
-    // should reset to defaultData:
-    await store1.loadData();
+    try {
+      // should reset to defaultData:
+      await store1.loadData();
+    }
+    catch (err) {
+      expect(err).toBeInstanceOf(Error);
+      expect(err.message).toContain("parsing JSON");
+    }
 
     expect(store1.getData().a).toBe(1);
     expect(store1.getData().b).toBe(2);

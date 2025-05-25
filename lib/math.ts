@@ -168,7 +168,7 @@ export function roundFixed(num: number, fractionDigits: number): number {
   return Math.round(num * scale) / scale;
 }
 
-/** Rounds the given values at the given decimal place and checks if they are within the given range (0.5 by default) */
+/** Rounds the given values at the given decimal place (same as in {@linkcode roundFixed()}) and checks if they are within the given range (0.5 by default) */
 export function valsWithin(a: number, b: number, dec = 10, withinRange = 0.5): boolean {
   return Math.abs(roundFixed(a, dec) - roundFixed(b, dec)) <= withinRange;
 }

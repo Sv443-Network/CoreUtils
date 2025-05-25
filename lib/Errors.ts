@@ -8,6 +8,7 @@ export class DatedError extends Error {
   public readonly date: Date;
   constructor(message: string, options?: ErrorOptions) {
     super(message, options);
+    this.name = this.constructor.name;
     this.date = new Date();
   }
 }

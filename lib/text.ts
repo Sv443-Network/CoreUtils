@@ -33,8 +33,6 @@ export function autoPlural(term: Stringifiable, num: number | ListLike, pluralTy
     return `${term}${num === 1 ? "" : "s"}`;
   case "-ies":
     return `${String(term).slice(0, -1)}${num === 1 ? "y" : "ies"}`;
-  default:
-    return String(term);
   }
 }
 
@@ -126,8 +124,9 @@ export function secsToTimeStr(seconds: number): string {
   ].join("");
 }
 
-/** Truncates a string if it exceeds `length` and inserts `endStr` at the end (empty string to disable) */
+/** Truncates a string if it exceeds `length` and inserts `endStr` at the end (empty string to disable), so that the final string doesn't exceed the given length */
 export function truncStr(input: Stringifiable, length: number, endStr = "..."): string {
   const str = input?.toString() ?? String(input);
-  return str.length > length ? str.substring(0, length) + endStr : str;
+  const finalStr = str.length > length ? str.substring(0, length - endStr.length) + endStr : str;
+  return finalStr.length > length ? finalStr.substring(0, length) : finalStr;
 }

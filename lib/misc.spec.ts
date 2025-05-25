@@ -1,45 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { consumeGen, fetchAdvanced, getListLength, pauseFor, pureObj } from "./misc.js";
-import { autoPlural, insertValues, consumeStringGen } from "./text.js";
-
-//#region autoPlural
-describe("misc/autoPlural", () => {
-  it("Tests if autoPlural uses the correct forms", () => {
-    expect(autoPlural("apple", -1)).toBe("apples");
-    expect(autoPlural("apple", 0)).toBe("apples");
-    expect(autoPlural("apple", 1)).toBe("apple");
-    expect(autoPlural("apple", 2)).toBe("apples");
-
-    expect(autoPlural("cherry", -1)).toBe("cherries");
-    expect(autoPlural("cherry", 0)).toBe("cherries");
-    expect(autoPlural("cherry", 1)).toBe("cherry");
-    expect(autoPlural("cherry", 2)).toBe("cherries");
-
-    const cont = document.createElement("div");
-    for(let i = 0; i < 3; i++) {
-      const span = document.createElement("span");
-      cont.append(span);
-    }
-
-    expect(autoPlural("cherry", [1])).toBe("cherry");
-    expect(autoPlural("cherry", cont.querySelectorAll("span"))).toBe("cherries");
-    expect(autoPlural("cherry", { count: 3 })).toBe("cherries");
-  });
-
-  it("Handles edge cases", () => {
-    expect(autoPlural("apple", 2, "-ies")).toBe("applies");
-    expect(autoPlural("cherry", 2, "-s")).toBe("cherrys");
-  });
-});
-
-//#region insertValues
-describe("misc/insertValues", () => {
-  it("Stringifies and inserts values correctly", () => {
-    expect(insertValues("a:%1,b:%2,c:%3", "A", "B", "C")).toBe("a:A,b:B,c:C");
-    expect(insertValues("a:%1,b:%2,c:%3", "A", 2, true)).toBe("a:A,b:2,c:true");
-    expect(insertValues("a:%1,b:%2,c:%3", { toString: () => "[A]" }, {})).toBe("a:[A],b:[object Object],c:%3");
-  });
-});
+import { consumeGen, consumeStringGen, fetchAdvanced, getListLength, pauseFor, pureObj, setImmediateInterval, setImmediateTimeoutLoop } from "./misc.js";
 
 //#region pauseFor
 describe("misc/pauseFor", () => {
@@ -142,5 +102,52 @@ describe("misc/pureObj", () => {
 
     expect(pure.a).toBe(1);
     expect(pure.b).toBe(2);
+  });
+});
+
+//#region setImmediateInterval
+describe("misc/setImmediateInterval", () => {
+  it("Calls the callback immediately and then at the specified interval", async () => {
+    const controller = new AbortController();
+
+    let startTs = Date.now();
+    const times: number[] = [];
+
+    setImmediateInterval(() => {
+      times.push(Date.now() - startTs);
+    }, 30, controller.signal);
+
+    await new Promise(resolve => setTimeout(resolve, 200)); // wait for 200 ms
+    controller.abort();
+
+    const len = times.length;
+    expect(len).toBeLessThanOrEqual(7);
+    expect(len).toBeGreaterThanOrEqual(6);
+    expect(times.every(t => t <= 200 && t >= 0)).toBe(true);
+
+    await new Promise(resolve => setTimeout(resolve, 100)); // wait for another 100 ms to ensure no more calls
+    expect(times.length).toEqual(len);
+  });
+});
+
+//#region setImmediateTimeoutLoop
+describe("misc/setImmediateTimeoutLoop", () => {
+  it("Calls the callback immediately and then with the specified timeout", async () => {
+    const controller = new AbortController();
+
+    let startTs = Date.now();
+    const times: number[] = [];
+
+    setImmediateTimeoutLoop(async () => {
+      await pauseFor(80, controller.signal);
+      times.push(Date.now() - startTs);
+    }, 30, controller.signal);
+
+    await new Promise(resolve => setTimeout(resolve, 200));
+    controller.abort();
+
+    expect(times.length).toBeLessThanOrEqual(3);
+    expect(times.length).toBeGreaterThanOrEqual(1);
+    expect(times.every(t => t <= 200 && t >= 0)).toBe(true);
   });
 });

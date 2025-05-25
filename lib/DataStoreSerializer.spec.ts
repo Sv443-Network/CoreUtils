@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { unlink } from "node:fs/promises";
 import { DataStoreSerializer } from "./DataStoreSerializer.js";
 import { DataStore } from "./DataStore.js";
 import { beforeEach } from "node:test";
@@ -12,6 +13,7 @@ const store1 = new DataStore({
   engine: () => new FileStorageEngine({
     filePath: "./test.json",
   }),
+  compressionFormat: null,
 });
 
 const compFmt = "deflate-raw";
@@ -41,6 +43,7 @@ describe("DataStoreSerializer", () => {
 
   afterAll(async () => {
     await new DataStoreSerializer(getStores()).deleteStoresData();
+    await unlink("./test.json").catch(() => {});
   });
 
   it("Serialization", async () => {

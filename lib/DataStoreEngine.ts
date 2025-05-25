@@ -4,7 +4,7 @@
  * [See the documentation for more info.](https://github.com/Sv443-Network/CoreUtils/blob/main/docs.md#class-datastoreengine)
  */
 
-import type { DataStoreOptions } from "./DataStore.js";
+import type { DataStoreData, DataStoreOptions } from "./DataStore.js";
 import type { SerializableVal } from "./types.js";
 
 //#region >> DataStoreEngine
@@ -13,7 +13,7 @@ import type { SerializableVal } from "./types.js";
  * Base class for creating {@linkcode DataStore} storage engines.  
  * This acts as an interchangeable API for writing and reading persistent data in various environments.
  */
-export abstract class DataStoreEngine<TData extends object = object> {
+export abstract class DataStoreEngine<TData extends DataStoreData> {
   protected dataStoreOptions!: DataStoreOptions<TData>; // setDataStoreOptions() is called from inside the DataStore constructor to set this value
 
   /** Called by DataStore on creation, to pass its options */
@@ -85,7 +85,7 @@ export type BrowserStorageEngineOptions = {
  * ⚠️ Requires a DOM environment
  * ⚠️ Don't reuse this engine across multiple {@linkcode DataStore} instances
  */
-export class BrowserStorageEngine<TData extends object = object> extends DataStoreEngine<TData> {
+export class BrowserStorageEngine<TData extends DataStoreData> extends DataStoreEngine<TData> {
   protected options: Required<BrowserStorageEngineOptions>;
 
   /**
@@ -108,25 +108,25 @@ export class BrowserStorageEngine<TData extends object = object> extends DataSto
   public async getValue<TValue extends SerializableVal = string>(name: string, defaultValue: TValue): Promise<string | TValue> {
     return (
       this.options.type === "localStorage"
-        ? localStorage.getItem(name) as TValue
-        : sessionStorage.getItem(name) as string
+        ? globalThis.localStorage.getItem(name) as TValue
+        : globalThis.sessionStorage.getItem(name) as string
     ) ?? defaultValue;
   }
 
   /** Sets a value in persistent storage */
   public async setValue(name: string, value: SerializableVal): Promise<void> {
     if(this.options.type === "localStorage")
-      localStorage.setItem(name, String(value));
+      globalThis.localStorage.setItem(name, String(value));
     else
-      sessionStorage.setItem(name, String(value));
+      globalThis.sessionStorage.setItem(name, String(value));
   }
 
   /** Deletes a value from persistent storage */
   public async deleteValue(name: string): Promise<void> {
     if(this.options.type === "localStorage")
-      localStorage.removeItem(name);
+      globalThis.localStorage.removeItem(name);
     else
-      sessionStorage.removeItem(name);
+      globalThis.sessionStorage.removeItem(name);
   }
 }
 
@@ -149,7 +149,7 @@ export type FileStorageEngineOptions = {
  * ⚠️ Requires Node.js or Deno with Node compatibility  
  * ⚠️ Don't reuse this engine across multiple {@linkcode DataStore} instances
  */
-export class FileStorageEngine<TData extends object = object> extends DataStoreEngine<TData> {
+export class FileStorageEngine<TData extends DataStoreData> extends DataStoreEngine<TData> {
   protected options: Required<FileStorageEngineOptions>;
 
   /**
@@ -172,7 +172,7 @@ export class FileStorageEngine<TData extends object = object> extends DataStoreE
   protected async readFile(): Promise<TData | undefined> {
     try {
       if(!fs)
-        fs = (await import("node:fs/promises"))?.default;
+        fs = (await import("node:fs/promises")).default;
 
       const path = typeof this.options.filePath === "string"
         ? this.options.filePath
@@ -191,7 +191,7 @@ export class FileStorageEngine<TData extends object = object> extends DataStoreE
   protected async writeFile(data: TData): Promise<void> {
     try {
       if(!fs)
-        fs = (await import("node:fs/promises"))?.default;
+        fs = (await import("node:fs/promises")).default;
 
       const path = typeof this.options.filePath === "string"
         ? this.options.filePath
@@ -224,7 +224,7 @@ export class FileStorageEngine<TData extends object = object> extends DataStoreE
     let data = await this.readFile() as TData | undefined;
     if(!data)
       data = {} as TData;
-    data[name as keyof TData] = value as TData[keyof TData];
+    data[name as keyof TData] = value as unknown as TData[keyof TData];
     await this.writeFile(data);
   }
 

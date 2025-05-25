@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bitSetHas, clamp, digitCount, mapRange, randRange, roundFixed } from "./math.js";
+import { bitSetHas, clamp, digitCount, formatNumber, mapRange, randRange, roundFixed, valsWithin } from "./math.js";
 
 //#region clamp
 describe("math/clamp", () => {
@@ -59,6 +59,24 @@ describe("math/randRange", () => {
     expect(randRange(0, 0)).toBe(0);
     expect(randRange(0)).toBe(0);
   });
+
+  it("Handles edge cases", () => {
+    expect(randRange(NaN, 10)).toBeNaN();
+    expect(randRange(0, NaN)).toBeNaN();
+    try {
+      randRange(Infinity, 10);
+    }
+    catch(e) {
+      expect(e).toBeInstanceOf(TypeError);
+    }
+    try {
+      //@ts-expect-error
+      randRange(Symbol(1), Symbol(2));
+    }
+    catch(e) {
+      expect(e).toBeInstanceOf(TypeError);
+    }
+  });
 });
 
 //#region digitCount
@@ -113,5 +131,42 @@ describe("math/bitSetHas", () => {
     expect(bitSetHas(0, 1)).toBe(false);
     expect(bitSetHas(1, 1)).toBe(true);
     expect(bitSetHas(NaN, NaN)).toBe(false);
+  });
+});
+
+//#region formatNumber
+describe("math/formatNumber", () => {
+  it("Formats a number correctly", () => {
+    expect(formatNumber(12345, "en-US", "short")).toBe("12.3K");
+    expect(formatNumber(123456789, "en-US", "short")).toBe("123.5M");
+    expect(formatNumber(123456789, "en-US", "long")).toBe("123,456,789");
+    expect(formatNumber(123456789, "en-US", "long")).toBe("123,456,789");
+    expect(formatNumber(123456789, "de-DE", "short")).toBe("123,5 Mio.");
+    expect(formatNumber(123456789, "de-DE", "long")).toBe("123.456.789");
+  });
+
+  it("Handles edge cases", () => {
+    expect(formatNumber(NaN, "en-US", "short")).toBe("NaN");
+    expect(formatNumber(Infinity, "en-US", "short")).toBe("∞");
+    expect(formatNumber(-Infinity, "en-US", "short")).toBe("-∞");
+  });
+});
+
+//#region valsWithin
+describe("math/valsWithin", () => {
+  it("Checks if all values are within a range", () => {
+    expect(valsWithin(1, 1.5)).toBe(true);
+    expect(valsWithin(1, 1.6)).toBe(false);
+    expect(valsWithin(1, 2, undefined, 1)).toBe(true);
+    expect(valsWithin(1.45, 1, 1, 0.49)).toBe(false);
+    expect(valsWithin(1.45, 1, 2, 0.49)).toBe(true);
+  });
+
+  it("Handles edge cases", () => {
+    expect(valsWithin(NaN, 1)).toBe(false);
+    expect(valsWithin(1, NaN)).toBe(false);
+    expect(valsWithin(Infinity, 1)).toBe(false);
+    expect(valsWithin(1, Infinity)).toBe(false);
+    expect(valsWithin(-Infinity, -Infinity)).toBe(false);
   });
 });

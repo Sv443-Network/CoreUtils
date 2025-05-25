@@ -17,7 +17,7 @@ type MigrationFunc = (oldData: any) => any | Promise<any>; // eslint-disable-lin
 export type DataMigrationsDict = Record<number, MigrationFunc>;
 
 /** Options for the DataStore instance */
-export type DataStoreOptions<TData extends object> = Prettify<
+export type DataStoreOptions<TData extends DataStoreData> = Prettify<
   & {
     /**
      * A unique internal ID for this data store.  
@@ -95,13 +95,13 @@ export type DataStoreOptions<TData extends object> = Prettify<
   )
 >;
 
+/** Generic type that represents the serializable data structure saved in a {@linkcode DataStore} instance. */
+export type DataStoreData<TData extends SerializableVal = SerializableVal> = Record<string, SerializableVal | TData>;
+
 //#region class
 
 /** Current version of the general DataStore format (mostly referring to keys in persistent storage) */
 const dsFmtVer = 1;
-
-/** Whether this is the first time a DataStore instance is created in this environment */
-let firstInit = true;
 
 /**
  * Manages a hybrid synchronous & asynchronous persistent JSON database that is cached in memory and persistently saved across sessions using one of the preset DataStoreEngines or your own one.  
@@ -116,7 +116,7 @@ let firstInit = true;
  * 
  * @template TData The type of the data that is saved in persistent storage for the currently set format version (FIXME:will be automatically inferred from `defaultData` if not provided)
  */
-export class DataStore<TData extends object = object> {
+export class DataStore<TData extends DataStoreData> {
   public readonly id: string;
   public readonly formatVersion: number;
   public readonly defaultData: TData;
@@ -124,6 +124,7 @@ export class DataStore<TData extends object = object> {
   public readonly decodeData: DataStoreOptions<TData>["decodeData"];
   public readonly compressionFormat = "deflate-raw";
   public readonly engine: DataStoreEngine<TData>;
+  protected firstInit = true;
   private cachedData: TData;
   private migrations?: DataMigrationsDict;
   private migrateIds: string[] = [];
@@ -180,8 +181,8 @@ export class DataStore<TData extends object = object> {
    */
   public async loadData(): Promise<TData> {
     try {
-      if(firstInit) {
-        firstInit = false;
+      if(this.firstInit) {
+        this.firstInit = false;
         // migrate from UserUtils <=9.x format:
         const dsVer = Number(await this.engine.getValue("__ds_fmt_ver", 0));
         if(isNaN(dsVer) || dsVer < 1) {

@@ -2868,7 +2868,7 @@ truncStr(input: Stringifiable, length: number, endStr = "..."): string;
   
 Truncates the given [`Stringifiable` value](#type-stringifiable) to the given length.  
 Replaces the last `n` characters with the given `endStr` string, where `n` is the length of the `endStr` string.  
-The result is a string that is `length` characters long, either by itself, or including the `endStr` string.  
+The result is a string that is at most `length` characters long, either by itself, or including the `endStr` string.  
   
 <details><summary>Example - click to view</summary>
 

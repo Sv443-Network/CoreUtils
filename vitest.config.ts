@@ -8,6 +8,9 @@ export default defineConfig({
       include: ["lib/**/*.ts"],
       exclude: [
         "lib/**/*.spec.ts",
+        "lib/TieredCache.ts",
+        "lib/Translate.ts",
+        "lib/index.ts",
       ],
       reporter: ["text", "text-summary", "lcov"],
     },
