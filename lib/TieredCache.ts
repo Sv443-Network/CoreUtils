@@ -4,7 +4,7 @@
  */
 
 import { compress, decompress } from "./crypto.js";
-import { DataStore, DataStoreOptions } from "./DataStore.js";
+import { DataStore, DataStoreOptions, type DataStoreData } from "./DataStore.js";
 import { ValidationError } from "./Errors.js";
 import { NanoEmitter, type NanoEmitterOptions } from "./NanoEmitter.js";
 import { autoPlural } from "./text.js";
@@ -14,7 +14,7 @@ import type { Prettify } from "./types.js";
 //#region types
 
 /** Options for the {@linkcode TieredCache} class. */
-export type TieredCacheOptions<TData extends object> = Prettify<{
+export type TieredCacheOptions<TData extends DataStoreData> = Prettify<{
   /** Unique identifier for this cache. */
   id: string;
   /** The available cache tiers. */
@@ -24,7 +24,7 @@ export type TieredCacheOptions<TData extends object> = Prettify<{
 }>;
 
 /** Options object as resolved by the {@linkcode TieredCache.resolveTierOpts()} method. */
-type TieredCacheResolvedTierOpts<TData extends object> = Prettify<
+type TieredCacheResolvedTierOpts<TData extends DataStoreData> = Prettify<
   & TieredCacheTierOptions<TData>
   & Pick<Required<TieredCacheTierOptions<TData>>, "compressionFormat">
 >;
@@ -56,7 +56,7 @@ export type TieredCachePropagateTierOptions = Prettify<{
 }>;
 
 /** Options for each {@linkcode TieredCache} tier. */
-export type TieredCacheTierOptions<TData extends object> = Prettify<{
+export type TieredCacheTierOptions<TData extends DataStoreData> = Prettify<{
   /**
    * Engine used for persistent storage. Can be a function that returns a DataStoreEngine or a DataStoreEngine instance.  
    * If this property is not set, this tier will not persist data and only keeps it in memory.  
@@ -81,7 +81,7 @@ export type TieredCacheEventMap = {};
  * Persists data using DataStore and DataStoreEngines.  
  * The zeroth tier contains the most accessed data, and the last tier contains the least accessed data, so it is recommended to use slower storage engines for the last tier(s).
  */
-export class TieredCache<TData extends object> extends NanoEmitter<TieredCacheEventMap> {
+export class TieredCache<TData extends DataStoreData> extends NanoEmitter<TieredCacheEventMap> {
   protected options: TieredCacheOptions<TData>;
   protected stores = new Map<number, DataStore<TData>>();
 
