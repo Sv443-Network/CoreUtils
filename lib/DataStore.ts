@@ -123,7 +123,7 @@ export class DataStore<TData extends object = object> {
   public readonly encodeData: DataStoreOptions<TData>["encodeData"];
   public readonly decodeData: DataStoreOptions<TData>["decodeData"];
   public readonly compressionFormat = "deflate-raw";
-  public readonly engine;
+  public readonly engine: DataStoreEngine<TData>;
   private cachedData: TData;
   private migrations?: DataMigrationsDict;
   private migrateIds: string[] = [];

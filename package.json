@@ -23,7 +23,7 @@
     "update-jsr-version": "node --import tsx ./tools/update-jsr-version.mts",
     "publish-package": "changeset publish",
     "publish-package-jsr": "pnpm update-jsr-version && npx jsr publish --allow-dirty",
-    "check-jsr": "npx jsr publish --allow-dirty --dry-run",
+    "check-jsr": "pnpm update-jsr-version && npx jsr publish --allow-dirty --dry-run",
     "change": "changeset",
     "test": "vitest",
     "test-coverage": "vitest --coverage"
@@ -77,7 +77,7 @@
     "/dist/CoreUtils.min.mjs",
     "/dist/CoreUtils.umd.js",
     "/dist/CoreUtils.min.umd.js",
-    "/dist/lib/**.d.ts",
+    "/dist/lib/**/*.d.ts",
     "/package.json",
     "/README.md",
     "/CHANGELOG.md",
