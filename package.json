@@ -3,15 +3,15 @@
   "libName": "@sv443-network/coreutils",
   "version": "0.1.0",
   "description": "",
-  "main": "dist/index.js",
-  "module": "dist/index.js",
+  "main": "dist/CoreUtils.cjs",
+  "module": "dist/CoreUtils.mjs",
   "types": "dist/lib/index.d.ts",
   "exports": {
     ".": {
-      "browser": "./dist/index.umd.js",
+      "browser": "./dist/CoreUtils.min.umd.js",
       "types": "./dist/lib/index.d.ts",
-      "require": "./dist/index.cjs",
-      "import": "./dist/index.js"
+      "require": "./dist/CoreUtils.cjs",
+      "import": "./dist/CoreUtils.mjs"
     }
   },
   "type": "module",
@@ -71,10 +71,12 @@
     "vitest": "^3.1.3"
   },
   "files": [
-    "/dist/index.js",
-    "/dist/index.cjs",
-    "/dist/index.mjs",
-    "/dist/index.umd.js",
+    "/dist/CoreUtils.cjs",
+    "/dist/CoreUtils.min.cjs",
+    "/dist/CoreUtils.mjs",
+    "/dist/CoreUtils.min.mjs",
+    "/dist/CoreUtils.umd.js",
+    "/dist/CoreUtils.min.umd.js",
     "/dist/lib/**.d.ts",
     "/package.json",
     "/README.md",
