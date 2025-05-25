@@ -109,13 +109,13 @@ For submitting bug reports or feature requests, please use the [GitHub issue tra
     - 🟣 [`function joinArrayReadable()`](#function-joinarrayreadable) - Joins the given array into a string, using the given separators and last separator
     - 🟣 [`function secsToTimeStr()`](#function-sectostimestr) - Turns the given number of seconds into a string in the format `(hh:)mm:ss` with intelligent zero-padding
     - 🟣 [`function truncStr()`](#function-truncstr) - Truncates the given string to the given length
-  - *[**TieredCache:**](#tieredcache)
+  <!-- - *[**TieredCache:**](#tieredcache)
     - 🟧 *[`class TieredCache`](#class-tieredcache) - A multi-tier cache that uses multiple storage engines with different expiration times
       - 🔷 *[`type TieredCacheOptions`](#type-tieredcacheoptions) - Options for the [`TieredCache` class](#class-tieredcache)
       - 🔷 *[`type TieredCachePropagateTierOptions`](#type-tieredcachestaleoptions) - Entry propagation options for each tier
       - 🔷 *[`type TieredCacheStaleOptions`](#type-tieredcachepropagatetieroptions) - Entry staleness options for each tier
       - 🔷 *[`type TieredCacheTierOptions`](#type-tieredcachetieroptions) - Options for each tier of a [`TieredCache` instance](#class-tieredcache)
-  <!-- - *[**Translate:**](#translate)
+  - *[**Translate:**](#translate)
     - 🟧 *[`class Translate`](#class-translate) - JSON-based translation system supporting transformation hooks, value injection, nested objects, etc.
     - 🔷 *[`type TransformFn`](#type-transformfn) - The type of the transformation hook functions
     - 🔷 *[`type TransformFnProps`](#type-transformfnprops) - The properties passed to the transformation functions
@@ -1875,7 +1875,8 @@ class ValidationError
 ```
   
 Error while validating data.  
-This error may be thrown by the [`TieredCache` constructor](#class-tieredcache) if the options object contain errors.
+<!-- TODO: -->
+<!-- This error may be thrown by the [`TieredCache` constructor](#class-tieredcache) if the options object contain errors. -->
 
 <br><br>
 
@@ -1957,26 +1958,33 @@ If it isn't a number already, the value will be converted by being passed to `St
   
 Returns `NaN` if the number is invalid or `Infinity` if the number is too large to be represented as a regular number.  
   
-If `withDecimals` is set to false, the decimal point and everything after it will be ignored.  
+If `withDecimals` is set to false, only the digits before the decimal point will be counted.  
   
 <details><summary><b>Example - click to view</b></summary>
 
 ```ts
 import { digitCount } from "@sv443-network/coreutils";
 
-const num1 = 123;
-const num2 = 123456789;
-const num3 = "  123456789    ";
-const num4 = Number.MAX_SAFE_INTEGER;
-const num5 = "a123b456c789d";
-const num6 = parseInt("0x123456789abcdef", 16);
+// integers:
+const int1 = 123;
+const int2 = 123456789;
+const int3 = "  123456789    ";
+const int4 = Number.MAX_SAFE_INTEGER;
+const int5 = "a123b456c789d";
+const int6 = parseInt("0x123456789abcdef", 16);
 
-digitCount(num1); // 3
-digitCount(num2); // 9
-digitCount(num3); // 9
-digitCount(num4); // 16
-digitCount(num5); // NaN (because hex conversion has to be done through parseInt(str, 16)), like below:
-digitCount(num6); // 17
+digitCount(int1); // 3
+digitCount(int2); // 9
+digitCount(int3); // 9
+digitCount(int4); // 16
+digitCount(int5); // NaN (because hex conversion has to be done through parseInt(str, 16)), like below:
+digitCount(int6); // 17
+
+// floats:
+const float = 123.456789;
+
+digitCount(float);        // 9
+digitCount(float, false); // 3
 ```
 </details>
 
@@ -2878,7 +2886,7 @@ console.log(truncStr(str, 10, "…")); // "Lorem ips…"
 
 
 <!-- #region TieredCache -->
-## TieredCache
+<!-- ## TODO: TieredCache
 
 <br>
 
@@ -2961,22 +2969,14 @@ const myCache = new TieredCache({
 
 <br>
 
-<!-- TODO: -->
-
-<br><br>
-
 ### `type TieredCacheEventMap`
 All events that can be emitted by the [`TieredCache` class.](#class-tieredcache)  
-<!-- TODO: -->
-<!-- | Event | Arguments | Description |
-| :-- | :-- | :-- | -->
 
 <br>
 
 ### `type TieredCacheOptions`
 Options object for the [`TieredCache` class.](#class-tieredcache)  
-It can have the following properties:  
-<!-- TODO: -->
+It can have the following properties:
 | Property | Type | Description |
 | :-- | :-- | :-- |
 | `id` | `string` | ID of the cache used in persistent storage, unique per each type of [`DataStoreEngine`](#storage-engines). |
@@ -2985,7 +2985,6 @@ It can have the following properties:
 <br>
 
 ### `type TieredCachePropagateTierOptions`
-<!-- TODO: -->
 Options for entry propagation to a specific cache tier.  
 This type is a constituent part of the [`TieredCacheTierOptions`](#type-tieredcachetieroptions) type.  
 It can have the following properties:
@@ -3000,7 +2999,6 @@ It can have the following properties:
 <br>
 
 ### `type TieredCacheStaleOptions`
-<!-- TODO: -->
 Options for when an entry goes stale, making it move to a lower tier or get fully deleted.  
 This type is a constituent part of the [`TieredCacheTierOptions`](#type-tieredcachetieroptions) type.  
 It can have the following properties:
@@ -3014,7 +3012,6 @@ It can have the following properties:
 <br>
 
 ### `type TieredCacheTierOptions`
-<!-- TODO: -->
 Options object for each cache tier.  
 It can have the following properties:
 | Property | Type | Description |
@@ -3025,7 +3022,7 @@ It can have the following properties:
 | `staleOptions?` | [`StaleOptions`](#type-tieredcachestaleoptions) | Options for when an entry goes stale, making it move to a lower tier or get fully deleted. |
 | `propagateTiers?` | [`TieredCachePropagateTierOptions[]`](#type-tieredcachepropagatetieroptions) | To which tiers to propagate created and updated entries. Defaults to the next tier in line, with all properties set to their defaults. |
 
-<br><br>
+<br><br> -->
 
 
 <!-- #region types -->

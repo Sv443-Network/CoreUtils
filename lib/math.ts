@@ -29,11 +29,11 @@ export function clamp(value: number, min: number, max?: number): number {
  * @param num The number to count the digits of
  * @param withDecimals Whether to count the decimal places as well (defaults to true)
  * @example ```ts
-* digitCount();         // NaN
-* digitCount(0);        // 1
-* digitCount(123);      // 3
-* digitCount(123.456);  // 6
-* digitCount(Infinity); // Infinity
+* digitCount();            // NaN
+* digitCount(123);         // 3
+* digitCount(1.23);        // 3
+* digitCount(1.23, false); // 1
+* digitCount(Infinity);    // Infinity
 * ```
 */
 export function digitCount(num: number | Stringifiable, withDecimals = true): number {
