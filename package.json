@@ -59,6 +59,7 @@
     "@eslint/js": "^9.28.0",
     "@swc/core": "^1.11.29",
     "@testing-library/dom": "^10.4.0",
+    "@types/deno": "^2.3.0",
     "@types/node": "^22.15.29",
     "@types/tx2": "^1.0.3",
     "@typescript-eslint/eslint-plugin": "^8.33.0",

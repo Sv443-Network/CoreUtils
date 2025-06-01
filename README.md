@@ -79,6 +79,7 @@ Intended to be used in conjunction with [`@sv443-network/userutils`](https://git
   - 🟣 [`function pureObj()`](./docs.md#function-pureobj) - Applies an object's props to a null object (object without prototype chain) or just returns a new null object
   - 🟣 [`function setImmediateInterval()`](./docs.md#function-setimmediateinterval) - Like `setInterval()`, but instantly calls the callback and supports passing an [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal)
   - 🟣 [`function setImmediateTimeoutLoop()`](./docs.md#function-setimmediatetimeoutloop) - Like a recursive `setTimeout()` loop, but instantly calls the callback and supports passing an [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal)
+  - 🟣 [`function scheduleExit()`](./docs.md#function-scheduleexit) - Schedules a process exit after the next event loop tick, to allow operations like IO writes to finish.
 - [**NanoEmitter:**](./docs.md#nanoemitter)
   - 🟧 [`class NanoEmitter`](./docs.md#class-nanoemitter) - Simple, lightweight event emitter class that can be used in both FP and OOP, inspired by [`EventEmitter` from `node:events`](https://nodejs.org/api/events.html#class-eventemitter), based on [`nanoevents`](https://npmjs.com/package/nanoevents)
     - 🔷 [`type NanoEmitterOptions`](./docs.md#type-nanoemitteroptions) - Options for the [`NanoEmitter` class](./docs.md#class-nanoemitter)

@@ -178,3 +178,25 @@ export function setImmediateTimeoutLoop(
   signal?.addEventListener("abort", cleanup);
   loop();
 }
+
+/**
+ * Schedules an exit of the current process after the next event loop tick, in order to allow any pending operations like IO writes to complete.  
+ * Works on both Node.js and Deno, but will not work in browser environments.
+ * @param code The exit code to use, defaults to 0 (success)
+ * @param timeout The time in milliseconds to wait before exiting, defaults to 0 (exit on the next event loop tick)
+ * @throws An error if no exit method is available (e.g. in browser environments)
+ */
+export function scheduleExit(code: number = 0, timeout = 0): void {
+  if(timeout < 0)
+    throw new TypeError("Timeout must be a non-negative number");
+
+  let exit: (() => void) | undefined;
+  if(typeof process !== "undefined" && "exit" in process)
+    exit = () => process.exit(code);
+  else if(typeof Deno !== "undefined" && "exit" in Deno)
+    exit = () => Deno.exit(code);
+  else
+    throw new Error("Cannot exit the process, no exit method available");
+
+  setTimeout(exit, timeout);
+}

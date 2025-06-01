@@ -97,6 +97,7 @@ For submitting bug reports or feature requests, please use the [GitHub issue tra
     - 🟣 [`function pureObj()`](#function-pureobj) - Applies an object's props to a null object (object without prototype chain) or just returns a new null object
     - 🟣 [`function setImmediateInterval()`](#function-setimmediateinterval) - Like `setInterval()`, but instantly calls the callback and supports passing an [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal)
     - 🟣 [`function setImmediateTimeoutLoop()`](#function-setimmediatetimeoutloop) - Like a recursive `setTimeout()` loop, but instantly calls the callback and supports passing an [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal)
+    - 🟣 [`function scheduleExit()`](#function-scheduleexit) - Schedules a process exit after the next event loop tick, to allow operations like IO writes to finish.
   - [**NanoEmitter:**](#nanoemitter)
     - 🟧 [`class NanoEmitter`](#class-nanoemitter) - Simple, lightweight event emitter class that can be used in both FP and OOP, inspired by [`EventEmitter` from `node:events`](https://nodejs.org/api/events.html#class-eventemitter), based on [`nanoevents`](https://npmjs.com/package/nanoevents)
       - 🔷 [`type NanoEmitterOptions`](#type-nanoemitteroptions) - Options for the [`NanoEmitter` class](#class-nanoemitter)
@@ -2494,6 +2495,20 @@ abortButton.addEventListener("click", () => {
 });
 ```
 </details>
+
+<br>
+
+### `function scheduleExit()`
+Signature:
+```ts
+function scheduleExit(code?: number, timeout?: number): void;
+```
+  
+Schedules the process to exit with the given exit code after a timeout, in both Node.js and Deno, but not in the browser.  
+This is useful for allowing the currently queued microtasks to finish before exiting the process. This can prevent data loss or corruption when writing to files or databases, for example.  
+If no exit code is given, it will default to 0 (success). Set it to 1 to indicate an error.  
+If no timeout is given, the process will exit immediately after the current microtask queue is cleared (0ms).  
+If a timeout is given, the process will exit after the timeout has elapsed, regardless of whether there are still microtasks in the queue.  
 
 <br><br>
 

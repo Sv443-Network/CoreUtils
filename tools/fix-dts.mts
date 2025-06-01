@@ -1,4 +1,4 @@
-import { readdir, readFile, writeFile, lstat } from "node:fs/promises";
+import { readdir, readFile, writeFile, stat } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { styleText } from "node:util";
 
@@ -24,7 +24,7 @@ async function processRecursive(directory: string): Promise<void> {
 
   for(const file of files) {
     const fullPath = join(directory, file);
-    const stats = await lstat(fullPath);
+    const stats = await stat(fullPath);
 
     if(stats.isDirectory())
       await processRecursive(fullPath);

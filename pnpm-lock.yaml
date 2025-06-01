@@ -27,6 +27,9 @@ importers:
       '@testing-library/dom':
         specifier: ^10.4.0
         version: 10.4.0
+      '@types/deno':
+        specifier: ^2.3.0
+        version: 2.3.0
       '@types/node':
         specifier: ^22.15.29
         version: 22.15.29
@@ -631,6 +634,9 @@ packages:
 
   '@types/aria-query@5.0.4':
     resolution: {integrity: sha512-rfT93uj5s0PRL7EzccGMs3brplhcrghnDoV26NqKhCAS1hVo+WdNsPvE/yb6ilfr5hi2MEk6d5EWJTKdxg8jVw==}
+
+  '@types/deno@2.3.0':
+    resolution: {integrity: sha512-/4SyefQpKjwNKGkq9qG3Ln7MazfbWKvydyVFBnXzP5OQA4u1paoFtaOe1iHKycIWHHkhYag0lPxyheThV1ijzw==}
 
   '@types/estree@1.0.7':
     resolution: {integrity: sha512-w28IoSUCJpidD/TGviZwwMJckNESJZXFu7NBZ5YJ4mEUnNraUn9Pm8HSZm/jDF1pDWYKspWE7oVphigUPRakIQ==}
@@ -2405,6 +2411,8 @@ snapshots:
       pretty-format: 27.5.1
 
   '@types/aria-query@5.0.4': {}
+
+  '@types/deno@2.3.0': {}
 
   '@types/estree@1.0.7': {}
 
