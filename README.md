@@ -4,7 +4,7 @@
 Cross-platform, general-purpose, JavaScript core library for Node, Deno and the browser.  
 Intended to be used in conjunction with [`@sv443-network/userutils`](https://github.com/Sv443-Network/UserUtils) and [`@sv443-network/djsutils`](https://github.com/Sv443-Network/DJSUtils), but can be used independently as well.
 
-### [Documentation](./docs.md#readme) &bull; [Features](#features) &bull; [Installation](#installation) &bull; [License](#license) &bull; [Changelog](./CHANGELOG.md)
+### [Documentation](./docs.md#readme) &bull; [Features](#features) &bull; [Installation](#installation) &bull; [License](./LICENSE.txt) &bull; [Changelog](./CHANGELOG.md)
 
 </div>
 <br>
