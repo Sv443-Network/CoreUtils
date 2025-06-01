@@ -3,15 +3,15 @@ import umdWrapper from "esbuild-plugin-umd-wrapper";
 import { dependencies } from "./package.json";
 import { createUmdWrapper } from "./tools/umdWrapperPlugin.cjs";
 
-/** @typedef {import('tsup').Options} TsupOpts */
+/** @typedef {import('tsup').Options} TsupOptions */
 
 const clientName = "CoreUtils";
 const externalDependencies = Object.keys(dependencies);
 const isDevelopmentMode = process.env.NODE_ENV === "development";
 
-/** @type {(cliOpts: TsupOpts) => Promise<TsupOpts | TsupOpts[]> | TsupOpts | TsupOpts[]} */
-const getBaseConfig = (cliOpts) => {
-  return {
+export default defineConfig((cliOpts) => {
+  /** @type {TsupOptions} */
+  const baseCfg = {
     entry: {
       [clientName]: "lib/index.ts",
     },
@@ -39,51 +39,46 @@ const getBaseConfig = (cliOpts) => {
     bundle: true,
     esbuildPlugins: [],
     minify: false,
-    splitting: false,
     sourcemap: true,
     dts: false,
     clean: true,
     watch: cliOpts.watch,
     metafile: cliOpts.watch || isDevelopmentMode,
   };
-};
 
-export default defineConfig((cliOpts) => ([
-  {
-    ...getBaseConfig(cliOpts),
-    esbuildPlugins: [],
-    minify: false,
-  },
-  {
-    ...getBaseConfig(cliOpts),
-    esbuildPlugins: [],
-    minify: true,
-  },
-  {
-    ...getBaseConfig(cliOpts),
-    format: ["umd"],
-    minify: false,
-    plugins: [createUmdWrapper({ libraryName: clientName, external: [] })],
-  },
-  {
-    ...getBaseConfig(cliOpts),
-    minify: true,
-    format: ["umd"],
-    plugins: [createUmdWrapper({ libraryName: clientName, external: [] })],
-  },
-  {
-    ...getBaseConfig(cliOpts),
-    entry: {
-      [clientName]: "lib/index.ts",
+  /** @type {TsupOptions[]} */
+  return [
+    baseCfg,
+    {
+      ...baseCfg,
+      minify: true,
     },
-    minify: false,
-    target: "es6",
-    format: ["umd"],
-    outputExtension: {
-      js: "browser.js",
+    {
+      ...baseCfg,
+      format: ["umd"],
+      minify: false,
+      plugins: [createUmdWrapper({ libraryName: clientName, external: [] })],
     },
-    outDir: "dist",
-    esbuildPlugins: [umdWrapper({ libraryName: clientName, external: "inherit" })],
-    onSuccess: "tsc --emitDeclarationOnly --declaration --outDir dist && node --import tsx ./tools/fix-dts.mts",
-  },
-]));
+    {
+      ...baseCfg,
+      minify: true,
+      format: ["umd"],
+      plugins: [createUmdWrapper({ libraryName: clientName, external: [] })],
+    },
+    {
+      ...baseCfg,
+      entry: {
+        [clientName]: "lib/index.ts",
+      },
+      minify: false,
+      target: "es6",
+      format: ["umd"],
+      outputExtension: {
+        js: "browser.js",
+      },
+      outDir: "dist",
+      esbuildPlugins: [umdWrapper({ libraryName: clientName, external: "inherit" })],
+      onSuccess: "tsc --emitDeclarationOnly --declaration --outDir dist && node --import tsx ./tools/fix-dts.mts",
+    },
+  ];
+});
