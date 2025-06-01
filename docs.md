@@ -1399,7 +1399,7 @@ const engine = new FileStorageEngine(options?: FileStorageEngineOptions);
   
 Storage engine for the [`DataStore` class](#class-datastore) that uses a file to store data.  
   
-⚠️ Requires Node.js or Deno with Node compatibility  
+⚠️ Requires Node.js or Deno with Node compatibility (v1.31+)  
 ⚠️ Don't reuse this engine across multiple [`DataStore`](#class-datastore) instances  
   
 <details><summary>Example - click to view</summary>

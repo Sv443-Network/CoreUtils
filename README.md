@@ -1,15 +1,10 @@
-> [!IMPORTANT]  
-> This library is not ready to be used yet. Please check back in a couple weeks.
-
-<br><br>
-
 <div align="center" style="text-align: center;">
 
 # CoreUtils
 Cross-platform, general-purpose, JavaScript core library for Node, Deno and the browser.  
 Intended to be used in conjunction with [`@sv443-network/userutils`](https://github.com/Sv443-Network/UserUtils) and [`@sv443-network/djsutils`](https://github.com/Sv443-Network/DJSUtils), but can be used independently as well.
 
-### [Documentation](./docs.md#readme) &bull; [Features](#features) &bull; [Installation](#installation) &bull; [License](#license)
+### [Documentation](./docs.md#readme) &bull; [Features](#features) &bull; [Installation](#installation) &bull; [License](#license) &bull; [Changelog](./CHANGELOG.md)
 
 </div>
 <br>
@@ -138,4 +133,35 @@ pnpm i @sv443-network/coreutils
 yarn add @sv443-network/coreutils
 npx jsr install @sv443-network/coreutils
 deno add jsr:@sv443-network/coreutils
+```
+- If you are in a DOM environment, you can include the UMD bundle using your favorite CDN:
+```html
+<script src="https://cdn.jsdelivr.net/npm/@sv443-network/coreutils@latest/dist/CoreUtils.min.umd.js"></script>
+<script src="https://unpkg.com/@sv443-network/coreutils@latest/dist/CoreUtils.min.umd.js"></script>
+<script src="https://esm.sh/@sv443-network/coreutils@latest/dist/CoreUtils.min.umd.js"></script>
+```
+- Then, import parts of the library as needed:
+```ts
+// >> EcmaScript Modules (ESM):
+
+// - import parts of the library:
+import { randomItem } from "@sv443-network/coreutils";
+// - or import the full library:
+import * as CoreUtils from "@sv443-network/coreutils";
+// - or import raw TS files, after installing via JSR:
+import { DataStore } from "jsr:@sv443-network/coreutils/lib/DataStore.ts";
+
+// >> CommonJS (CJS):
+
+// - import parts of the library:
+const { debounce } = require("@sv443-network/coreutils");
+// - or import the full library:
+const CoreUtils = require("@sv443-network/coreutils");
+
+// >> Universal Module Definition (UMD):
+
+// - to make the global variable `CoreUtils` available, import this file:
+// "@sv443-network/coreutils/dist/CoreUtils.min.umd.js"
+// - or import the library on your HTML page:
+// <script src="https://cdn.jsdelivr.net/npm/@sv443-network/coreutils@latest/dist/CoreUtils.min.umd.js"></script>
 ```
