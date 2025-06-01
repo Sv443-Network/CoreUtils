@@ -5,6 +5,7 @@
  */
 
 import type { DataStoreData, DataStoreOptions } from "./DataStore.js";
+import { DatedError } from "./Errors.js";
 import type { SerializableVal } from "./types.js";
 
 //#region >> DataStoreEngine
@@ -146,7 +147,7 @@ export type FileStorageEngineOptions = {
 /**
  * Storage engine for the {@linkcode DataStore} class that uses a JSON file to store data.  
  *   
- * ⚠️ Requires Node.js or Deno with Node compatibility  
+ * ⚠️ Requires Node.js or Deno with Node compatibility (v1.31+)  
  * ⚠️ Don't reuse this engine across multiple {@linkcode DataStore} instances
  */
 export class FileStorageEngine<TData extends DataStoreData> extends DataStoreEngine<TData> {
@@ -155,7 +156,7 @@ export class FileStorageEngine<TData extends DataStoreData> extends DataStoreEng
   /**
    * Creates an instance of `FileStorageEngine`.  
    *   
-   * ⚠️ Requires Node.js or Deno with Node compatibility  
+   * ⚠️ Requires Node.js or Deno with Node compatibility (v1.31+)  
    * ⚠️ Don't reuse this engine across multiple {@linkcode DataStore} instances
    */
   constructor(options?: FileStorageEngineOptions) {
@@ -173,14 +174,17 @@ export class FileStorageEngine<TData extends DataStoreData> extends DataStoreEng
     try {
       if(!fs)
         fs = (await import("node:fs/promises")).default;
+      if(!fs)
+        throw new DatedError("FileStorageEngine requires Node.js or Deno with Node compatibility (v1.31+)", { cause: new Error("'node:fs/promises' module not available") });
 
       const path = typeof this.options.filePath === "string"
         ? this.options.filePath
         : this.options.filePath(this.dataStoreOptions.id);
       const data = await fs.readFile(path, "utf-8");
-      if(!data)
-        return undefined;
-      return JSON.parse(await this.dataStoreOptions?.decodeData?.[1]?.(data) ?? data) as TData;
+
+      return data
+        ? JSON.parse(await this.dataStoreOptions?.decodeData?.[1]?.(data) ?? data) as TData
+        : undefined;
     }
     catch {
       return undefined;
@@ -192,10 +196,13 @@ export class FileStorageEngine<TData extends DataStoreData> extends DataStoreEng
     try {
       if(!fs)
         fs = (await import("node:fs/promises")).default;
+      if(!fs)
+        throw new DatedError("FileStorageEngine requires Node.js or Deno with Node compatibility (v1.31+)", { cause: new Error("'node:fs/promises' module not available") });
 
       const path = typeof this.options.filePath === "string"
         ? this.options.filePath
         : this.options.filePath(this.dataStoreOptions.id);
+
       await fs.mkdir(path.slice(0, path.lastIndexOf("/")), { recursive: true });
       await fs.writeFile(path, await this.dataStoreOptions?.encodeData?.[1]?.(JSON.stringify(data)) ?? JSON.stringify(data, undefined, 2), "utf-8");
     }
