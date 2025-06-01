@@ -136,6 +136,12 @@ For submitting bug reports or feature requests, please use the [GitHub issue tra
     - 🔷 [`type ValueGen`](#type-valuegen) - A value that can be either the generic type T, or a sync or async function that returns T
     - 🔷 [`type Stringifiable`](#type-stringifiable) - Any value that can be implicitly converted to a string
 
+> [!NOTE]  
+> 🟣 = function  
+> 🟧 = class  
+> 🔷 = type  
+> 🟩 = const
+
 <br><br><br>
 
 

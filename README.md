@@ -122,7 +122,7 @@ Intended to be used in conjunction with [`@sv443-network/userutils`](https://git
 > 🟣 = function  
 > 🟧 = class  
 > 🔷 = type  
-> 🔶 = const
+> 🟩 = const
 
 <br>
 
