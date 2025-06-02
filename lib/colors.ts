@@ -43,10 +43,8 @@ export function darkenColor(color: string, percent: number, upperCase = false): 
     return rgbToHex(r, g, b, a, color.startsWith("#"), upperCase);
   else if(color.startsWith("rgba"))
     return `rgba(${r}, ${g}, ${b}, ${a ?? NaN})`;
-  else if(color.startsWith("rgb"))
-    return `rgb(${r}, ${g}, ${b})`;
   else
-    throw new TypeError("Unsupported color format");
+    return `rgb(${r}, ${g}, ${b})`;
 }
 
 /**

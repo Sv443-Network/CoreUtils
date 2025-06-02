@@ -22,7 +22,7 @@ const store2 = new DataStore({
   defaultData: { c: 1, d: 2 },
   formatVersion: 1,
   engine: () => new FileStorageEngine({
-    filePath: "./test.json",
+    filePath: () => "./test.json",
   }),
   encodeData: [compFmt, async (data) => await compress(data, compFmt, "string")],
   decodeData: [compFmt, async (data) => await decompress(data, compFmt, "string")],

@@ -4,7 +4,7 @@ import { darkenColor, hexToRgb, lightenColor, rgbToHex } from "./colors.js";
 //#region hexToRgb
 describe("colors/hexToRgb", () => {
   it("Converts a hex color string to an RGB tuple", () => {
-    const hex = "#FF0000";
+    const hex = "#F00";
     const [r, g, b, a] = hexToRgb(hex);
 
     expect(r).toBe(255);
@@ -57,6 +57,11 @@ describe("colors/lightenColor", () => {
     expect(lightenColor("ab35de", Infinity, true)).toBe("FFFFFF");
     expect(lightenColor("rgba(255, 50, 127, 0.5)", 50)).toBe("rgba(255, 75, 190.5, 0.5)");
     expect(lightenColor("rgb(255, 50, 127)", 50)).toBe("rgb(255, 75, 190.5)");
+  });
+
+  it("Handles edge cases", () => {
+    expect(() => lightenColor("z", 50)).toThrowError(TypeError);
+    expect(() => lightenColor("rgbz", 50)).toThrowError(TypeError);
   });
 });
 

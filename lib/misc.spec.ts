@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { consumeGen, consumeStringGen, fetchAdvanced, getListLength, pauseFor, pureObj, setImmediateInterval, setImmediateTimeoutLoop } from "./misc.js";
+import { consumeGen, consumeStringGen, fetchAdvanced, getListLength, pauseFor, pureObj, scheduleExit, setImmediateInterval, setImmediateTimeoutLoop } from "./misc.js";
+import { vi } from "vitest";
 
 //#region pauseFor
 describe("misc/pauseFor", () => {
@@ -149,5 +150,22 @@ describe("misc/setImmediateTimeoutLoop", () => {
     expect(times.length).toBeLessThanOrEqual(3);
     expect(times.length).toBeGreaterThanOrEqual(1);
     expect(times.every(t => t <= 200 && t >= 0)).toBe(true);
+  });
+});
+
+//#region scheduleExit
+describe("misc/scheduleExit", () => {
+  it("Schedules an exit with the specified code", async () => {
+    const exitSpy = vi.spyOn(process, "exit").mockImplementation((code?: string | number | null) => void code as never);
+
+    scheduleExit(0);
+    await pauseFor(1);
+    expect(exitSpy).toHaveBeenCalledWith(0);
+
+    scheduleExit(1);
+    await pauseFor(1);
+    expect(exitSpy).toHaveBeenCalledWith(1);
+
+    exitSpy.mockRestore();
   });
 });
