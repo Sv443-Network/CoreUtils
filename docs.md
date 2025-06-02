@@ -399,10 +399,10 @@ console.log(rgbToHex());                                // #nannannan
 ### `function abtoa()`
 Signature:
 ```ts
-function abtoa(buf: ArrayBuffer): string;
+function abtoa(buf: Uint8Array): string;
 ```
   
-Converts an ArrayBuffer to a base64-encoded (ASCII) string.  
+Converts an ArrayBuffer (Uint8Array) to a base64-encoded (ASCII) string.  
 Used to encode a value to be later decoded with the [`atoab()` function](#function-atoab).  
   
 <details><summary>Example - click to view</summary>
@@ -413,7 +413,7 @@ import { abtoa } from "@sv443-network/coreutils";
 const buffer = new ArrayBuffer(8);
 const view = new Uint8Array(buffer);
 view.set([1, 2, 3, 4, 5, 6, 7, 8]);
-const base64 = abtoa(buffer);
+const base64 = abtoa(view);
 console.log(base64); // AQIDBAUGBwg=
 ```
 </details>
@@ -423,10 +423,10 @@ console.log(base64); // AQIDBAUGBwg=
 ### `function atoab()`
 Signature:
 ```ts
-function atoab(str: string): ArrayBuffer;
+function atoab(str: string): Uint8Array;
 ```
   
-Converts a base64-encoded (ASCII) string to an ArrayBuffer.  
+Converts a base64-encoded (ASCII) string to an ArrayBuffer (Uint8Array).  
 Used to decode a value previously encoded with the [`abtoa()` function](#function-abtoa).  
   
 <details><summary>Example - click to view</summary>
@@ -436,8 +436,7 @@ import { atoab } from "@sv443-network/coreutils";
 
 const base64 = "AQIDBAUGBwg="; // see abtoa() example
 const buffer = atoab(base64);
-const view = new Uint8Array(buffer);
-console.log(view); // Uint8Array(8) [ 1, 2, 3, 4, 5, 6, 7, 8 ]
+console.log(buffer); // Uint8Array(8) [ 1, 2, 3, 4, 5, 6, 7, 8 ]
 ```
 </details>
 
@@ -446,13 +445,13 @@ console.log(view); // Uint8Array(8) [ 1, 2, 3, 4, 5, 6, 7, 8 ]
 ### `function compress()`
 Signature:
 ```ts
-function compress(input: Stringifiable | ArrayBuffer, compressionFormat: CompressionFormat, outputType: "string" | "arrayBuffer" = "string"): Promise<ArrayBuffer | string>;
+function compress(input: Stringifiable | Uint8Array, compressionFormat: CompressionFormat, outputType: "string" | "arrayBuffer" = "string"): Promise<Uint8Array | string>;
 ```
   
-Compresses the given string or ArrayBuffer using the given algorithm and encoding.  
-The `input` argument can be a [`Stringifiable`](#type-stringifiable) object or an ArrayBuffer.  
+Compresses the given string or ArrayBuffer (Uint8Array) using the given algorithm and encoding.  
+The `input` argument can be a [`Stringifiable`](#type-stringifiable) object or an ArrayBuffer (Uint8Array).  
 The `compressionFormat` argument can usually be either `gzip`, `deflate` or `deflate-raw`.  
-The `outputType` argument determines if the returned value should be a base64-encoded string or an ArrayBuffer.  
+The `outputType` argument determines if the returned value should be a base64-encoded string or an ArrayBuffer (Uint8Array).  
   
 <details><summary>Example - click to view</summary>
 
@@ -473,13 +472,13 @@ console.log(str === decompressed); // true
 ### `function decompress()`
 Signature:
 ```ts
-function decompress(input: Stringifiable | ArrayBuffer, compressionFormat: CompressionFormat, outputType: "string" | "arrayBuffer" = "string"): Promise<ArrayBuffer | string>;
+function decompress(input: Stringifiable | Uint8Array, compressionFormat: CompressionFormat, outputType: "string" | "arrayBuffer" = "string"): Promise<Uint8Array | string>;
 ```
   
-Decompresses the previously compressed string or ArrayBuffer using the given algorithm and encoding.  
-The `input` argument can be a [`Stringifiable`](#type-stringifiable) object or an ArrayBuffer.  
+Decompresses the previously compressed string or ArrayBuffer (Uint8Array) using the given algorithm and encoding.  
+The `input` argument can be a [`Stringifiable`](#type-stringifiable) object or an ArrayBuffer (Uint8Array).  
 The `compressionFormat` argument can usually be either `gzip`, `deflate` or `deflate-raw`.  
-The `outputType` argument determines if the returned value should be a base64-encoded string or an ArrayBuffer.  
+The `outputType` argument determines if the returned value should be a base64-encoded string or an ArrayBuffer (Uint8Array).  
   
 <details><summary>Example - click to view</summary>
 
@@ -500,14 +499,10 @@ console.log(str === decompressed); // true
 ### `function computeHash()`
 Signature:
 ```ts
-function computeHash(input: string | ArrayBuffer, algorithm = "SHA-256"): Promise<string>;
+function computeHash(input: string | Uint8Array, algorithm = "SHA-256"): Promise<string>;
 ```
-<!-- Creates a hash / checksum of the given {@linkcode input} string or ArrayBuffer using the specified {@linkcode algorithm} ("SHA-256" by default).  
- *   
- * - ⚠️ Uses the SubtleCrypto API so it needs to run in a secure context (HTTPS).  
- * - ⚠️ If you use this for cryptography, make sure to use a secure algorithm (under no circumstances use SHA-1) and to [salt](https://en.wikipedia.org/wiki/Salt_(cryptography)) your input data. -->
   
-Creates a hash / checksum of the given string or ArrayBuffer using the specified algorithm ("SHA-256" by default).  
+Creates a hash / checksum of the given string or ArrayBuffer (Uint8Array) using the specified algorithm ("SHA-256" by default).  
   
 - ⚠️ Uses the SubtleCrypto API so in a DOM environment this needs to run in a secure context (HTTPS).
 - ⚠️ If you use this for cryptography, make sure to use a secure algorithm (under no circumstances use SHA-1) and to [salt your input.](https://en.wikipedia.org/wiki/Salt_(cryptography))
