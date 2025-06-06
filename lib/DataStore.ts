@@ -296,7 +296,7 @@ export class DataStore<TData extends DataStoreData> {
   }
 
   /**
-   * Call this method to clear all persistently stored data associated with this DataStore instance.  
+   * Call this method to clear all persistently stored data associated with this DataStore instance, including the storage container (if supported by the DataStoreEngine).  
    * The in-memory cache will be left untouched, so you may still access the data with {@linkcode getData()}  
    * Calling {@linkcode loadData()} or {@linkcode setData()} after this method was called will recreate persistent storage with the cached or default data.  
    *   
@@ -307,6 +307,7 @@ export class DataStore<TData extends DataStoreData> {
       this.engine.deleteValue(`__ds-${this.id}-dat`),
       this.engine.deleteValue(`__ds-${this.id}-ver`),
       this.engine.deleteValue(`__ds-${this.id}-enc`),
+      this.engine.deleteStorage?.(),
     ]);
   }
 

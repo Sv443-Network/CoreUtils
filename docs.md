@@ -772,7 +772,7 @@ Signature:
 deleteData(): Promise<void>;
 ```
   
-Fully deletes the data from persistent storage only.  
+Fully deletes the data from persistent storage only. Also deletes the data container itself, if the storage engine implements the [`deleteStorage()`](#datastoreenginedeletestorage) method.  
 The internal cache will be left untouched, so any subsequent calls to `getData()` will return the data that was last loaded.  
 If `loadData()` or `setData()` are called after this, the persistent storage will be populated with the value of `options.defaultData` again.  
 This is why you should either immediately repopulate the cache and persistent storage or the page should probably be reloaded or closed after this method is called.
@@ -1268,6 +1268,16 @@ abstract deleteValue(name: string): Promise<void>;
   
 Must be implemented by the engine subclass.  
 Is called to delete the value of the given name from persistent storage.  
+
+<br>
+
+### `DataStoreEngine.deleteStorage()`
+Signature:
+```ts
+deleteStorage?(): Promise<void>;
+```
+Optional method that may be implemented by the engine subclass. Gets called when the [`DataStore.deleteData()`](#datastoredeletedata) method is called.  
+If called, it should delete all data stored by the engine by deleting the storage container itself (e.g. the file or database).
 
 <br>
 

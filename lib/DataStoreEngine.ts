@@ -10,6 +10,11 @@ import type { SerializableVal } from "./types.js";
 
 //#region >> DataStoreEngine
 
+export interface DataStoreEngine<TData extends DataStoreData> { // eslint-disable-line @typescript-eslint/no-unused-vars
+  /** Deletes all data in persistent storage, including the data container itself (e.g. a file or a database) */
+  deleteStorage?(): Promise<void>;
+}
+
 /**
  * Base class for creating {@linkcode DataStore} storage engines.  
  * This acts as an interchangeable API for writing and reading persistent data in various environments.
@@ -173,7 +178,7 @@ export class FileStorageEngine<TData extends DataStoreData> extends DataStoreEng
   protected async readFile(): Promise<TData | undefined> {
     try {
       if(!fs)
-        fs = (await import("node:fs/promises")).default;
+        fs = (await import("node:fs/promises"))?.default;
       if(!fs)
         throw new DatedError("FileStorageEngine requires Node.js or Deno with Node compatibility (v1.31+)", { cause: new Error("'node:fs/promises' module not available") });
 
@@ -195,7 +200,7 @@ export class FileStorageEngine<TData extends DataStoreData> extends DataStoreEng
   protected async writeFile(data: TData): Promise<void> {
     try {
       if(!fs)
-        fs = (await import("node:fs/promises")).default;
+        fs = (await import("node:fs/promises"))?.default;
       if(!fs)
         throw new DatedError("FileStorageEngine requires Node.js or Deno with Node compatibility (v1.31+)", { cause: new Error("'node:fs/promises' module not available") });
 
@@ -242,5 +247,23 @@ export class FileStorageEngine<TData extends DataStoreData> extends DataStoreEng
       return;
     delete data[name as keyof TData];
     await this.writeFile(data);
+  }
+
+  /** Deletes the file that contains the data of this DataStore. */
+  public async deleteStorage(): Promise<void> {
+    try {
+      if(!fs)
+        fs = (await import("node:fs/promises"))?.default;
+      if(!fs)
+        throw new DatedError("FileStorageEngine requires Node.js or Deno with Node compatibility (v1.31+)", { cause: new Error("'node:fs/promises' module not available") });
+
+      const path = typeof this.options.filePath === "string"
+        ? this.options.filePath
+        : this.options.filePath(this.dataStoreOptions.id);
+      await fs.unlink(path);
+    }
+    catch(err) {
+      console.error("Error deleting file:", err);
+    }
   }
 }
