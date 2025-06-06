@@ -53,7 +53,9 @@ export function darkenColor(color: string, percent: number, upperCase = false): 
  */
 export function hexToRgb(hex: string): [red: number, green: number, blue: number, alpha?: number] {
   hex = (hex.startsWith("#") ? hex.slice(1) : hex).trim();
-  const a = hex.length === 8 || hex.length === 4 ? parseInt(hex.slice(-(hex.length / 4)), 16) / (hex.length === 8 ? 255 : 15) : undefined;
+  const a = hex.length === 8 || hex.length === 4
+    ? parseInt(hex.slice(-(hex.length / 4)), 16) / (hex.length === 8 ? 255 : 15)
+    : undefined;
 
   if(!isNaN(Number(a)))
     hex = hex.slice(0, -(hex.length / 4));

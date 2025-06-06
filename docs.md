@@ -108,7 +108,7 @@ For submitting bug reports or feature requests, please use the [GitHub issue tra
       - 🟩 [`const defaultPbChars`](#const-defaultpbchars) - Default characters for the progress bar
       - 🔷 [`type ProgressBarChars`](#type-progressbarchars) - Type for the progress bar characters object
     - 🟣 [`function joinArrayReadable()`](#function-joinarrayreadable) - Joins the given array into a string, using the given separators and last separator
-    - 🟣 [`function secsToTimeStr()`](#function-sectostimestr) - Turns the given number of seconds into a string in the format `(hh:)mm:ss` with intelligent zero-padding
+    - 🟣 [`function secsToTimeStr()`](#function-secstotimestr) - Turns the given number of seconds into a string in the format `(hh:)mm:ss` with intelligent zero-padding
     - 🟣 [`function truncStr()`](#function-truncstr) - Truncates the given string to the given length
   <!-- - *[**TieredCache:**](#tieredcache)
     - 🟧 *[`class TieredCache`](#class-tieredcache) - A multi-tier cache that uses multiple storage engines with different expiration times

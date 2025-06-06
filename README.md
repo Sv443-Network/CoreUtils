@@ -90,7 +90,7 @@ Intended to be used in conjunction with [`@sv443-network/userutils`](https://git
     - 🟩 [`const defaultPbChars`](./docs.md#const-defaultpbchars) - Default characters for the progress bar
     - 🔷 [`type ProgressBarChars`](./docs.md#type-progressbarchars) - Type for the progress bar characters object
   - 🟣 [`function joinArrayReadable()`](./docs.md#function-joinarrayreadable) - Joins the given array into a string, using the given separators and last separator
-  - 🟣 [`function secsToTimeStr()`](./docs.md#function-sectostimestr) - Turns the given number of seconds into a string in the format `(hh:)mm:ss` with intelligent zero-padding
+  - 🟣 [`function secsToTimeStr()`](./docs.md#function-secstotimestr) - Turns the given number of seconds into a string in the format `(hh:)mm:ss` with intelligent zero-padding
   - 🟣 [`function truncStr()`](./docs.md#function-truncstr) - Truncates the given string to the given length
 <!-- - *[**TieredCache:**](./docs.md#tieredcache)
   - 🟧 *[`class TieredCache`](./docs.md#class-tieredcache) - A multi-tier cache that uses multiple storage engines with different expiration times
@@ -135,11 +135,11 @@ yarn add @sv443-network/coreutils
 npx jsr install @sv443-network/coreutils
 deno add jsr:@sv443-network/coreutils
 ```
-- If you are in a DOM environment, you can include the UMD bundle using your favorite CDN:
+- If you are in a DOM environment, you can include the UMD bundle using your favorite CDN (after inserting the version number):
 ```html
-<script src="https://cdn.jsdelivr.net/npm/@sv443-network/coreutils@latest/dist/CoreUtils.min.umd.js"></script>
-<script src="https://unpkg.com/@sv443-network/coreutils@latest/dist/CoreUtils.min.umd.js"></script>
-<script src="https://esm.sh/@sv443-network/coreutils@latest/dist/CoreUtils.min.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@sv443-network/coreutils@INSERT_VERSION_HERE/dist/CoreUtils.min.umd.js"></script>
+<script src="https://unpkg.com/@sv443-network/coreutils@INSERT_VERSION_HERE/dist/CoreUtils.min.umd.js"></script>
+<script src="https://esm.sh/@sv443-network/coreutils@INSERT_VERSION_HERE/dist/CoreUtils.min.umd.js"></script>
 ```
 - Then, import parts of the library as needed:
 ```ts
