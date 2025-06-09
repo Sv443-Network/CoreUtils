@@ -52,12 +52,14 @@ For submitting bug reports or feature requests, please use the [GitHub issue tra
     - 🟧 [`class DataStore`](#class-datastore) - The main class for the data store
       - 🔷 [`type DataStoreOptions`](#type-datastoreoptions) - Options for the data store
       - 🔷 [`type DataMigrationsDict`](#type-datamigrationsdict) - Dictionary of data migration functions
+      - 🔷 [`type DataStoreData`](#type-datastoredata) - The type of the serializable data
     - 🟧 [`class DataStoreSerializer`](#class-datastoreserializer) - Serializes and deserializes data for multiple DataStore instances
       - 🔷 [`type DataStoreSerializerOptions`](#type-datastoreserializeroptions) - Options for the DataStoreSerializer
       - 🔷 [`type LoadStoresDataResult`](#type-loadstoresdataresult) - Result of calling [`loadStoresData()`](#datastoreserializer-loadstoresdata)
       - 🔷 [`type SerializedDataStore`](#type-serializeddatastore) - Meta object and serialized data of a DataStore instance
       - 🔷 [`type StoreFilter`](#type-storefilter) - Filter for selecting data stores
     - 🟧 [`class DataStoreEngine`](#class-datastoreengine) - Base class for DataStore storage engines, which handle the data storage
+      - 🔷 [`type DataStoreEngineDSOptions`](#type-datastoreenginedsoptions) - Reduced version of [`DataStoreOptions`](#type-datastoreoptions)
     - [Storage Engines:](#storage-engines)
       - 🟧 [`class BrowserStorageEngine`](#class-browserstorageengine) - Storage engine for browser environments (localStorage, sessionStorage)
         - 🔷 [`type BrowserStorageEngineOptions`](#browserstorageengineoptions) - Options for the browser storage engine
@@ -586,7 +588,7 @@ benchmark(true, true);   // Generated 10k in 1054ms
 ### `class DataStore`
 Signature:
 ```ts
-class DataStore<TData extends object = object>;
+class DataStore<TData extends DataStoreData>;
 ```
   
 Usage:
@@ -825,8 +827,8 @@ It has the following properties:
 | `migrations?` | [`DataMigrationsDict`](#type-datamigrationsdict) | (Optional) A dictionary of functions that can be used to migrate data from older versions of the data to newer ones. The keys of the dictionary should be the format version number that the function migrates to, from the previous whole integer value. The values should be functions that take the data in the old format and return the data in the new format. The functions will be run in order from the oldest to the newest version. If the current format version is not in the dictionary, no migrations will be run. |
 | `migrateIds?` | `string \| string[]` | (Optional) A string or array of strings that migrate from one or more old IDs to the ID set in the constructor. If no data exist for the old ID(s), nothing will be done, but some time may still pass trying to fetch the non-existent data. The ID migration will be done once per session in the call to [`loadData()`](#datastoreloaddata). |
 | `compressionFormat?` | [`CompressionFormat`](https://developer.mozilla.org/en-US/docs/Web/API/CompressionStream/CompressionStream#format) \| `null` | (Optional, disallowed when `encodeData` and `decodeData` are set) The compression format to use when saving the data. If set, the data will be compressed before saving and decompressed after loading. The default is `"deflate-raw"`. Explicitly set to `null` to disable compression. |
-| `encodeData?` | `(data: string) => string \| Promise<string>` | (Optional, but required when `decodeData` is also set and disallowed when `compressionFormat` is set) Function that encodes the data before saving - you can use [`compress()`](#function-compress) here to save space at the cost of a little bit of performance |
-| `decodeData?` | `(data: string) => string \| Promise<string>` | (Optional, but required when `encodeData` is also set and disallowed when `compressionFormat` is set) Function that decodes the data when loading - you can use [`decompress()`](#function-decompress) here to decode the data that was previously compressed with [compress()](#function-compress) |
+| `encodeData?` | `[format: string, encode: (data: string) => string \| Promise<string>]` | (Optional, but required when `decodeData` is also set and disallowed when `compressionFormat` is set) Format identifier and function that encodes the data before saving - you can use [`compress()`](#function-compress) here to save space at the cost of a little bit of performance |
+| `decodeData?` | `[format: string, decode: (data: string) => string \| Promise<string>]` | (Optional, but required when `encodeData` is also set and disallowed when `compressionFormat` is set) Format identifier and function that decodes the data when loading - you can use [`decompress()`](#function-decompress) here to decode the data that was previously compressed with [compress()](#function-compress) |
 
 <br>
 
@@ -838,6 +840,18 @@ Don't use negative values and don't skip numbers.
   
 The values are functions that take the data in the old format as the sole argument and should return the data in the new format.  
 The old data is a copy of the cached object, so you can mutate it directly, use `delete data.foo` to delete properties, etc.
+
+<br>
+
+### `type DataStoreData`
+```ts
+type DataStoreData<TData extends SerializableVal = SerializableVal> = Record<string, SerializableVal | TData>;
+```
+  
+A type that represents the data stored in a DataStore instance.  
+It is a record of string keys to values that can be serialized to JSON via `JSON.stringify()`.  
+This means that the values can be primitive types (string, number, boolean, null), arrays or objects that only contain serializable values.  
+Refer to the [`SerializableVal` type](#type-serializableval) for more information.
 
 <br><br>
 
@@ -891,7 +905,7 @@ const barStore = new DataStore({
   // this is how you can set custom encoding and decoding functions:
   encodeData: ["gzip", (data) => compress(data, "gzip", "string")],
   decodeData: ["gzip", (data) => decompress(data, "gzip", "string")],
-  // ensure the algorithm always stays the same!
+  // ensure the algorithm always stays consistent!
 });
 
 const serializer = new DataStoreSerializer([fooStore, barStore], {
@@ -1177,12 +1191,12 @@ Argument for filtering DataStore instances in the methods [`DataStoreSerializer.
 ### `class DataStoreEngine`
 Signature:
 ```ts
-abstract class DataStoreEngine<TData extends object = object>;
+abstract class DataStoreEngine<TData extends DataStoreData>;
 ```
   
 Usage:
 ```ts
-class MyStorageEngine<TData extends object = object> extends DataStoreEngine<TData> {
+class MyStorageEngine<TData extends DataStoreData> extends DataStoreEngine<TData> {
   protected options: MyStorageEngineOptions;
   constructor(options: MyStorageEngineOptions) {
     super();
@@ -1198,9 +1212,9 @@ While this library offers some premade engines [in the Storage Engines section,]
 <details><summary>Example - click to view</summary>
 
 ```ts
-import { DataStoreEngine } from "@sv443-network/coreutils";
+import { DataStoreEngine, type DataStoreData } from "@sv443-network/coreutils";
 
-class MyStorageEngine<TData extends object = object> extends DataStoreEngine<TData> {
+class MyStorageEngine<TData extends DataStoreData> extends DataStoreEngine<TData> {
   protected options: MyStorageEngineOptions;
 
   constructor(options: MyStorageEngineOptions) {
@@ -1288,7 +1302,7 @@ serializeData(data: TData, useEncoding?: boolean): Promise<string>;
 ```
   
 Is called to serialize the data before it will be saved.  
-In the default implementation, if `useEncoding` is set to `true`, the data will be encoded using the `dataStoreOptions.encodeData` function.
+In the default implementation, if `useEncoding` is set to `true`, the data will be encoded using the function at `dataStoreOptions.encodeData[1]`.
 
 <br>
 
@@ -1318,11 +1332,27 @@ If it isn't available, it defaults to a more primitive `JSON.parse(JSON.stringif
 ### `DataStoreEngine.setDataStoreOptions()`
 Signature:
 ```ts
-setDataStoreOptions(dataStoreOptions: DataStoreOptions<TData>): void;
+setDataStoreOptions(dataStoreOptions: DataStoreEngineDSOptions<TData>): void;
 ```
   
-Called by the [`DataStore` class](#class-datastore) instance to pass its options object.  
-Either overwrite this method or wait for the member `dataStoreOptions` to be set by it and use that.
+Called by the [`DataStore` constructor](#class-datastore) instance to pass a reduced version of its options object (see also [`DataStoreEngineDSOptions`](#type-datastoreenginedsoptions)).  
+If you are using a DataStoreEngine subclass standalone, you can call this method yourself to set the options object.
+
+<br>
+
+### `type DataStoreEngineDSOptions`
+```ts
+type DataStoreEngineDSOptions<TData extends DataStoreData> =
+  Pick<DataStoreOptions<TData>, "decodeData" | "encodeData" | "id">;
+```
+  
+A reduced version of the [`DataStoreOptions`](#type-datastoreoptions) object that is set via the respective [`DataStoreEngine` subclass constructor](#storage-engines), or the method [`DataStoreEngine.setDataStoreOptions()`](#datastoreenginesetdatastoreoptions).  
+It contains only the properties necessary for storage engines to function properly:
+| Property | Type | Description |
+| :-- | :-- | :-- |
+| `id` | `string` | The ID of the namespace under which to store the data. This is used to prevent collisions between different "realms". |
+| `encodeData` | `[format: string, encode: (data: string) => string \| Promise<string>]` | Format identifier and function that encodes the data before saving - you can use [`compress()`](#function-compress) here to save space at the cost of a little bit of performance |
+| `decodeData` | `[format: string, decode: (data: string) => string \| Promise<string>]` | Format identifier and function that decodes the data when loading - you can use [`decompress()`](#function-decompress) here to decode the data that was previously compressed with [compress()](#function-compress) |
 
 <br><br>
 
@@ -1334,7 +1364,7 @@ Either overwrite this method or wait for the member `dataStoreOptions` to be set
 ### `class BrowserStorageEngine`
 Signature:
 ```ts
-class BrowserStorageEngine<TData extends object = object>
+class BrowserStorageEngine<TData extends DataStoreData>
   extends DataStoreEngine<TData>;
 ```
   
@@ -1400,7 +1430,7 @@ Note that the session storage will be cleared when the page is closed, while the
 ### `class FileStorageEngine`
 Signature:
 ```ts
-class FileStorageEngine<TData extends object = object>
+class FileStorageEngine<TData extends DataStoreData>
   extends DataStoreEngine<TData>;
 ```
   
@@ -3217,7 +3247,7 @@ const bar: Bar = {
 type SerializableVal = string | number | boolean | null | SerializableVal[] | { [key: string]: SerializableVal };
 ```
   
-Any value that can be serialized to JSON with `JSON.stringify()`.  
+Any value that can be serialized to JSON with `JSON.stringify()`.
 
 <br>
 
