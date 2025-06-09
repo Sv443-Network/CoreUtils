@@ -22,7 +22,7 @@ export interface DataStoreEngine<TData extends DataStoreData> { // eslint-disabl
 export abstract class DataStoreEngine<TData extends DataStoreData> {
   protected dataStoreOptions!: DataStoreOptions<TData>; // setDataStoreOptions() is called from inside the DataStore constructor to set this value
 
-  /** Called by DataStore on creation, to pass its options */
+  /** Called by DataStore on creation, to pass its options. Only overwrite the options if you are absolutely sure you know what you're doing! */
   public setDataStoreOptions(dataStoreOptions: DataStoreOptions<TData>): void {
     this.dataStoreOptions = dataStoreOptions;
   }

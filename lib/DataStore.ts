@@ -69,27 +69,31 @@ export type DataStoreOptions<TData extends DataStoreData> = Prettify<
       decodeData?: never;
       /**
        * The format to use for compressing the data. Defaults to `deflate-raw`. Explicitly set to `null` to store data uncompressed.  
-       * ⚠️ Use either this, or `encodeData` and `decodeData`, but not all three at a time!
+       * ⚠️ Use either this property, or both `encodeData` and `decodeData`, but not all three!
        */
       compressionFormat?: CompressionFormat | null;
     }
     | {
       /**
        * Tuple of a compression format identifier and a function to use to encode the data prior to saving it in persistent storage.  
-       * If this is specified, `compressionFormat` can't be used. Also make sure to declare {@linkcode decodeData()} as well.  
+       * Set the identifier to `null` or `"identity"` to indicate that no traditional compression is used.  
+       *   
+       * ⚠️ If this is specified, `compressionFormat` can't be used. Also make sure to declare {@linkcode decodeData()} as well.  
        *   
        * You can make use of the [`compress()` function](https://github.com/Sv443-Network/CoreUtils/blob/main/docs.md#function-compress) here to make the data use up less space at the cost of a little bit of performance.
        * @param data The input data as a serialized object (JSON string)
        */
-      encodeData: [format: LooseUnion<CompressionFormat>, encode: (data: string) => string | Promise<string>];
+      encodeData: [format: LooseUnion<CompressionFormat> | null, encode: (data: string) => string | Promise<string>];
       /**
        * Tuple of a compression format identifier and a function to use to decode the data after reading it from persistent storage.  
-       * If this is specified, `compressionFormat` can't be used. Also make sure to declare {@linkcode encodeData()} as well.  
+       * Set the identifier to `null` or `"identity"` to indicate that no traditional compression is used.  
+       *   
+       * ⚠️ If this is specified, `compressionFormat` can't be used. Also make sure to declare {@linkcode encodeData()} as well.  
        *   
        * You can make use of the [`decompress()` function](https://github.com/Sv443-Network/CoreUtils/blob/main/docs.md#function-decompress) here to make the data use up less space at the cost of a little bit of performance.
        * @returns The resulting data as a valid serialized object (JSON string)
        */
-      decodeData: [format: LooseUnion<CompressionFormat>, decode: (data: string) => string | Promise<string>];
+      decodeData: [format: LooseUnion<CompressionFormat> | null, decode: (data: string) => string | Promise<string>];
       compressionFormat?: never;
     }
   )
@@ -122,12 +126,20 @@ export class DataStore<TData extends DataStoreData> {
   public readonly defaultData: TData;
   public readonly encodeData: DataStoreOptions<TData>["encodeData"];
   public readonly decodeData: DataStoreOptions<TData>["decodeData"];
-  public readonly compressionFormat = "deflate-raw";
+  public readonly compressionFormat: Exclude<DataStoreOptions<TData>["compressionFormat"], undefined> = "deflate-raw";
   public readonly engine: DataStoreEngine<TData>;
+  /**
+   * Whether all first-init checks should be done.  
+   * This includes migrating the internal DataStore format, migrating data from the UserUtils format, and anything similar.  
+   * This is set to `true` by default. Create a subclass and set it to `false` before calling {@linkcode loadData()} if you want to explicitly skip these checks.
+   */
   protected firstInit = true;
+  /** In-memory cached copy of the data that is saved in persistent storage used for synchronous read access. */
   private cachedData: TData;
   private migrations?: DataMigrationsDict;
   private migrateIds: string[] = [];
+
+  public options: DataStoreOptions<TData>;
 
   /**
    * Creates an instance of DataStore to manage a sync & async database that is cached in memory and persistently saved across sessions.  
@@ -151,8 +163,10 @@ export class DataStore<TData extends DataStoreData> {
     this.decodeData = opts.decodeData;
     this.engine = typeof opts.engine === "function" ? opts.engine() : opts.engine;
 
+    this.options = opts;
+
     if(typeof opts.compressionFormat === "undefined")
-      opts.compressionFormat = "deflate-raw";
+      opts.compressionFormat = opts.encodeData?.[0] as CompressionFormat | undefined ?? "deflate-raw";
 
     if(typeof opts.compressionFormat === "string") {
       this.encodeData = [opts.compressionFormat, async (data: string) => await compress(data, opts.compressionFormat!, "string")];
@@ -194,17 +208,22 @@ export class DataStore<TData extends DataStoreData> {
 
             const promises: Promise<void>[] = [];
 
+            /** Migrates one UserUtils key */
             const migrateFmt = (oldKey: string, newKey: string, value: SerializableVal): void => {
               promises.push(this.engine.setValue(newKey, value));
               promises.push(this.engine.deleteValue(oldKey));
             };
 
-            oldData
-              && migrateFmt(`_uucfg-${this.id}`, `__ds-${this.id}-dat`, oldData);
-            !isNaN(oldVer)
-              && migrateFmt(`_uucfgver-${this.id}`, `__ds-${this.id}-ver`, oldVer);
-            typeof oldEnc === "boolean"
-              && migrateFmt(`_uucfgenc-${this.id}`, `__ds-${this.id}-enc`, oldEnc === true ? this.compressionFormat : null);
+            if(oldData)
+              migrateFmt(`_uucfg-${this.id}`, `__ds-${this.id}-dat`, oldData);
+
+            if(!isNaN(oldVer))
+              migrateFmt(`_uucfgver-${this.id}`, `__ds-${this.id}-ver`, oldVer);
+
+            if(typeof oldEnc === "boolean")
+              migrateFmt(`_uucfgenc-${this.id}`, `__ds-${this.id}-enf`, oldEnc === true ? Boolean(this.compressionFormat) || null : null);
+            else
+              promises.push(this.engine.setValue(`__ds-${this.id}-enf`, this.compressionFormat));
 
             await Promise.allSettled(promises);
           }
@@ -232,7 +251,8 @@ export class DataStore<TData extends DataStoreData> {
       }
 
       // check if the data is encoded
-      const isEncoded = Boolean(await this.engine.getValue(`__ds-${this.id}-enc`, false));
+      const encodingFmt = String(await this.engine.getValue(`__ds-${this.id}-enf`, null));
+      const isEncoded = encodingFmt !== "null" && encodingFmt !== "false";
 
       // if no format version is found, save the current one
       let saveData = false;
@@ -273,12 +293,11 @@ export class DataStore<TData extends DataStoreData> {
   /** Saves the data synchronously to the in-memory cache and asynchronously to the persistent storage */
   public setData(data: TData): Promise<void> {
     this.cachedData = data;
-    const useEncoding = this.encodingEnabled();
     return new Promise<void>(async (resolve) => {
       await Promise.allSettled([
-        this.engine.setValue(`__ds-${this.id}-dat`, await this.engine.serializeData(data, useEncoding)),
+        this.engine.setValue(`__ds-${this.id}-dat`, await this.engine.serializeData(data, this.encodingEnabled())),
         this.engine.setValue(`__ds-${this.id}-ver`, this.formatVersion),
-        this.engine.setValue(`__ds-${this.id}-enc`, useEncoding),
+        this.engine.setValue(`__ds-${this.id}-enf`, this.compressionFormat),
       ]);
       resolve();
     });
@@ -287,11 +306,10 @@ export class DataStore<TData extends DataStoreData> {
   /** Saves the default data passed in the constructor synchronously to the in-memory cache and asynchronously to persistent storage */
   public async saveDefaultData(): Promise<void> {
     this.cachedData = this.defaultData;
-    const useEncoding = this.encodingEnabled();
     await Promise.allSettled([
-      this.engine.setValue(`__ds-${this.id}-dat`, await this.engine.serializeData(this.defaultData, useEncoding)),
+      this.engine.setValue(`__ds-${this.id}-dat`, await this.engine.serializeData(this.defaultData, this.encodingEnabled())),
       this.engine.setValue(`__ds-${this.id}-ver`, this.formatVersion),
-      this.engine.setValue(`__ds-${this.id}-enc`, useEncoding),
+      this.engine.setValue(`__ds-${this.id}-enf`, this.compressionFormat),
     ]);
   }
 
@@ -306,14 +324,14 @@ export class DataStore<TData extends DataStoreData> {
     await Promise.allSettled([
       this.engine.deleteValue(`__ds-${this.id}-dat`),
       this.engine.deleteValue(`__ds-${this.id}-ver`),
-      this.engine.deleteValue(`__ds-${this.id}-enc`),
-      this.engine.deleteStorage?.(),
+      this.engine.deleteValue(`__ds-${this.id}-enf`),
     ]);
+    await this.engine.deleteStorage?.();
   }
 
   /** Returns whether encoding and decoding are enabled for this DataStore instance */
   public encodingEnabled(): this is Required<Pick<DataStoreOptions<TData>, "encodeData" | "decodeData">> {
-    return Boolean(this.encodeData && this.decodeData);
+    return Boolean(this.encodeData && this.decodeData) || Boolean(this.compressionFormat);
   }
 
   //#region migrations
@@ -356,7 +374,7 @@ export class DataStore<TData extends DataStoreData> {
     await Promise.allSettled([
       this.engine.setValue(`__ds-${this.id}-dat`, await this.engine.serializeData(newData as TData)),
       this.engine.setValue(`__ds-${this.id}-ver`, lastFmtVer),
-      this.engine.setValue(`__ds-${this.id}-enc`, this.encodingEnabled()),
+      this.engine.setValue(`__ds-${this.id}-enf`, this.compressionFormat),
     ]);
 
     return this.cachedData = { ...newData as TData };
@@ -369,9 +387,14 @@ export class DataStore<TData extends DataStoreData> {
   public async migrateId(oldIds: string | string[]): Promise<void> {
     const ids = Array.isArray(oldIds) ? oldIds : [oldIds];
     await Promise.all(ids.map(async id => {
-      const data = await this.engine.getValue(`__ds-${id}-dat`, JSON.stringify(this.defaultData));
-      const fmtVer = Number(await this.engine.getValue(`__ds-${id}-ver`, NaN));
-      const isEncoded = Boolean(await this.engine.getValue(`__ds-${id}-enc`, false));
+      const [data, fmtVer, isEncoded] = await (async () => {
+        const [d, f, e] = await Promise.all([
+          this.engine.getValue(`__ds-${id}-dat`, JSON.stringify(this.defaultData)),
+          this.engine.getValue(`__ds-${id}-ver`, NaN),
+          this.engine.getValue(`__ds-${id}-enf`, null),
+        ]);
+        return [d, Number(f), Boolean(e) && String(e) !== "null"] as const;
+      })();
 
       if(data === undefined || isNaN(fmtVer))
         return;
@@ -380,10 +403,10 @@ export class DataStore<TData extends DataStoreData> {
       await Promise.allSettled([
         this.engine.setValue(`__ds-${this.id}-dat`, await this.engine.serializeData(parsed)),
         this.engine.setValue(`__ds-${this.id}-ver`, fmtVer),
-        this.engine.setValue(`__ds-${this.id}-enc`, isEncoded),
+        this.engine.setValue(`__ds-${this.id}-enf`, this.compressionFormat),
         this.engine.deleteValue(`__ds-${id}-dat`),
         this.engine.deleteValue(`__ds-${id}-ver`),
-        this.engine.deleteValue(`__ds-${id}-enc`),
+        this.engine.deleteValue(`__ds-${id}-enf`),
       ]);
     }));
   }
