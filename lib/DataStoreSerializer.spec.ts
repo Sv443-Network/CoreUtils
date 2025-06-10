@@ -6,31 +6,26 @@ import { beforeEach } from "node:test";
 import { compress, decompress } from "./crypto.js";
 import { FileStorageEngine } from "./DataStoreEngine.js";
 
-const store1 = new DataStore({
-  id: "dss-test-1",
-  defaultData: { a: 1, b: 2 },
-  formatVersion: 1,
-  engine: () => new FileStorageEngine({
-    filePath: "./test.json",
-  }),
-  compressionFormat: null,
-});
-
-const compFmt = "deflate-raw";
-const store2 = new DataStore({
-  id: "dss-test-2",
-  defaultData: { c: 1, d: 2 },
-  formatVersion: 1,
-  engine: () => new FileStorageEngine({
-    filePath: () => "./test.json",
-  }),
-  encodeData: [compFmt, async (data) => await compress(data, compFmt, "string")],
-  decodeData: [compFmt, async (data) => await decompress(data, compFmt, "string")],
-});
-
 const getStores = () => [
-  store1,
-  store2,
+  new DataStore({
+    id: "dss-test-1",
+    defaultData: { a: 1, b: 2 },
+    formatVersion: 1,
+    engine: () => new FileStorageEngine({
+      filePath: "./test.json",
+    }),
+    compressionFormat: null,
+  }),
+  new DataStore({
+    id: "dss-test-2",
+    defaultData: { c: 1, d: 2 },
+    formatVersion: 1,
+    engine: () => new FileStorageEngine({
+      filePath: () => "./test.json",
+    }),
+    encodeData: ["deflate-raw", async (data) => await compress(data, "deflate-raw", "string")],
+    decodeData: ["deflate-raw", async (data) => await decompress(data, "deflate-raw", "string")],
+  }),
 ];
 
 describe("DataStoreSerializer", () => {
@@ -75,6 +70,7 @@ describe("DataStoreSerializer", () => {
 
   it("Deserialization", async () => {
     const stores = getStores();
+    const [store1, store2] = stores;
     const ser = new DataStoreSerializer(stores);
 
     await ser.deserialize(`[{"id":"dss-test-2","data":"{\\"c\\":420,\\"d\\":420}","formatVersion":1,"encoded":false}]`);

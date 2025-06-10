@@ -331,7 +331,7 @@ export class DataStore<TData extends DataStoreData> {
 
   /** Returns whether encoding and decoding are enabled for this DataStore instance */
   public encodingEnabled(): this is Required<Pick<DataStoreOptions<TData>, "encodeData" | "decodeData">> {
-    return Boolean(this.encodeData && this.decodeData) || Boolean(this.compressionFormat);
+    return Boolean(this.encodeData && this.decodeData) && this.compressionFormat !== null || Boolean(this.compressionFormat);
   }
 
   //#region migrations

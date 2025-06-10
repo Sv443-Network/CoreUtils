@@ -6,11 +6,11 @@
 
 import type { DataStoreData, DataStoreOptions } from "./DataStore.js";
 import { DatedError } from "./Errors.js";
-import type { SerializableVal } from "./types.js";
+import type { Prettify, SerializableVal } from "./types.js";
 
 //#region >> DataStoreEngine
 
-export type DataStoreEngineDSOptions<TData extends DataStoreData> = Pick<DataStoreOptions<TData>, "decodeData" | "encodeData" | "id">;
+export type DataStoreEngineDSOptions<TData extends DataStoreData> = Prettify<Pick<DataStoreOptions<TData>, "decodeData" | "encodeData" | "id">>;
 
 export interface DataStoreEngine<TData extends DataStoreData> { // eslint-disable-line @typescript-eslint/no-unused-vars
   /** Deletes all data in persistent storage, including the data container itself (e.g. a file or a database) */
@@ -23,6 +23,11 @@ export interface DataStoreEngine<TData extends DataStoreData> { // eslint-disabl
  */
 export abstract class DataStoreEngine<TData extends DataStoreData> {
   protected dataStoreOptions!: DataStoreEngineDSOptions<TData>; // setDataStoreOptions() is called from inside the DataStore constructor to set this value
+
+  constructor(options?: DataStoreEngineDSOptions<TData>) {
+    if(options)
+      this.dataStoreOptions = options;
+  }
 
   /** Called by DataStore on creation, to pass its options. Only call this if you are using this instance standalone! */
   public setDataStoreOptions(dataStoreOptions: DataStoreEngineDSOptions<TData>): void {
@@ -120,7 +125,7 @@ export class BrowserStorageEngine<TData extends DataStoreData> extends DataStore
    * ⚠️ Don't reuse this engine across multiple {@linkcode DataStore} instances
    */
   constructor(options?: BrowserStorageEngineOptions) {
-    super();
+    super(options?.dataStoreOptions);
     this.options = {
       type: "localStorage",
       ...options,
@@ -189,7 +194,7 @@ export class FileStorageEngine<TData extends DataStoreData> extends DataStoreEng
    * ⚠️ Don't reuse this engine across multiple {@linkcode DataStore} instances
    */
   constructor(options?: FileStorageEngineOptions) {
-    super();
+    super(options?.dataStoreOptions);
     this.options = {
       filePath: (id) => `.ds-${id}`,
       ...options,
@@ -200,6 +205,8 @@ export class FileStorageEngine<TData extends DataStoreData> extends DataStoreEng
 
   /** Reads the file contents */
   protected async readFile(): Promise<TData | undefined> {
+    this.validateDataStoreOptions();
+
     try {
       if(!fs)
         fs = (await import("node:fs/promises"))?.default;
