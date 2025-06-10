@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import { NanoEmitter } from "./NanoEmitter.js";
 
 describe("NanoEmitter", () => {
+  //#region FP
+
   it("Functional", async () => {
     const evts = new NanoEmitter<{
       val: (v1: number, v2: number) => void;
@@ -35,6 +37,8 @@ describe("NanoEmitter", () => {
     evts.emit("val", 40, 40);
     expect(v3 + v4).toBe(60);
   });
+
+  //#region OOP
 
   it("Object oriented", async () => {
     class MyEmitter extends NanoEmitter<{

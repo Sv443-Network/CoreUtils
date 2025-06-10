@@ -6,6 +6,8 @@ import { beforeEach } from "node:test";
 import { compress, decompress } from "./crypto.js";
 import { FileStorageEngine } from "./DataStoreEngine.js";
 
+//#region consts
+
 const getStores = () => [
   new DataStore({
     id: "dss-test-1",
@@ -29,6 +31,8 @@ const getStores = () => [
 ];
 
 describe("DataStoreSerializer", () => {
+  //#region hooks
+
   beforeEach(async () => {
     const ser = new DataStoreSerializer(getStores());
     await ser.deleteStoresData();
@@ -40,6 +44,8 @@ describe("DataStoreSerializer", () => {
     await new DataStoreSerializer(getStores()).deleteStoresData();
     await unlink("./test.json").catch(() => {});
   });
+
+  //#region serialization
 
   it("Serialization", async () => {
     const ser = new DataStoreSerializer(getStores());
@@ -67,6 +73,8 @@ describe("DataStoreSerializer", () => {
       },
     ]);
   });
+
+  //#region deserialization
 
   it("Deserialization", async () => {
     const stores = getStores();
