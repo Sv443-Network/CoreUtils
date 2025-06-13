@@ -267,7 +267,7 @@ Signature:
 takeRandomItemIndex<TItem = unknown>(arr: TItem[]): [item?: TItem, index?: number];
 ```
   
-Returns a random item and its index as a tuple from the given array and mutates the original array to remove it.  
+Returns a random item and its original index as a tuple from the given array and mutates the original array to remove it.  
 If the array is empty, `undefined` will be returned for both values.  
   
 <details><summary>Example - click to view</summary>
@@ -277,14 +277,14 @@ import { takeRandomItemIndex } from "@sv443-network/coreutils";
 
 const arr = ["foo", "bar", "baz"];
 
-console.log(takeRandomItemIndex(arr)); // ["bar", 1]
-console.log(arr); // ["foo", "baz"]
+while([itm, idx] = takeRandomItemIndex(arr), itm !== undefined) {
+  console.log(idx, itm, arr);
+}
 
-console.log(takeRandomItemIndex(arr)); // ["baz", 1]
-console.log(arr); // ["foo"]
-
-console.log(takeRandomItemIndex(arr)); // ["foo", 0]
-console.log(arr); // []
+// Logs:
+// 1 "bar" ["foo", "baz"]
+// 1 "baz" ["foo"]
+// 0 "foo" []
 
 console.log(takeRandomItemIndex(arr)); // [undefined, undefined]
 console.log(arr); // []
@@ -542,7 +542,7 @@ This randomization is also affected by the `enhancedEntropy` setting, unless the
   
 Throws a RangeError if the length is less than 1 or the radix is less than 2 or greater than 36.  
   
-⚠️ This is not suitable for generating anything related to cryptography! Use [SubtleCrypto's `generateKey()`](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/generateKey) for that instead.  
+- ⚠️ This is not suitable for generating anything related to cryptography! Use [SubtleCrypto's `generateKey()`](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/generateKey) for that instead.  
   
 <details><summary>Example - click to view</summary>
 
@@ -612,7 +612,7 @@ It combines the data of multiple DataStore instances into a single object that c
   
 If you were using the `DataStore` class from the `@sv443-network/coreutils` package before, all your data should be migrated automatically on the first call to `loadData()`.  
   
-⚠️ The data is serialized as a JSON string, so only JSON-compatible data can be used. Circular structures and complex objects (containing functions, symbols, etc.) will either throw an error on load and save or cause otherwise unexpected behavior. Properties with a value of `undefined` will be removed from the data prior to saving it, so use `null` instead.  
+- ⚠️ The data is serialized as a JSON string, so only JSON-compatible data can be used. Circular structures and complex objects (containing functions, symbols, etc.) will either throw an error on load and save or cause otherwise unexpected behavior. Properties with a value of `undefined` will be removed from the data prior to saving it, so use `null` instead.  
   
 <details><summary><b>Example - click to view</b></summary>
 
@@ -868,7 +868,7 @@ Also, by default a checksum is calculated and importing data with a mismatching 
   
 The class' internal methods are all declared as protected, so you can extend this class and override them if you need to add your own functionality.  
   
-⚠️ Needs to run in a secure context (HTTPS) due to the use of the SubtleCrypto API.  
+- ⚠️ Needs to run in a secure context (HTTPS) due to the use of the SubtleCrypto API.  
   
 <details><summary><b>Example - click to view</b></summary>
 
@@ -1375,8 +1375,8 @@ const engine = new BrowserStorageEngine(options?: BrowserStorageEngineOptions);
   
 Storage engine for the [`DataStore` class](#class-datastore) that uses the browser's LocalStorage or SessionStorage to store data.  
   
-⚠️ Requires a secure DOM environment (HTTPS)  
-⚠️ Don't reuse this engine across multiple [`DataStore`](#class-datastore) instances
+- ⚠️ Requires a secure DOM environment (HTTPS)  
+- ⚠️ Don't reuse engines across multiple [`DataStore`](#class-datastore) instances
   
 <details><summary>Example - click to view</summary>
 
@@ -1441,8 +1441,8 @@ const engine = new FileStorageEngine(options?: FileStorageEngineOptions);
   
 Storage engine for the [`DataStore` class](#class-datastore) that uses a file to store data.  
   
-⚠️ Requires Node.js or Deno with Node compatibility (v1.31+)  
-⚠️ Don't reuse this engine across multiple [`DataStore`](#class-datastore) instances  
+- ⚠️ Requires Node.js or Deno with Node compatibility (v1.31+)  
+- ⚠️ Don't reuse engines across multiple [`DataStore`](#class-datastore) instances  
   
 <details><summary>Example - click to view</summary>
 
