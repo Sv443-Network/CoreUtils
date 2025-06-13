@@ -101,7 +101,7 @@ export class NanoEmitter<TEvtMap extends EventsMap = DefaultEvents> {
 
   /**
    * Emits an event on this instance.  
-   * ⚠️ Needs `publicEmit` to be set to true in the NanoEmitter constructor or super() call!
+   * - ⚠️ Needs `publicEmit` to be set to true in the NanoEmitter constructor or super() call!
    * @param event The event to emit
    * @param args The arguments to pass to the event listeners
    * @returns Returns true if `publicEmit` is true and the event was emitted successfully

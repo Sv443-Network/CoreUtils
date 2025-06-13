@@ -43,7 +43,7 @@ export type DataStoreOptions<TData extends DataStoreData> = Prettify<
      * The engine middleware to use for persistent storage.  
      * Create an instance of {@linkcode FileStorageEngine} (Node.js), {@linkcode BrowserStorageEngine} (DOM) or your own engine class that extends {@linkcode DataStoreEngine} and pass it here.  
      *   
-     * ⚠️ Don't reuse the same engine instance for multiple DataStores, unless it explicitly supports it!
+     * - ⚠️ Don't reuse the same engine instance for multiple DataStores, unless it explicitly supports it!
      */
     engine: (() => DataStoreEngine<TData>) | DataStoreEngine<TData>;
     /**
@@ -69,7 +69,7 @@ export type DataStoreOptions<TData extends DataStoreData> = Prettify<
       decodeData?: never;
       /**
        * The format to use for compressing the data. Defaults to `deflate-raw`. Explicitly set to `null` to store data uncompressed.  
-       * ⚠️ Use either this property, or both `encodeData` and `decodeData`, but not all three!
+       * - ⚠️ Use either this property, or both `encodeData` and `decodeData`, but not all three!
        */
       compressionFormat?: CompressionFormat | null;
     }
@@ -78,7 +78,7 @@ export type DataStoreOptions<TData extends DataStoreData> = Prettify<
        * Tuple of a compression format identifier and a function to use to encode the data prior to saving it in persistent storage.  
        * Set the identifier to `null` or `"identity"` to indicate that no traditional compression is used.  
        *   
-       * ⚠️ If this is specified, `compressionFormat` can't be used. Also make sure to declare {@linkcode decodeData()} as well.  
+       * - ⚠️ If this is specified, `compressionFormat` can't be used. Also make sure to declare {@linkcode decodeData()} as well.  
        *   
        * You can make use of the [`compress()` function](https://github.com/Sv443-Network/CoreUtils/blob/main/docs.md#function-compress) here to make the data use up less space at the cost of a little bit of performance.
        * @param data The input data as a serialized object (JSON string)
@@ -88,7 +88,7 @@ export type DataStoreOptions<TData extends DataStoreData> = Prettify<
        * Tuple of a compression format identifier and a function to use to decode the data after reading it from persistent storage.  
        * Set the identifier to `null` or `"identity"` to indicate that no traditional compression is used.  
        *   
-       * ⚠️ If this is specified, `compressionFormat` can't be used. Also make sure to declare {@linkcode encodeData()} as well.  
+       * - ⚠️ If this is specified, `compressionFormat` can't be used. Also make sure to declare {@linkcode encodeData()} as well.  
        *   
        * You can make use of the [`decompress()` function](https://github.com/Sv443-Network/CoreUtils/blob/main/docs.md#function-decompress) here to make the data use up less space at the cost of a little bit of performance.
        * @returns The resulting data as a valid serialized object (JSON string)
@@ -145,7 +145,6 @@ export class DataStore<TData extends DataStoreData> {
    * Creates an instance of DataStore to manage a sync & async database that is cached in memory and persistently saved across sessions.  
    * Supports migrating data from older versions to newer ones and populating the cache with default data if no persistent data is found.  
    *   
-   * - ⚠️ Requires the directives `@grant GM.getValue` and `@grant GM.setValue` if the storageMethod is left as the default of `"GM"`  
    * - ⚠️ Make sure to call {@linkcode loadData()} at least once after creating an instance, or the returned data will be the same as `options.defaultData`
    * 
    * @template TData The type of the data that is saved in persistent storage for the currently set format version (will be automatically inferred from `defaultData` if not provided) - **This has to be a JSON-compatible object!** (no undefined, circular references, etc.)
@@ -241,11 +240,11 @@ export class DataStore<TData extends DataStoreData> {
       }
 
       // load data
-      const gmData = await this.engine.getValue(`__ds-${this.id}-dat`, JSON.stringify(this.defaultData));
-      let gmFmtVer = Number(await this.engine.getValue(`__ds-${this.id}-ver`, NaN));
+      const storedData = await this.engine.getValue(`__ds-${this.id}-dat`, JSON.stringify(this.defaultData));
+      let storedFmtVer = Number(await this.engine.getValue(`__ds-${this.id}-ver`, NaN));
 
       // save default if no data is found
-      if(typeof gmData !== "string") {
+      if(typeof storedData !== "string") {
         await this.saveDefaultData();
         return { ...this.defaultData };
       }
@@ -256,17 +255,17 @@ export class DataStore<TData extends DataStoreData> {
 
       // if no format version is found, save the current one
       let saveData = false;
-      if(isNaN(gmFmtVer)) {
-        await this.engine.setValue(`__ds-${this.id}-ver`, gmFmtVer = this.formatVersion);
+      if(isNaN(storedFmtVer)) {
+        await this.engine.setValue(`__ds-${this.id}-ver`, storedFmtVer = this.formatVersion);
         saveData = true;
       }
 
       // deserialize the data if needed
-      let parsed = await this.engine.deserializeData(gmData, isEncoded);
+      let parsed = await this.engine.deserializeData(storedData, isEncoded);
 
       // run migrations if needed
-      if(gmFmtVer < this.formatVersion && this.migrations)
-        parsed = await this.runMigrations(parsed, gmFmtVer); // setting saveData = true not needed since runMigrations() already saves the data
+      if(storedFmtVer < this.formatVersion && this.migrations)
+        parsed = await this.runMigrations(parsed, storedFmtVer); // setting saveData = true not needed since runMigrations() already saves the data
 
       // save the data if it was changed
       if(saveData)
@@ -316,9 +315,7 @@ export class DataStore<TData extends DataStoreData> {
   /**
    * Call this method to clear all persistently stored data associated with this DataStore instance, including the storage container (if supported by the DataStoreEngine).  
    * The in-memory cache will be left untouched, so you may still access the data with {@linkcode getData()}  
-   * Calling {@linkcode loadData()} or {@linkcode setData()} after this method was called will recreate persistent storage with the cached or default data.  
-   *   
-   * - ⚠️ This requires the additional directive `@grant GM.deleteValue` if the storageMethod is left as the default of `"GM"`
+   * Calling {@linkcode loadData()} or {@linkcode setData()} after this method was called will recreate persistent storage with the cached or default data.
    */
   public async deleteData(): Promise<void> {
     await Promise.allSettled([

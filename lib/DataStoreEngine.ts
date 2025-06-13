@@ -104,7 +104,7 @@ export type BrowserStorageEngineOptions = {
   type?: "localStorage" | "sessionStorage";
   /**
    * Specifies the necessary options for storing data.  
-   * ⚠️ Only call this if you are using this instance standalone! The parent DataStore will set this automatically.
+   * - ⚠️ Only call this if you are using this instance standalone! The parent DataStore will set this automatically.
    */
   dataStoreOptions?: DataStoreEngineDSOptions<DataStoreData>;
 };
@@ -112,8 +112,8 @@ export type BrowserStorageEngineOptions = {
 /**
  * Storage engine for the {@linkcode DataStore} class that uses the browser's LocalStorage or SessionStorage to store data.  
  *   
- * ⚠️ Requires a DOM environment
- * ⚠️ Don't reuse this engine across multiple {@linkcode DataStore} instances
+ * - ⚠️ Requires a DOM environment
+ * - ⚠️ Don't reuse engines across multiple {@linkcode DataStore} instances
  */
 export class BrowserStorageEngine<TData extends DataStoreData> extends DataStoreEngine<TData> {
   protected options: BrowserStorageEngineOptions & Required<Pick<BrowserStorageEngineOptions, "type">>;
@@ -121,8 +121,8 @@ export class BrowserStorageEngine<TData extends DataStoreData> extends DataStore
   /**
    * Creates an instance of `BrowserStorageEngine`.  
    *   
-   * ⚠️ Requires a DOM environment  
-   * ⚠️ Don't reuse this engine across multiple {@linkcode DataStore} instances
+   * - ⚠️ Requires a DOM environment  
+   * - ⚠️ Don't reuse engines across multiple {@linkcode DataStore} instances
    */
   constructor(options?: BrowserStorageEngineOptions) {
     super(options?.dataStoreOptions);
@@ -173,7 +173,7 @@ export type FileStorageEngineOptions = {
   filePath?: ((dataStoreID: string) => string) | string;
   /**
    * Specifies the necessary options for storing data.  
-   * ⚠️ Only call this if you are using this instance standalone! The parent DataStore will set this automatically.
+   * - ⚠️ Only call this if you are using this instance standalone! The parent DataStore will set this automatically.
    */
   dataStoreOptions?: DataStoreEngineDSOptions<DataStoreData>;
 };
@@ -181,8 +181,8 @@ export type FileStorageEngineOptions = {
 /**
  * Storage engine for the {@linkcode DataStore} class that uses a JSON file to store data.  
  *   
- * ⚠️ Requires Node.js or Deno with Node compatibility (v1.31+)  
- * ⚠️ Don't reuse this engine across multiple {@linkcode DataStore} instances
+ * - ⚠️ Requires Node.js or Deno with Node compatibility (v1.31+)  
+ * - ⚠️ Don't reuse engines across multiple {@linkcode DataStore} instances
  */
 export class FileStorageEngine<TData extends DataStoreData> extends DataStoreEngine<TData> {
   protected options: FileStorageEngineOptions & Required<Pick<FileStorageEngineOptions, "filePath">>;
@@ -190,8 +190,8 @@ export class FileStorageEngine<TData extends DataStoreData> extends DataStoreEng
   /**
    * Creates an instance of `FileStorageEngine`.  
    *   
-   * ⚠️ Requires Node.js or Deno with Node compatibility (v1.31+)  
-   * ⚠️ Don't reuse this engine across multiple {@linkcode DataStore} instances
+   * - ⚠️ Requires Node.js or Deno with Node compatibility (v1.31+)  
+   * - ⚠️ Don't reuse engines across multiple {@linkcode DataStore} instances
    */
   constructor(options?: FileStorageEngineOptions) {
     super(options?.dataStoreOptions);
