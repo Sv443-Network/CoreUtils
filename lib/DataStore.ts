@@ -128,18 +128,19 @@ export class DataStore<TData extends DataStoreData> {
   public readonly decodeData: DataStoreOptions<TData>["decodeData"];
   public readonly compressionFormat: Exclude<DataStoreOptions<TData>["compressionFormat"], undefined> = "deflate-raw";
   public readonly engine: DataStoreEngine<TData>;
+  public options: DataStoreOptions<TData>;
+
   /**
    * Whether all first-init checks should be done.  
    * This includes migrating the internal DataStore format, migrating data from the UserUtils format, and anything similar.  
    * This is set to `true` by default. Create a subclass and set it to `false` before calling {@linkcode loadData()} if you want to explicitly skip these checks.
    */
   protected firstInit = true;
+
   /** In-memory cached copy of the data that is saved in persistent storage used for synchronous read access. */
   private cachedData: TData;
   private migrations?: DataMigrationsDict;
   private migrateIds: string[] = [];
-
-  public options: DataStoreOptions<TData>;
 
   /**
    * Creates an instance of DataStore to manage a sync & async database that is cached in memory and persistently saved across sessions.  

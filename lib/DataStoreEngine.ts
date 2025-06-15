@@ -10,6 +10,7 @@ import type { Prettify, SerializableVal } from "./types.js";
 
 //#region >> DataStoreEngine
 
+/** Contains the only properties of {@linkcode DataStoreOptions} that are relevant to the {@linkcode DataStoreEngine} class. */
 export type DataStoreEngineDSOptions<TData extends DataStoreData> = Prettify<Pick<DataStoreOptions<TData>, "decodeData" | "encodeData" | "id">>;
 
 export interface DataStoreEngine<TData extends DataStoreData> { // eslint-disable-line @typescript-eslint/no-unused-vars
@@ -47,7 +48,7 @@ export abstract class DataStoreEngine<TData extends DataStoreData> {
 
   /** Serializes the given object to a string, optionally encoded with `options.encodeData` if {@linkcode useEncoding} is set to true */
   public async serializeData(data: TData, useEncoding?: boolean): Promise<string> {
-    this.validateDataStoreOptions();
+    this.ensureDataStoreOptions();
 
     const stringData = JSON.stringify(data);
     if(!useEncoding || !this.dataStoreOptions?.encodeData || !this.dataStoreOptions?.decodeData)
@@ -61,7 +62,7 @@ export abstract class DataStoreEngine<TData extends DataStoreData> {
 
   /** Deserializes the given string to a JSON object, optionally decoded with `options.decodeData` if {@linkcode useEncoding} is set to true */
   public async deserializeData(data: string, useEncoding?: boolean): Promise<TData> {
-    this.validateDataStoreOptions();
+    this.ensureDataStoreOptions();
 
     let decRes = this.dataStoreOptions?.decodeData && useEncoding ? this.dataStoreOptions.decodeData?.[1]?.(data) : undefined;
     if(decRes instanceof Promise)
@@ -73,7 +74,7 @@ export abstract class DataStoreEngine<TData extends DataStoreData> {
   //#region misc api
 
   /** Throws an error if the DataStoreOptions are not set or invalid */
-  protected validateDataStoreOptions(): void {
+  protected ensureDataStoreOptions(): void {
     if(!this.dataStoreOptions)
       throw new DatedError("DataStoreEngine must be initialized with DataStore options before use. If you are using this instance standalone, set them in the constructor or call `setDataStoreOptions()` with the DataStore options.");
     if(!this.dataStoreOptions.id)
@@ -104,7 +105,7 @@ export type BrowserStorageEngineOptions = {
   type?: "localStorage" | "sessionStorage";
   /**
    * Specifies the necessary options for storing data.  
-   * - ⚠️ Only call this if you are using this instance standalone! The parent DataStore will set this automatically.
+   * - ⚠️ Only specify this if you are using this instance standalone! The parent DataStore will set this automatically.
    */
   dataStoreOptions?: DataStoreEngineDSOptions<DataStoreData>;
 };
@@ -173,7 +174,7 @@ export type FileStorageEngineOptions = {
   filePath?: ((dataStoreID: string) => string) | string;
   /**
    * Specifies the necessary options for storing data.  
-   * - ⚠️ Only call this if you are using this instance standalone! The parent DataStore will set this automatically.
+   * - ⚠️ Only specify this if you are using this instance standalone! The parent DataStore will set this automatically.
    */
   dataStoreOptions?: DataStoreEngineDSOptions<DataStoreData>;
 };
@@ -205,7 +206,7 @@ export class FileStorageEngine<TData extends DataStoreData> extends DataStoreEng
 
   /** Reads the file contents */
   protected async readFile(): Promise<TData | undefined> {
-    this.validateDataStoreOptions();
+    this.ensureDataStoreOptions();
 
     try {
       if(!fs)
@@ -229,7 +230,7 @@ export class FileStorageEngine<TData extends DataStoreData> extends DataStoreEng
 
   /** Overwrites the file contents */
   protected async writeFile(data: TData): Promise<void> {
-    this.validateDataStoreOptions();
+    this.ensureDataStoreOptions();
 
     try {
       if(!fs)
@@ -284,7 +285,7 @@ export class FileStorageEngine<TData extends DataStoreData> extends DataStoreEng
 
   /** Deletes the file that contains the data of this DataStore. */
   public async deleteStorage(): Promise<void> {
-    this.validateDataStoreOptions();
+    this.ensureDataStoreOptions();
 
     try {
       if(!fs)

@@ -1196,11 +1196,14 @@ abstract class DataStoreEngine<TData extends DataStoreData>;
   
 Usage:
 ```ts
+type MyStorageEngineOptions<TData extends DataStoreData> = {
+  dataStoreOptions?: DataStoreEngineDSOptions<TData>;
+  // ...
+}
+
 class MyStorageEngine<TData extends DataStoreData> extends DataStoreEngine<TData> {
-  protected options: MyStorageEngineOptions;
-  constructor(options: MyStorageEngineOptions) {
-    super();
-    this.options = options;
+  constructor(protected options: MyStorageEngineOptions<TData>) {
+    super(options?.dataStoreOptions);
   }
 }
 ```
@@ -1212,16 +1215,23 @@ While this library offers some premade engines [in the Storage Engines section,]
 <details><summary>Example - click to view</summary>
 
 ```ts
-import { DataStoreEngine, type DataStoreData } from "@sv443-network/coreutils";
+import { DataStoreEngine, type DataStoreData, type DataStoreEngineDSOptions } from "@sv443-network/coreutils";
+
+type MyStorageEngineOptions<TData extends DataStoreData> = {
+  dataStoreOptions?: DataStoreEngineDSOptions<TData>;
+  // custom engine options here:
+}
 
 class MyStorageEngine<TData extends DataStoreData> extends DataStoreEngine<TData> {
-  protected options: MyStorageEngineOptions;
+  protected options: MyStorageEngineOptions<TData>;
 
-  constructor(options: MyStorageEngineOptions) {
-    super();
+  constructor(options: MyStorageEngineOptions<TData>) {
+    // if this engine is used standalone, this is how it needs to be initialized, to ensure the "id", "encodeData" and "decodeData" properties are set:
+    super(options?.dataStoreOptions);
     this.options = options;
   }
 
+  /** Required - returns the value of the given name from persistent storage, or defaultValue if it doesn't exist */
   async getValue(name: string, defaultValue: string): Promise<string> {
     // implement your own logic in here
 
@@ -1230,18 +1240,84 @@ class MyStorageEngine<TData extends DataStoreData> extends DataStoreEngine<TData
     return value ?? defaultValue;
   }
 
+  /** Required - sets the value of the given name in persistent storage */
   async setValue(name: string, value: string): Promise<void> {
     // implement your own logic in here
 
     await saveMyValue(`${this.dataStoreOptions.id}-${name}`, value);
   }
 
+  /** Required - deletes the value of the given name from persistent storage */
   async deleteValue(name: string): Promise<void> {
     // implement your own logic in here
 
     await deleteMyValue(`${this.dataStoreOptions.id}-${name}`);
   }
+
+  /** Optional - deletes the entire storage container, e.g. a file or database */
+  async deleteStorage(): Promise<void> {
+    // this method is optional, so you can remove it if it doesn't apply to your storage logic
+
+    await deleteMyStorageContainer(this.dataStoreOptions.id);
+  }
+
+  // implementing new behavior and use the default implementation as a fallback:
+
+  public deepCopy<T>(obj: T): T {
+    try {
+      // use your own deep copy logic here
+      return myCustomDeepCopy(obj);
+    }
+    catch {
+      // if the custom deep copy fails, fall back to the default implementation:
+      return super.deepCopy(obj);
+    }
+  }
+
+  // other methods that can be overridden (or used as-is):
+
+  // public async serializeData(data: TData, useEncoding?: boolean): Promise<string>;
+  // public async deserializeData(data: string, useEncoding?: boolean): Promise<TData>;
+  // protected ensureDataStoreOptions(): void;
+  // public setDataStoreOptions(dataStoreOptions: DataStoreEngineDSOptions<TData>): void;
 }
+
+
+// using the engine standalone:
+
+const engine = new MyStorageEngine({
+  // since there's no DataStore instance to initialize the engine, the dataStoreOptions need to be passed here
+  // if they aren't passed, most methods will throw an error
+  dataStoreOptions: {
+    id: "my-engine",
+    encodeData: ["gzip", (data) => compress(data, "gzip", "string")],
+    decodeData: ["gzip", (data) => decompress(data, "gzip", "string")],
+  },
+});
+
+await engine.setValue("foo", "bar");
+console.log(await engine.getValue("foo", "default")); // "bar"
+await engine.deleteValue("foo");
+console.log(await engine.getValue("foo", "default")); // "default"
+
+
+// using the engine in a DataStore instance:
+
+import { DataStore } from "@sv443-network/coreutils";
+
+const store = new DataStore({
+  id: "my-store",
+  defaultData: {
+    foo: "hello",
+  },
+  formatVersion: 1,
+  engine: new MyStorageEngine({
+    // no need to pass dataStoreOptions here, as the DataStore instance will override them automatically using the method `DataStoreEngine.setDataStoreOptions()`
+  }),
+});
+
+await store.loadData(); // DataStore uses the engine internally for persistent storage
+await store.engine.setValue("bar", "baz"); // the store's engine instance can also be used manually (though not really recommended)
 ```
 </details>
 
