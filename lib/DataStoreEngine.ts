@@ -6,19 +6,32 @@
 
 import type { DataStoreData, DataStoreOptions } from "./DataStore.js";
 import { DatedError } from "./Errors.js";
-import type { SerializableVal } from "./types.js";
+import type { Prettify, SerializableVal } from "./types.js";
 
 //#region >> DataStoreEngine
+
+/** Contains the only properties of {@linkcode DataStoreOptions} that are relevant to the {@linkcode DataStoreEngine} class. */
+export type DataStoreEngineDSOptions<TData extends DataStoreData> = Prettify<Pick<DataStoreOptions<TData>, "decodeData" | "encodeData" | "id">>;
+
+export interface DataStoreEngine<TData extends DataStoreData> { // eslint-disable-line @typescript-eslint/no-unused-vars
+  /** Deletes all data in persistent storage, including the data container itself (e.g. a file or a database) */
+  deleteStorage?(): Promise<void>;
+}
 
 /**
  * Base class for creating {@linkcode DataStore} storage engines.  
  * This acts as an interchangeable API for writing and reading persistent data in various environments.
  */
 export abstract class DataStoreEngine<TData extends DataStoreData> {
-  protected dataStoreOptions!: DataStoreOptions<TData>; // setDataStoreOptions() is called from inside the DataStore constructor to set this value
+  protected dataStoreOptions!: DataStoreEngineDSOptions<TData>; // setDataStoreOptions() is called from inside the DataStore constructor to set this value
 
-  /** Called by DataStore on creation, to pass its options */
-  public setDataStoreOptions(dataStoreOptions: DataStoreOptions<TData>): void {
+  constructor(options?: DataStoreEngineDSOptions<TData>) {
+    if(options)
+      this.dataStoreOptions = options;
+  }
+
+  /** Called by DataStore on creation, to pass its options. Only call this if you are using this instance standalone! */
+  public setDataStoreOptions(dataStoreOptions: DataStoreEngineDSOptions<TData>): void {
     this.dataStoreOptions = dataStoreOptions;
   }
 
@@ -35,6 +48,8 @@ export abstract class DataStoreEngine<TData extends DataStoreData> {
 
   /** Serializes the given object to a string, optionally encoded with `options.encodeData` if {@linkcode useEncoding} is set to true */
   public async serializeData(data: TData, useEncoding?: boolean): Promise<string> {
+    this.ensureDataStoreOptions();
+
     const stringData = JSON.stringify(data);
     if(!useEncoding || !this.dataStoreOptions?.encodeData || !this.dataStoreOptions?.decodeData)
       return stringData;
@@ -47,6 +62,8 @@ export abstract class DataStoreEngine<TData extends DataStoreData> {
 
   /** Deserializes the given string to a JSON object, optionally decoded with `options.decodeData` if {@linkcode useEncoding} is set to true */
   public async deserializeData(data: string, useEncoding?: boolean): Promise<TData> {
+    this.ensureDataStoreOptions();
+
     let decRes = this.dataStoreOptions?.decodeData && useEncoding ? this.dataStoreOptions.decodeData?.[1]?.(data) : undefined;
     if(decRes instanceof Promise)
       decRes = await decRes;
@@ -55,6 +72,14 @@ export abstract class DataStoreEngine<TData extends DataStoreData> {
   }
 
   //#region misc api
+
+  /** Throws an error if the DataStoreOptions are not set or invalid */
+  protected ensureDataStoreOptions(): void {
+    if(!this.dataStoreOptions)
+      throw new DatedError("DataStoreEngine must be initialized with DataStore options before use. If you are using this instance standalone, set them in the constructor or call `setDataStoreOptions()` with the DataStore options.");
+    if(!this.dataStoreOptions.id)
+      throw new DatedError("DataStoreEngine must be initialized with a valid DataStore ID");
+  }
 
   /**
    * Copies a JSON-compatible object and loses all its internal references in the process.  
@@ -78,25 +103,30 @@ export abstract class DataStoreEngine<TData extends DataStoreData> {
 export type BrowserStorageEngineOptions = {
   /** Whether to store the data in LocalStorage (default) or SessionStorage */
   type?: "localStorage" | "sessionStorage";
+  /**
+   * Specifies the necessary options for storing data.  
+   * - ⚠️ Only specify this if you are using this instance standalone! The parent DataStore will set this automatically.
+   */
+  dataStoreOptions?: DataStoreEngineDSOptions<DataStoreData>;
 };
 
 /**
  * Storage engine for the {@linkcode DataStore} class that uses the browser's LocalStorage or SessionStorage to store data.  
  *   
- * ⚠️ Requires a DOM environment
- * ⚠️ Don't reuse this engine across multiple {@linkcode DataStore} instances
+ * - ⚠️ Requires a DOM environment
+ * - ⚠️ Don't reuse engines across multiple {@linkcode DataStore} instances
  */
 export class BrowserStorageEngine<TData extends DataStoreData> extends DataStoreEngine<TData> {
-  protected options: Required<BrowserStorageEngineOptions>;
+  protected options: BrowserStorageEngineOptions & Required<Pick<BrowserStorageEngineOptions, "type">>;
 
   /**
    * Creates an instance of `BrowserStorageEngine`.  
    *   
-   * ⚠️ Requires a DOM environment  
-   * ⚠️ Don't reuse this engine across multiple {@linkcode DataStore} instances
+   * - ⚠️ Requires a DOM environment  
+   * - ⚠️ Don't reuse engines across multiple {@linkcode DataStore} instances
    */
   constructor(options?: BrowserStorageEngineOptions) {
-    super();
+    super(options?.dataStoreOptions);
     this.options = {
       type: "localStorage",
       ...options,
@@ -142,25 +172,30 @@ let fs: typeof import("node:fs/promises") | undefined;
 export type FileStorageEngineOptions = {
   /** Function that returns a string or a plain string that is the data file path, including name and extension. Defaults to `.ds-${dataStoreID}` */
   filePath?: ((dataStoreID: string) => string) | string;
+  /**
+   * Specifies the necessary options for storing data.  
+   * - ⚠️ Only specify this if you are using this instance standalone! The parent DataStore will set this automatically.
+   */
+  dataStoreOptions?: DataStoreEngineDSOptions<DataStoreData>;
 };
 
 /**
  * Storage engine for the {@linkcode DataStore} class that uses a JSON file to store data.  
  *   
- * ⚠️ Requires Node.js or Deno with Node compatibility (v1.31+)  
- * ⚠️ Don't reuse this engine across multiple {@linkcode DataStore} instances
+ * - ⚠️ Requires Node.js or Deno with Node compatibility (v1.31+)  
+ * - ⚠️ Don't reuse engines across multiple {@linkcode DataStore} instances
  */
 export class FileStorageEngine<TData extends DataStoreData> extends DataStoreEngine<TData> {
-  protected options: Required<FileStorageEngineOptions>;
+  protected options: FileStorageEngineOptions & Required<Pick<FileStorageEngineOptions, "filePath">>;
 
   /**
    * Creates an instance of `FileStorageEngine`.  
    *   
-   * ⚠️ Requires Node.js or Deno with Node compatibility (v1.31+)  
-   * ⚠️ Don't reuse this engine across multiple {@linkcode DataStore} instances
+   * - ⚠️ Requires Node.js or Deno with Node compatibility (v1.31+)  
+   * - ⚠️ Don't reuse engines across multiple {@linkcode DataStore} instances
    */
   constructor(options?: FileStorageEngineOptions) {
-    super();
+    super(options?.dataStoreOptions);
     this.options = {
       filePath: (id) => `.ds-${id}`,
       ...options,
@@ -171,9 +206,11 @@ export class FileStorageEngine<TData extends DataStoreData> extends DataStoreEng
 
   /** Reads the file contents */
   protected async readFile(): Promise<TData | undefined> {
+    this.ensureDataStoreOptions();
+
     try {
       if(!fs)
-        fs = (await import("node:fs/promises")).default;
+        fs = (await import("node:fs/promises"))?.default;
       if(!fs)
         throw new DatedError("FileStorageEngine requires Node.js or Deno with Node compatibility (v1.31+)", { cause: new Error("'node:fs/promises' module not available") });
 
@@ -193,9 +230,11 @@ export class FileStorageEngine<TData extends DataStoreData> extends DataStoreEng
 
   /** Overwrites the file contents */
   protected async writeFile(data: TData): Promise<void> {
+    this.ensureDataStoreOptions();
+
     try {
       if(!fs)
-        fs = (await import("node:fs/promises")).default;
+        fs = (await import("node:fs/promises"))?.default;
       if(!fs)
         throw new DatedError("FileStorageEngine requires Node.js or Deno with Node compatibility (v1.31+)", { cause: new Error("'node:fs/promises' module not available") });
 
@@ -242,5 +281,25 @@ export class FileStorageEngine<TData extends DataStoreData> extends DataStoreEng
       return;
     delete data[name as keyof TData];
     await this.writeFile(data);
+  }
+
+  /** Deletes the file that contains the data of this DataStore. */
+  public async deleteStorage(): Promise<void> {
+    this.ensureDataStoreOptions();
+
+    try {
+      if(!fs)
+        fs = (await import("node:fs/promises"))?.default;
+      if(!fs)
+        throw new DatedError("FileStorageEngine requires Node.js or Deno with Node compatibility (v1.31+)", { cause: new Error("'node:fs/promises' module not available") });
+
+      const path = typeof this.options.filePath === "string"
+        ? this.options.filePath
+        : this.options.filePath(this.dataStoreOptions.id);
+      await fs.unlink(path);
+    }
+    catch(err) {
+      console.error("Error deleting file:", err);
+    }
   }
 }
