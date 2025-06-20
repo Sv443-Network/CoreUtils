@@ -83,6 +83,7 @@ For submitting bug reports or feature requests, please use the [GitHub issue tra
     - 🟣 [`function formatNumber()`](#function-formatnumber) - Formats a number to a string using the given locale and format identifier
       - 🔷 [`type NumberFormat`](#type-numberformat) - Number format identifier
     - 🟣 [`function mapRange()`](#function-maprange) - Maps a number from one range to another
+    - 🟣 [`function overflowVal()`](#function-overflowVal) - Makes sure a number is in a range by over- & underflowing it
     - 🟣 [`function randRange()`](#function-randrange) - Returns a random number in the given range
     - 🟣 [`function roundFixed()`](#function-roundfixed) - Rounds the given number to the given number of decimal places
     - 🟣 [`function valsWithin()`](#function-valswithin) - Checks if the given numbers are within a certain range of each other
@@ -2168,6 +2169,43 @@ mapRange(5, 10, 50);        // 25
 // to calculate a percentage from arbitrary values, use 0 and 100 as the second range
 // for example, if 4 files of a total of 13 were downloaded:
 mapRange(4, 0, 13, 0, 100); // 30.76923076923077
+```
+</details>
+
+<br>
+
+### `function overflowVal()`
+Signatures:
+```ts
+// with min:
+overflowVal(value: number, min: number, max: number): number
+// without min (defaults to 0):
+overflowVal(value: number, max: number): number
+```
+  
+Returns the value of a number that over- and underflows to conform to the given range.  
+This differs from the [`clamp()` function](#function-clamp) in that it will wrap the value around at the edges of the range instead of just pinning it to a given boundary.  
+  
+If only the `max` argument is passed, the `min` will be set to 0.  
+  
+If the given value is already within the range, it will be returned unchanged.  
+If any argument is `NaN`, `Infinity` or `-Infinity`, it will return `NaN`, since those are not real numbers in a mathematical sense.  
+  
+<details><summary><b>Example - click to view</b></summary>
+
+```ts
+import { overflowVal } from "@sv443-network/coreutils";
+
+overflowVal(5, 0, 10);     // 5
+overflowVal(15, 0, 10);    // 4
+overflowVal(-5, 0, 10);    // 6
+overflowVal(3, 2);         // 0
+
+overflowVal(NaN, 10);      // NaN
+overflowVal(Infinity, 10); // NaN
+overflowVal(3, Infinity);  // NaN
+
+overflowVal(1, 10, 0);     // throws RangeError
 ```
 </details>
 

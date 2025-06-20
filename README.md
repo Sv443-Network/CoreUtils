@@ -65,6 +65,7 @@ Intended to be used in conjunction with [`@sv443-network/userutils`](https://git
   - 🟣 [`function formatNumber()`](./docs.md#function-formatnumber) - Formats a number to a string using the given locale and format identifier
     - 🔷 [`type NumberFormat`](./docs.md#type-numberformat) - Number format identifier
   - 🟣 [`function mapRange()`](./docs.md#function-maprange) - Maps a number from one range to another
+  - 🟣 [`function overflowVal()`](./docs.md#function-overflowVal) - Makes sure a number is in a range by over- & underflowing it
   - 🟣 [`function randRange()`](./docs.md#function-randrange) - Returns a random number in the given range
   - 🟣 [`function roundFixed()`](./docs.md#function-roundfixed) - Rounds the given number to the given number of decimal places
   - 🟣 [`function valsWithin()`](./docs.md#function-valswithin) - Checks if the given numbers are within a certain range of each other
@@ -168,3 +169,15 @@ const CoreUtils = require("@sv443-network/coreutils");
 // - or import the library on your HTML page:
 // <script src="https://cdn.jsdelivr.net/npm/@sv443-network/coreutils@latest/dist/CoreUtils.min.umd.js"></script>
 ```
+
+<br><br>
+
+<div align="center" style="text-align: center;">
+
+Made with ❤️ by [Sv443](https://github.com/Sv443)  
+If you like this userscript, please consider [supporting the development](https://github.com/sponsors/Sv443)  
+  
+© 2025 Sv443 & Sv443 Network  
+[MIT license](./LICENSE.txt)
+
+</div>
