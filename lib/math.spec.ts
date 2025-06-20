@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bitSetHas, clamp, digitCount, formatNumber, mapRange, randRange, roundFixed, valsWithin } from "./math.js";
+import { bitSetHas, clamp, digitCount, formatNumber, mapRange, overflowVal, randRange, roundFixed, valsWithin } from "./math.js";
 
 //#region clamp
 describe("math/clamp", () => {
@@ -32,6 +32,24 @@ describe("math/mapRange", () => {
     expect(mapRange(0, 0, 0)).toBe(NaN);
     expect(mapRange(Infinity, 10, 1000)).toBe(Infinity);
     expect(mapRange(-Infinity, -Infinity, Infinity)).toBe(NaN);
+  });
+});
+
+//#region overflowVal
+describe("math/overflowVal", () => {
+  it("Overflows a value to be within a range", () => {
+    expect(overflowVal(5, 0, 10)).toBe(5);
+    expect(overflowVal(15, 0, 10)).toBe(4);
+    expect(overflowVal(-5, 0, 10)).toBe(6);
+    expect(overflowVal(3, 2)).toBe(0);
+  });
+
+  it("Handles edge cases", () => {
+    expect(overflowVal(NaN, 10)).toBeNaN();
+    expect(overflowVal(5, 10, NaN)).toBeNaN();
+    expect(overflowVal(Infinity, 10)).toBeNaN();
+    expect(overflowVal(-Infinity, 10)).toBeNaN();
+    expect(() => overflowVal(5, 10, 0)).toThrow(RangeError);
   });
 });
 

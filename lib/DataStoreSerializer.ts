@@ -100,15 +100,16 @@ export class DataStoreSerializer<TData extends DataStoreData> {
     const serData: SerializedDataStore[] = [];
 
     for(const storeInst of this.stores.filter(s => typeof stores === "function" ? stores(s.id) : stores.includes(s.id))) {
-      const data = useEncoding && storeInst.encodingEnabled()
-        ? await storeInst.encodeData[1](JSON.stringify(storeInst.getData()))
+      const encoded = Boolean(useEncoding && storeInst.encodingEnabled() && storeInst.encodeData?.[1]);
+      const data = encoded
+        ? await storeInst.encodeData![1](JSON.stringify(storeInst.getData()))
         : JSON.stringify(storeInst.getData());
 
       serData.push({
         id: storeInst.id,
         data,
         formatVersion: storeInst.formatVersion,
-        encoded: useEncoding && storeInst.encodingEnabled(),
+        encoded,
         checksum: this.options.addChecksum
           ? await this.calcChecksum(data)
           : undefined,

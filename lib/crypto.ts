@@ -1,70 +1,70 @@
 /**
  * @module crypto
- * This module contains various cryptographic functions, like compression and ArrayBuffer encoding - [see the documentation for more info](https://github.com/Sv443-Network/CoreUtils/blob/main/docs.md#crypto)
+ * This module contains various cryptographic functions, like compression and Uint8Array encoding - [see the documentation for more info](https://github.com/Sv443-Network/CoreUtils/blob/main/docs.md#crypto)
  */
 
 import { mapRange, randRange } from "./math.js";
 import type { Stringifiable } from "./types.js";
 
-/** Converts an ArrayBuffer to a base64-encoded (ASCII) string */
-export function abtoa(buf: ArrayBuffer): string {
+/** Converts an Uint8Array to a base64-encoded (ASCII) string */
+export function abtoa(buf: Uint8Array): string {
   return btoa(
     new Uint8Array(buf)
       .reduce((data, byte) => data + String.fromCharCode(byte), ""),
   );
 }
 
-/** Converts a base64-encoded (ASCII) string to an ArrayBuffer representation of its bytes */
-export function atoab(str: string): ArrayBuffer {
+/** Converts a base64-encoded (ASCII) string to an Uint8Array representation of its bytes */
+export function atoab(str: string): Uint8Array {
   return Uint8Array.from(atob(str), c => c.charCodeAt(0));
 }
 
-/** Compresses a string or an ArrayBuffer using the provided {@linkcode compressionFormat} and returns it as a base64 string */
-export async function compress(input: Stringifiable | ArrayBuffer, compressionFormat: CompressionFormat, outputType?: "string"): Promise<string>
-/** Compresses a string or an ArrayBuffer using the provided {@linkcode compressionFormat} and returns it as an ArrayBuffer */
-export async function compress(input: Stringifiable | ArrayBuffer, compressionFormat: CompressionFormat, outputType: "arrayBuffer"): Promise<ArrayBuffer>
-/** Compresses a string or an ArrayBuffer using the provided {@linkcode compressionFormat} and returns it as a base64 string or ArrayBuffer, depending on what {@linkcode outputType} is set to */
-export async function compress(input: Stringifiable | ArrayBuffer, compressionFormat: CompressionFormat, outputType: "string" | "arrayBuffer" = "string"): Promise<ArrayBuffer | string> {
-  const byteArray = input instanceof ArrayBuffer
+/** Compresses a string or an Uint8Array using the provided {@linkcode compressionFormat} and returns it as a base64 string */
+export async function compress(input: Stringifiable | Uint8Array, compressionFormat: CompressionFormat, outputType?: "string"): Promise<string>
+/** Compresses a string or an Uint8Array using the provided {@linkcode compressionFormat} and returns it as an Uint8Array */
+export async function compress(input: Stringifiable | Uint8Array, compressionFormat: CompressionFormat, outputType: "arrayBuffer"): Promise<Uint8Array>
+/** Compresses a string or an Uint8Array using the provided {@linkcode compressionFormat} and returns it as a base64 string or Uint8Array, depending on what {@linkcode outputType} is set to */
+export async function compress(input: Stringifiable | Uint8Array, compressionFormat: CompressionFormat, outputType: "string" | "arrayBuffer" = "string"): Promise<Uint8Array | string> {
+  const byteArray = input instanceof Uint8Array
     ? input
     : new TextEncoder().encode(input?.toString() ?? String(input));
   const comp = new CompressionStream(compressionFormat);
   const writer = comp.writable.getWriter();
   writer.write(byteArray);
   writer.close();
-  const buf = await (new Response(comp.readable).arrayBuffer());
+  const uintArr = new Uint8Array(await (new Response(comp.readable).arrayBuffer()));
   return outputType === "arrayBuffer"
-    ? buf
-    : abtoa(buf);
+    ? uintArr
+    : abtoa(uintArr);
 }
 
-/** Decompresses a previously compressed base64 string or ArrayBuffer, with the format passed by {@linkcode compressionFormat}, converted to a string */
-export async function decompress(input: Stringifiable | ArrayBuffer, compressionFormat: CompressionFormat, outputType?: "string"): Promise<string>
-/** Decompresses a previously compressed base64 string or ArrayBuffer, with the format passed by {@linkcode compressionFormat}, converted to an ArrayBuffer */
-export async function decompress(input: Stringifiable | ArrayBuffer, compressionFormat: CompressionFormat, outputType: "arrayBuffer"): Promise<ArrayBuffer>
-/** Decompresses a previously compressed base64 string or ArrayBuffer, with the format passed by {@linkcode compressionFormat}, converted to a string or ArrayBuffer, depending on what {@linkcode outputType} is set to */
-export async function decompress(input: Stringifiable | ArrayBuffer, compressionFormat: CompressionFormat, outputType: "string" | "arrayBuffer" = "string"): Promise<ArrayBuffer | string> {
-  const byteArray = input instanceof ArrayBuffer
+/** Decompresses a previously compressed base64 string or Uint8Array, with the format passed by {@linkcode compressionFormat}, converted to a string */
+export async function decompress(input: Stringifiable | Uint8Array, compressionFormat: CompressionFormat, outputType?: "string"): Promise<string>
+/** Decompresses a previously compressed base64 string or Uint8Array, with the format passed by {@linkcode compressionFormat}, converted to an Uint8Array */
+export async function decompress(input: Stringifiable | Uint8Array, compressionFormat: CompressionFormat, outputType: "arrayBuffer"): Promise<Uint8Array>
+/** Decompresses a previously compressed base64 string or Uint8Array, with the format passed by {@linkcode compressionFormat}, converted to a string or Uint8Array, depending on what {@linkcode outputType} is set to */
+export async function decompress(input: Stringifiable | Uint8Array, compressionFormat: CompressionFormat, outputType: "string" | "arrayBuffer" = "string"): Promise<Uint8Array | string> {
+  const byteArray = input instanceof Uint8Array
     ? input
     : atoab(input?.toString() ?? String(input));
   const decomp = new DecompressionStream(compressionFormat);
   const writer = decomp.writable.getWriter();
   writer.write(byteArray);
   writer.close();
-  const buf = await (new Response(decomp.readable).arrayBuffer());
+  const uintArr = new Uint8Array(await (new Response(decomp.readable).arrayBuffer()));
   return outputType === "arrayBuffer"
-    ? buf
-    : new TextDecoder().decode(buf);
+    ? uintArr
+    : new TextDecoder().decode(uintArr);
 }
 
 /**
- * Creates a hash / checksum of the given {@linkcode input} string or ArrayBuffer using the specified {@linkcode algorithm} ("SHA-256" by default).  
+ * Creates a hash / checksum of the given {@linkcode input} string or Uint8Array using the specified {@linkcode algorithm} ("SHA-256" by default).  
  *   
  * - ⚠️ Uses the SubtleCrypto API so it needs to run in a secure context (HTTPS).  
  * - ⚠️ If you use this for cryptography, make sure to use a secure algorithm (under no circumstances use SHA-1) and to [salt](https://en.wikipedia.org/wiki/Salt_(cryptography)) your input data.
  */
-export async function computeHash(input: string | ArrayBuffer, algorithm = "SHA-256"): Promise<string> {
-  let data: ArrayBuffer;
+export async function computeHash(input: string | Uint8Array, algorithm = "SHA-256"): Promise<string> {
+  let data: Uint8Array;
   if(typeof input === "string") {
     const encoder = new TextEncoder();
     data = encoder.encode(input);
