@@ -37,11 +37,11 @@ Intended to be used in conjunction with [`@sv443-network/userutils`](https://git
     - 🔷 [`type DataStoreData`](./docs.md#type-datastoredata) - The type of the serializable data
   - 🟧 [`class DataStoreSerializer`](./docs.md#class-datastoreserializer) - Serializes and deserializes data for multiple DataStore instances
     - 🔷 [`type DataStoreSerializerOptions`](./docs.md#type-datastoreserializeroptions) - Options for the DataStoreSerializer
-    - 🔷 [`type LoadStoresDataResult`](./docs.md#type-loadstoresdataresult) - Result of calling [`loadStoresData()`](#datastoreserializer-loadstoresdata)
+    - 🔷 [`type LoadStoresDataResult`](./docs.md#type-loadstoresdataresult) - Result of calling [`loadStoresData()`](./docs.md#datastoreserializer-loadstoresdata)
     - 🔷 [`type SerializedDataStore`](./docs.md#type-serializeddatastore) - Meta object and serialized data of a DataStore instance
     - 🔷 [`type StoreFilter`](./docs.md#type-storefilter) - Filter for selecting data stores
   - 🟧 [`class DataStoreEngine`](./docs.md#class-datastoreengine) - Base class for DataStore storage engines, which handle the data storage
-    - 🔷 [`type DataStoreEngineDSOptions`](./docs.md#type-datastoreenginedsoptions) - Reduced version of [`DataStoreOptions`](#type-datastoreoptions)
+    - 🔷 [`type DataStoreEngineDSOptions`](./docs.md#type-datastoreenginedsoptions) - Reduced version of [`DataStoreOptions`](./docs.md#type-datastoreoptions)
   - [Storage Engines:](./docs.md#storage-engines)
     - 🟧 [`class BrowserStorageEngine`](./docs.md#class-browserstorageengine) - Storage engine for browser environments (localStorage, sessionStorage)
       - 🔷 [`type BrowserStorageEngineOptions`](./docs.md#browserstorageengineoptions) - Options for the browser storage engine
@@ -167,7 +167,8 @@ const CoreUtils = require("@sv443-network/coreutils");
 // - to make the global variable `CoreUtils` available, import this file:
 // "@sv443-network/coreutils/dist/CoreUtils.min.umd.js"
 // - or import the library on your HTML page:
-// <script src="https://cdn.jsdelivr.net/npm/@sv443-network/coreutils@latest/dist/CoreUtils.min.umd.js"></script>
+// <script src="https://cdn.jsdelivr.net/npm/@sv443-network/coreutils@INSERT_VERSION_HERE/dist/CoreUtils.min.umd.js"></script>
+// (make sure to insert the version number above. Use 'latest' (not recommended) or a specific version, e.g. '9.4.3')
 ```
 
 <br><br>

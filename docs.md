@@ -2799,21 +2799,25 @@ doStuff();
 ### `NanoEmitter.on()`  
 Signature:
 ```ts
-NanoEmitter.on<K extends keyof TEventMap>(event: K, listener: TEventMap[K]): void
+NanoEmitter.on<K extends keyof TEventMap>(event: K, listener: TEventMap[K]): () => void
 ```
   
 Registers a listener function for the given event.  
-May be called multiple times for the same event.
+May be called multiple times for the same event.  
+  
+Returns a function that can be called to unsubscribe the listener from the event.
   
 <br>
 
 ### `NanoEmitter.once()`
 Signature:
 ```ts
-NanoEmitter.once<K extends keyof TEventMap>(event: K, listener: TEventMap[K]): void
+NanoEmitter.once<K extends keyof TEventMap>(event: K, listener: TEventMap[K]): () => void
 ```
   
-Registers a listener function for the given event that will only be called once.
+Registers a listener function for the given event that will only be called once.  
+  
+Returns a function that can be called to unsubscribe the listener from the event.
 
 <br>
 

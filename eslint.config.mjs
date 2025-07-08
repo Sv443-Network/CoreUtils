@@ -26,11 +26,26 @@ const config = [
       "**/test.ts",
       "test/**/*",
       "**/*.spec.ts",
+      "**/*.mjs",
+      "**/*.cjs",
+      "**/*.js",
+      "tools/**/*",
+      "vitest.config.ts",
     ],
-  }, ...compat.extends(
+  },
+  {
+    languageOptions: {
+      parserOptions: {
+        projectService: true,
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+  },
+  ...compat.extends(
     "eslint:recommended",
     "plugin:@typescript-eslint/recommended",
-  ), {
+  ),
+  {
     plugins: {
       "@typescript-eslint": typescriptEslint,
     },
@@ -78,6 +93,9 @@ const config = [
       "@typescript-eslint/explicit-function-return-type": ["error", {
         allowExpressions: true,
         allowIIFEs: true,
+      }],
+      "@typescript-eslint/unbound-method": ["error", {
+        ignoreStatic: true,
       }],
       "comma-dangle": ["error", "only-multiline"],
       "no-misleading-character-class": "off",
