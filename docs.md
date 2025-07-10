@@ -2739,6 +2739,11 @@ myInstance.on("foo", (bar) => {
   console.log("foo event (outside):", bar);
 });
 
+(async () => {
+  // once() returns a Promise that can make your code much cleaner:
+  const [bar] = await myInstance.once("foo");
+})();
+
 // throws a TS error since `events` is protected, but technically still works in JS:
 myInstance.events.emit("foo", "hello");
 
@@ -2772,9 +2777,15 @@ myEmitter.on("foo", (bar) => {
   console.log("foo event:", bar);
 });
 
+// once() can be used via callback or Promise:
 myEmitter.once("baz", (qux) => {
   console.log("baz event (once):", qux);
 });
+
+(async () => {
+  const [qux] = await myEmitter.once("baz");
+  console.log("baz event (once, Promise):", qux);
+})();
 
 function doStuff() {
   // only works if publicEmit is set to true
@@ -2812,12 +2823,11 @@ Returns a function that can be called to unsubscribe the listener from the event
 ### `NanoEmitter.once()`
 Signature:
 ```ts
-NanoEmitter.once<K extends keyof TEventMap>(event: K, listener: TEventMap[K]): () => void
+NanoEmitter.once<K extends keyof TEventMap>(event: K, listener: TEventMap[K]): Promise<Parameters<TEvtMap[K]>>
 ```
   
 Registers a listener function for the given event that will only be called once.  
-  
-Returns a function that can be called to unsubscribe the listener from the event.
+Returns a Promise that resolves with the arguments passed to `emit()`.  
 
 <br>
 
