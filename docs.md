@@ -2821,6 +2821,102 @@ Returns a function that can be called to unsubscribe the listener from the event
 
 <br>
 
+### `NanoEmitter.onMulti()`
+Signature:
+```ts
+NanoEmitter.onMulti(options: NanoEmitterOnMultiOptions<TEventMap> | Array<NanoEmitterOnMultiOptions<TEventMap>>): () => void
+```
+  
+Allows subscribing to multiple events and calling the callback only when one of, all of, or a subset of the events are emitted, either continuously or only once.  
+  
+Returns a function that can be called to unsubscribe all listeners created by this call.  
+Alternatively, pass the same [`AbortController`'s `AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortController#instance_properties) to all options objects to achieve the same effect, or use different ones for finer control.  
+  
+The `options` argument can be a single object or an array of objects with the following properties:
+| Property | Type | Description |
+| :-- | :-- | :-- |
+| `callback` | `function` | The function that will be called when the conditions are met. It will be called with the event name and spread arguments that have been passed via the `emit()` method. |
+| `oneOf?` | `Array<keyof TEventMap>` | If used, the callback will be called when any of the matching events are emitted. At least one of `oneOf` or `allOf` must be provided. If both are used, it works like an "or" condition. |
+| `allOf?` | `Array<keyof TEventMap>` | If used, the callback will be called after all of the matching events are emitted at least once, and, if `once` is false, any time any of them are emitted again. At least one of `oneOf` or `allOf` must be provided. If both are used, it works like an "or" condition. |
+| `once?` | `boolean` | If set to true, the callback will be called only once for the first event (or set of events) that match the criteria, then stop listening. Defaults to false. |
+| `signal?` | `AbortSignal` | If provided, the subscription will be aborted when the given signal is aborted. |
+
+<details><summary><b>Example - click to view</b></summary>
+
+```ts
+import { NanoEmitter } from "@sv443-network/coreutils";
+
+let result = 0;
+
+const myEmitter = new NanoEmitter<{
+  foo: (value: number) => void;
+  bar: (value: number) => void;
+  baz: (value: number) => void;
+}>({ publicEmit: true });
+
+myEmitter.onMulti([
+  {
+    oneOf: ["foo", "bar"],
+    // this callback will be called every time either foo or bar is emitted:
+    callback: (event, value) => {
+      console.log(`Event ${event} emitted with value ${value}`);
+      result += value;
+    },
+  },
+  {
+    allOf: ["foo", "bar"],
+    once: true,
+    callback: () => {
+      console.log("Both foo and bar were emitted at least once");
+      result *= 2;
+    },
+  },
+]);
+
+// the first events add their values to the result:
+myEmitter.emit("foo", 10); // "Event foo emitted with value 10" (result = 10)
+myEmitter.emit("foo", 20); // "Event foo emitted with value 20" (result = 30)
+myEmitter.emit("bar", 30); // "Event bar emitted with value 30" (result = 60)
+
+// both events were emitted at least once, so the second callback is called to multiply the result by 2:
+console.log(result); // 120
+
+// any subsequent events will not call the second callback again (because once = true), but will still call the first one:
+myEmitter.emit("bar", 10); // "Event bar emitted with value 10"
+console.log(result); // 130
+
+
+// combining allOf and oneOf:
+
+result = 0; // reset result
+
+const controller = new AbortController();
+
+myEmitter.onMulti({
+  // using both makes them work like an "or" condition:
+  oneOf: ["foo", "bar"],
+  allOf: ["bar", "baz"],
+  callback: (event, value) => {
+    console.log(`Event ${event} emitted with value ${value}`);
+    result += value;
+  },
+  // calling controller.abort() will unsubscribe all listeners created by this call:
+  signal: controller.signal,
+});
+
+myEmitter.emit("baz", 10); // doesn't match `oneOf` or `allOf`, so nothing happens
+console.log(result); // 0
+
+myEmitter.emit("foo", 20); // matches `oneOf`
+console.log(result); // 20
+
+myEmitter.emit("bar", 30); // matches `oneOf` and `allOf`
+console.log(result); // 50
+```
+</details>
+
+<br>
+
 ### `NanoEmitter.emit()`
 Signature:
 ```ts
