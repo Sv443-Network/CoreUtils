@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { NanoEmitter } from "./NanoEmitter.js";
 
-describe("NanoEmitter", () => {
+describe("NanoEmitter base functionality", () => {
+  //#region base - FP
+
   it("Functional", async () => {
     const evts = new NanoEmitter<{
       val: (v1: number, v2: number) => void;
@@ -36,6 +38,8 @@ describe("NanoEmitter", () => {
     expect(v3 + v4).toBe(60);
   });
 
+  //#region OOP
+
   it("Object oriented", async () => {
     class MyEmitter extends NanoEmitter<{
       val: (v1: number, v2: number) => void;
@@ -57,4 +61,184 @@ describe("NanoEmitter", () => {
 
     expect(evts.emit("val", 0, 0)).toBe(false);
   });
+});
+
+describe("NanoEmitter onMulti", () => {
+  //#region onMulti allOf
+  it("allOf", () => {
+    const evts = new NanoEmitter<{
+      val1: (val: number) => void;
+      val2: (val: number) => void;
+    }>({
+      publicEmit: true,
+    });
+
+    let cbVal = -1;
+
+    evts.onMulti([
+      {
+        allOf: ["val1", "val2"],
+        callback: (event, val) => {
+          cbVal = val;
+        },
+      },
+    ]);
+
+    evts.emit("val1", 1);
+    expect(cbVal).toBe(-1);
+
+    evts.emit("val2", 2);
+    expect(cbVal).toBe(2);
+
+    evts.emit("val1", 3);
+    expect(cbVal).toBe(3);
+  });
+
+  //#region onMulti oneOf
+  it("oneOf", () => {
+    const evts = new NanoEmitter<{
+      val1: (val: number) => void;
+      val2: (val: number) => void;
+    }>({
+      publicEmit: true,
+    });
+
+    let cbVal = -1;
+
+    const unsub = evts.onMulti([
+      {
+        oneOf: ["val1", "val2"],
+        callback: (event, val) => {
+          cbVal = val;
+        },
+      },
+    ]);
+
+    evts.emit("val1", 1);
+    expect(cbVal).toBe(1);
+
+    evts.emit("val2", 2);
+    expect(cbVal).toBe(2);
+
+    unsub();
+
+    evts.emit("val1", 3);
+    expect(cbVal).toBe(2);
+  });
+
+  // #region onMulti oneOf once
+  it("oneOf once", () => {
+    const evts = new NanoEmitter<{
+      val1: (val: number) => void;
+      val2: (val: number) => void;
+    }>({
+      publicEmit: true,
+    });
+
+    let cbVal = -1;
+
+    evts.onMulti({
+      oneOf: ["val1", "val2"],
+      once: true,
+      callback: (event, val) => {
+        cbVal = val;
+      },
+    });
+
+    evts.emit("val1", 1);
+    expect(cbVal).toBe(1);
+
+    evts.emit("val2", 2);
+    expect(cbVal).toBe(1);
+  });
+
+  // #region onMulti allOf once
+  it("allOf once", () => {
+    const evts = new NanoEmitter<{
+      val1: (val: number) => void;
+      val2: (val: number) => void;
+    }>({
+      publicEmit: true,
+    });
+
+    let cbVal = -1;
+
+    evts.onMulti({
+      allOf: ["val1", "val2"],
+      once: true,
+      callback: (event, val) => {
+        cbVal = val;
+      },
+    });
+
+    evts.emit("val1", 1);
+    expect(cbVal).toBe(-1);
+
+    evts.emit("val2", 2);
+    expect(cbVal).toBe(2);
+
+    evts.emit("val1", 3);
+    expect(cbVal).toBe(2);
+  });
+
+  // #region onMulti oneOf + allOf
+  it("allOf + oneOf", () => {
+    const evts = new NanoEmitter<{
+      val1: (val: number) => void;
+      val2: (val: number) => void;
+      val3: (val: number) => void;
+    }>({
+      publicEmit: true,
+    });
+
+    let cbVal = -1;
+
+    evts.onMulti({
+      oneOf: ["val1", "val2"],
+      allOf: ["val2", "val3"],
+      callback: (event, val) => {
+        cbVal = val;
+      },
+    });
+
+    evts.emit("val1", 1);
+    expect(cbVal).toBe(1);
+
+    evts.emit("val3", 3);
+    expect(cbVal).toBe(1);
+
+    evts.emit("val2", 2);
+    expect(cbVal).toBe(2);
+
+    evts.emit("val1", 1);
+    expect(cbVal).toBe(1);
+  });
+
+  //#region onMulti edge cases
+  it("Handles edge cases", () => {
+    const evts = new NanoEmitter();
+    expect(() => {
+      // @ts-expect-error
+      evts.onMulti({
+        once: true,
+        callback: () => void 0,
+      });
+    }).toThrow(TypeError);
+
+    const ac = new AbortController();
+    ac.abort();
+
+    let cbVal = -1;
+
+    evts.onMulti({
+      signal: ac.signal,
+      oneOf: ["val1", "val2"],
+      callback: (event, val) => {
+        cbVal = val;
+      },
+    });
+
+    evts.emit("val1", 1);
+    expect(cbVal).toBe(-1);
+  })
 });

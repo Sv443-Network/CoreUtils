@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { compress, computeHash, decompress, randomId } from "./crypto.js";
+import { abtoa, atoab, compress, computeHash, decompress, randomId } from "./crypto.js";
 
 //#region compress
 describe("crypto/compress", () => {
@@ -9,7 +9,18 @@ describe("crypto/compress", () => {
     expect((await compress(input, "gzip", "string")).startsWith("H4sI")).toBe(true);
     expect((await compress(input, "deflate", "string")).startsWith("eJzz")).toBe(true);
     expect((await compress(input, "deflate-raw", "string")).startsWith("80jN")).toBe(true);
-    expect(await compress(input, "gzip", "arrayBuffer")).toBeInstanceOf(ArrayBuffer);
+    expect(await compress(input, "gzip", "arrayBuffer")).toBeInstanceOf(Uint8Array);
+  });
+
+  it("Handles Uint8Array input correctly", async () => {
+    const input = new ArrayBuffer(5);
+    const view = new Uint8Array(input);
+    view.set([1, 2, 3, 4, 5]);
+
+    const ab = await compress(view, "gzip", "arrayBuffer");
+
+    expect(ab).toBeInstanceOf(Uint8Array);
+    expect(abtoa(ab).startsWith("H4sI")).toBe(true);
   });
 });
 
@@ -26,6 +37,23 @@ describe("crypto/decompress", () => {
     expect(await decompress(inputDf, "deflate", "string")).toBe(expectedDecomp);
     expect(await decompress(inputDfRaw, "deflate-raw", "string")).toBe(expectedDecomp);
   });
+
+  it("Handles Uint8Array input correctly", async () => {
+    const inputGz = "H4sIAAAAAAAACvNIzcnJ11Eozy/KSVEEAObG5usNAAAA";
+    const inputDf = "eJzzSM3JyddRKM8vyklRBAAgXgSK";
+    const inputDfRaw = "80jNycnXUSjPL8pJUQQA";
+
+    const inputGzUintArr = new Uint8Array(atoab(inputGz));
+    const inputDfUintArr = new Uint8Array(atoab(inputDf));
+    const inputDfRawUintArr = new Uint8Array(atoab(inputDfRaw));
+
+    const expectedDecomp = new TextEncoder().encode("Hello, world!");
+    const expectedDecompUintArr = new Uint8Array(expectedDecomp.buffer);
+
+    expect(await decompress(inputGzUintArr, "gzip", "arrayBuffer")).toEqual(expectedDecompUintArr);
+    expect(await decompress(inputDfUintArr, "deflate", "arrayBuffer")).toEqual(expectedDecompUintArr);
+    expect(await decompress(inputDfRawUintArr, "deflate-raw", "arrayBuffer")).toEqual(expectedDecompUintArr);
+  });
 });
 
 //#region computeHash
@@ -38,6 +66,13 @@ describe("crypto/computeHash", () => {
     expect(await computeHash(input1, "SHA-256")).toBe("315f5bdb76d078c43b8ac0064e4a0164612b1fce77c869345bfc94c75894edd3");
     expect(await computeHash(input1, "SHA-512")).toBe("c1527cd893c124773d811911970c8fe6e857d6df5dc9226bd8a160614c0cd963a4ddea2b94bb7d36021ef9d865d5cea294a82dd49a0bb269f51f6e7a57f79421");
     expect(await computeHash(input2, "SHA-256")).toBe(await computeHash(input2, "SHA-256"));
+  });
+
+  it("Handles Uint8Array input correctly", async () => {
+    const input = new TextEncoder().encode("Hello, world!");
+    const expectedHash = "315f5bdb76d078c43b8ac0064e4a0164612b1fce77c869345bfc94c75894edd3";
+
+    expect(await computeHash(input, "SHA-256")).toBe(expectedHash);
   });
 });
 

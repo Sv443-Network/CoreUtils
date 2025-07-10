@@ -52,12 +52,14 @@ For submitting bug reports or feature requests, please use the [GitHub issue tra
     - 🟧 [`class DataStore`](#class-datastore) - The main class for the data store
       - 🔷 [`type DataStoreOptions`](#type-datastoreoptions) - Options for the data store
       - 🔷 [`type DataMigrationsDict`](#type-datamigrationsdict) - Dictionary of data migration functions
+      - 🔷 [`type DataStoreData`](#type-datastoredata) - The type of the serializable data
     - 🟧 [`class DataStoreSerializer`](#class-datastoreserializer) - Serializes and deserializes data for multiple DataStore instances
       - 🔷 [`type DataStoreSerializerOptions`](#type-datastoreserializeroptions) - Options for the DataStoreSerializer
       - 🔷 [`type LoadStoresDataResult`](#type-loadstoresdataresult) - Result of calling [`loadStoresData()`](#datastoreserializer-loadstoresdata)
       - 🔷 [`type SerializedDataStore`](#type-serializeddatastore) - Meta object and serialized data of a DataStore instance
       - 🔷 [`type StoreFilter`](#type-storefilter) - Filter for selecting data stores
     - 🟧 [`class DataStoreEngine`](#class-datastoreengine) - Base class for DataStore storage engines, which handle the data storage
+      - 🔷 [`type DataStoreEngineDSOptions`](#type-datastoreenginedsoptions) - Reduced version of [`DataStoreOptions`](#type-datastoreoptions)
     - [Storage Engines:](#storage-engines)
       - 🟧 [`class BrowserStorageEngine`](#class-browserstorageengine) - Storage engine for browser environments (localStorage, sessionStorage)
         - 🔷 [`type BrowserStorageEngineOptions`](#browserstorageengineoptions) - Options for the browser storage engine
@@ -81,6 +83,7 @@ For submitting bug reports or feature requests, please use the [GitHub issue tra
     - 🟣 [`function formatNumber()`](#function-formatnumber) - Formats a number to a string using the given locale and format identifier
       - 🔷 [`type NumberFormat`](#type-numberformat) - Number format identifier
     - 🟣 [`function mapRange()`](#function-maprange) - Maps a number from one range to another
+    - 🟣 [`function overflowVal()`](#function-overflowVal) - Makes sure a number is in a range by over- & underflowing it
     - 🟣 [`function randRange()`](#function-randrange) - Returns a random number in the given range
     - 🟣 [`function roundFixed()`](#function-roundfixed) - Rounds the given number to the given number of decimal places
     - 🟣 [`function valsWithin()`](#function-valswithin) - Checks if the given numbers are within a certain range of each other
@@ -108,7 +111,7 @@ For submitting bug reports or feature requests, please use the [GitHub issue tra
       - 🟩 [`const defaultPbChars`](#const-defaultpbchars) - Default characters for the progress bar
       - 🔷 [`type ProgressBarChars`](#type-progressbarchars) - Type for the progress bar characters object
     - 🟣 [`function joinArrayReadable()`](#function-joinarrayreadable) - Joins the given array into a string, using the given separators and last separator
-    - 🟣 [`function secsToTimeStr()`](#function-sectostimestr) - Turns the given number of seconds into a string in the format `(hh:)mm:ss` with intelligent zero-padding
+    - 🟣 [`function secsToTimeStr()`](#function-secstotimestr) - Turns the given number of seconds into a string in the format `(hh:)mm:ss` with intelligent zero-padding
     - 🟣 [`function truncStr()`](#function-truncstr) - Truncates the given string to the given length
   <!-- - *[**TieredCache:**](#tieredcache)
     - 🟧 *[`class TieredCache`](#class-tieredcache) - A multi-tier cache that uses multiple storage engines with different expiration times
@@ -135,6 +138,12 @@ For submitting bug reports or feature requests, please use the [GitHub issue tra
     - 🔷 [`type StringGen`](#type-stringgen) - A value that can be either of type string, or a sync or async function that returns a string
     - 🔷 [`type ValueGen`](#type-valuegen) - A value that can be either the generic type T, or a sync or async function that returns T
     - 🔷 [`type Stringifiable`](#type-stringifiable) - Any value that can be implicitly converted to a string
+
+> [!NOTE]  
+> 🟣 = function  
+> 🟧 = class  
+> 🔷 = type  
+> 🟩 = const
 
 <br><br><br>
 
@@ -259,7 +268,7 @@ Signature:
 takeRandomItemIndex<TItem = unknown>(arr: TItem[]): [item?: TItem, index?: number];
 ```
   
-Returns a random item and its index as a tuple from the given array and mutates the original array to remove it.  
+Returns a random item and its original index as a tuple from the given array and mutates the original array to remove it.  
 If the array is empty, `undefined` will be returned for both values.  
   
 <details><summary>Example - click to view</summary>
@@ -269,14 +278,14 @@ import { takeRandomItemIndex } from "@sv443-network/coreutils";
 
 const arr = ["foo", "bar", "baz"];
 
-console.log(takeRandomItemIndex(arr)); // ["bar", 1]
-console.log(arr); // ["foo", "baz"]
+while([itm, idx] = takeRandomItemIndex(arr), itm !== undefined) {
+  console.log(idx, itm, arr);
+}
 
-console.log(takeRandomItemIndex(arr)); // ["baz", 1]
-console.log(arr); // ["foo"]
-
-console.log(takeRandomItemIndex(arr)); // ["foo", 0]
-console.log(arr); // []
+// Logs:
+// 1 "bar" ["foo", "baz"]
+// 1 "baz" ["foo"]
+// 0 "foo" []
 
 console.log(takeRandomItemIndex(arr)); // [undefined, undefined]
 console.log(arr); // []
@@ -393,10 +402,10 @@ console.log(rgbToHex());                                // #nannannan
 ### `function abtoa()`
 Signature:
 ```ts
-function abtoa(buf: ArrayBuffer): string;
+function abtoa(buf: Uint8Array): string;
 ```
   
-Converts an ArrayBuffer to a base64-encoded (ASCII) string.  
+Converts an ArrayBuffer (Uint8Array) to a base64-encoded (ASCII) string.  
 Used to encode a value to be later decoded with the [`atoab()` function](#function-atoab).  
   
 <details><summary>Example - click to view</summary>
@@ -407,7 +416,7 @@ import { abtoa } from "@sv443-network/coreutils";
 const buffer = new ArrayBuffer(8);
 const view = new Uint8Array(buffer);
 view.set([1, 2, 3, 4, 5, 6, 7, 8]);
-const base64 = abtoa(buffer);
+const base64 = abtoa(view);
 console.log(base64); // AQIDBAUGBwg=
 ```
 </details>
@@ -417,10 +426,10 @@ console.log(base64); // AQIDBAUGBwg=
 ### `function atoab()`
 Signature:
 ```ts
-function atoab(str: string): ArrayBuffer;
+function atoab(str: string): Uint8Array;
 ```
   
-Converts a base64-encoded (ASCII) string to an ArrayBuffer.  
+Converts a base64-encoded (ASCII) string to an ArrayBuffer (Uint8Array).  
 Used to decode a value previously encoded with the [`abtoa()` function](#function-abtoa).  
   
 <details><summary>Example - click to view</summary>
@@ -430,8 +439,7 @@ import { atoab } from "@sv443-network/coreutils";
 
 const base64 = "AQIDBAUGBwg="; // see abtoa() example
 const buffer = atoab(base64);
-const view = new Uint8Array(buffer);
-console.log(view); // Uint8Array(8) [ 1, 2, 3, 4, 5, 6, 7, 8 ]
+console.log(buffer); // Uint8Array(8) [ 1, 2, 3, 4, 5, 6, 7, 8 ]
 ```
 </details>
 
@@ -440,13 +448,13 @@ console.log(view); // Uint8Array(8) [ 1, 2, 3, 4, 5, 6, 7, 8 ]
 ### `function compress()`
 Signature:
 ```ts
-function compress(input: Stringifiable | ArrayBuffer, compressionFormat: CompressionFormat, outputType: "string" | "arrayBuffer" = "string"): Promise<ArrayBuffer | string>;
+function compress(input: Stringifiable | Uint8Array, compressionFormat: CompressionFormat, outputType: "string" | "arrayBuffer" = "string"): Promise<Uint8Array | string>;
 ```
   
-Compresses the given string or ArrayBuffer using the given algorithm and encoding.  
-The `input` argument can be a [`Stringifiable`](#type-stringifiable) object or an ArrayBuffer.  
+Compresses the given string or ArrayBuffer (Uint8Array) using the given algorithm and encoding.  
+The `input` argument can be a [`Stringifiable`](#type-stringifiable) object or an ArrayBuffer (Uint8Array).  
 The `compressionFormat` argument can usually be either `gzip`, `deflate` or `deflate-raw`.  
-The `outputType` argument determines if the returned value should be a base64-encoded string or an ArrayBuffer.  
+The `outputType` argument determines if the returned value should be a base64-encoded string or an ArrayBuffer (Uint8Array).  
   
 <details><summary>Example - click to view</summary>
 
@@ -467,13 +475,13 @@ console.log(str === decompressed); // true
 ### `function decompress()`
 Signature:
 ```ts
-function decompress(input: Stringifiable | ArrayBuffer, compressionFormat: CompressionFormat, outputType: "string" | "arrayBuffer" = "string"): Promise<ArrayBuffer | string>;
+function decompress(input: Stringifiable | Uint8Array, compressionFormat: CompressionFormat, outputType: "string" | "arrayBuffer" = "string"): Promise<Uint8Array | string>;
 ```
   
-Decompresses the previously compressed string or ArrayBuffer using the given algorithm and encoding.  
-The `input` argument can be a [`Stringifiable`](#type-stringifiable) object or an ArrayBuffer.  
+Decompresses the previously compressed string or ArrayBuffer (Uint8Array) using the given algorithm and encoding.  
+The `input` argument can be a [`Stringifiable`](#type-stringifiable) object or an ArrayBuffer (Uint8Array).  
 The `compressionFormat` argument can usually be either `gzip`, `deflate` or `deflate-raw`.  
-The `outputType` argument determines if the returned value should be a base64-encoded string or an ArrayBuffer.  
+The `outputType` argument determines if the returned value should be a base64-encoded string or an ArrayBuffer (Uint8Array).  
   
 <details><summary>Example - click to view</summary>
 
@@ -494,14 +502,10 @@ console.log(str === decompressed); // true
 ### `function computeHash()`
 Signature:
 ```ts
-function computeHash(input: string | ArrayBuffer, algorithm = "SHA-256"): Promise<string>;
+function computeHash(input: string | Uint8Array, algorithm = "SHA-256"): Promise<string>;
 ```
-<!-- Creates a hash / checksum of the given {@linkcode input} string or ArrayBuffer using the specified {@linkcode algorithm} ("SHA-256" by default).  
- *   
- * - ⚠️ Uses the SubtleCrypto API so it needs to run in a secure context (HTTPS).  
- * - ⚠️ If you use this for cryptography, make sure to use a secure algorithm (under no circumstances use SHA-1) and to [salt](https://en.wikipedia.org/wiki/Salt_(cryptography)) your input data. -->
   
-Creates a hash / checksum of the given string or ArrayBuffer using the specified algorithm ("SHA-256" by default).  
+Creates a hash / checksum of the given string or ArrayBuffer (Uint8Array) using the specified algorithm ("SHA-256" by default).  
   
 - ⚠️ Uses the SubtleCrypto API so in a DOM environment this needs to run in a secure context (HTTPS).
 - ⚠️ If you use this for cryptography, make sure to use a secure algorithm (under no circumstances use SHA-1) and to [salt your input.](https://en.wikipedia.org/wiki/Salt_(cryptography))
@@ -539,7 +543,7 @@ This randomization is also affected by the `enhancedEntropy` setting, unless the
   
 Throws a RangeError if the length is less than 1 or the radix is less than 2 or greater than 36.  
   
-⚠️ This is not suitable for generating anything related to cryptography! Use [SubtleCrypto's `generateKey()`](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/generateKey) for that instead.  
+- ⚠️ This is not suitable for generating anything related to cryptography! Use [SubtleCrypto's `generateKey()`](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/generateKey) for that instead.  
   
 <details><summary>Example - click to view</summary>
 
@@ -585,7 +589,7 @@ benchmark(true, true);   // Generated 10k in 1054ms
 ### `class DataStore`
 Signature:
 ```ts
-class DataStore<TData extends object = object>;
+class DataStore<TData extends DataStoreData>;
 ```
   
 Usage:
@@ -609,7 +613,7 @@ It combines the data of multiple DataStore instances into a single object that c
   
 If you were using the `DataStore` class from the `@sv443-network/coreutils` package before, all your data should be migrated automatically on the first call to `loadData()`.  
   
-⚠️ The data is serialized as a JSON string, so only JSON-compatible data can be used. Circular structures and complex objects (containing functions, symbols, etc.) will either throw an error on load and save or cause otherwise unexpected behavior. Properties with a value of `undefined` will be removed from the data prior to saving it, so use `null` instead.  
+- ⚠️ The data is serialized as a JSON string, so only JSON-compatible data can be used. Circular structures and complex objects (containing functions, symbols, etc.) will either throw an error on load and save or cause otherwise unexpected behavior. Properties with a value of `undefined` will be removed from the data prior to saving it, so use `null` instead.  
   
 <details><summary><b>Example - click to view</b></summary>
 
@@ -771,7 +775,7 @@ Signature:
 deleteData(): Promise<void>;
 ```
   
-Fully deletes the data from persistent storage only.  
+Fully deletes the data from persistent storage only. Also deletes the data container itself, if the storage engine implements the [`deleteStorage()`](#datastoreenginedeletestorage) method.  
 The internal cache will be left untouched, so any subsequent calls to `getData()` will return the data that was last loaded.  
 If `loadData()` or `setData()` are called after this, the persistent storage will be populated with the value of `options.defaultData` again.  
 This is why you should either immediately repopulate the cache and persistent storage or the page should probably be reloaded or closed after this method is called.
@@ -824,8 +828,8 @@ It has the following properties:
 | `migrations?` | [`DataMigrationsDict`](#type-datamigrationsdict) | (Optional) A dictionary of functions that can be used to migrate data from older versions of the data to newer ones. The keys of the dictionary should be the format version number that the function migrates to, from the previous whole integer value. The values should be functions that take the data in the old format and return the data in the new format. The functions will be run in order from the oldest to the newest version. If the current format version is not in the dictionary, no migrations will be run. |
 | `migrateIds?` | `string \| string[]` | (Optional) A string or array of strings that migrate from one or more old IDs to the ID set in the constructor. If no data exist for the old ID(s), nothing will be done, but some time may still pass trying to fetch the non-existent data. The ID migration will be done once per session in the call to [`loadData()`](#datastoreloaddata). |
 | `compressionFormat?` | [`CompressionFormat`](https://developer.mozilla.org/en-US/docs/Web/API/CompressionStream/CompressionStream#format) \| `null` | (Optional, disallowed when `encodeData` and `decodeData` are set) The compression format to use when saving the data. If set, the data will be compressed before saving and decompressed after loading. The default is `"deflate-raw"`. Explicitly set to `null` to disable compression. |
-| `encodeData?` | `(data: string) => string \| Promise<string>` | (Optional, but required when `decodeData` is also set and disallowed when `compressionFormat` is set) Function that encodes the data before saving - you can use [`compress()`](#function-compress) here to save space at the cost of a little bit of performance |
-| `decodeData?` | `(data: string) => string \| Promise<string>` | (Optional, but required when `encodeData` is also set and disallowed when `compressionFormat` is set) Function that decodes the data when loading - you can use [`decompress()`](#function-decompress) here to decode the data that was previously compressed with [compress()](#function-compress) |
+| `encodeData?` | `[format: string, encode: (data: string) => string \| Promise<string>]` | (Optional, but required when `decodeData` is also set and disallowed when `compressionFormat` is set) Format identifier and function that encodes the data before saving - you can use [`compress()`](#function-compress) here to save space at the cost of a little bit of performance |
+| `decodeData?` | `[format: string, decode: (data: string) => string \| Promise<string>]` | (Optional, but required when `encodeData` is also set and disallowed when `compressionFormat` is set) Format identifier and function that decodes the data when loading - you can use [`decompress()`](#function-decompress) here to decode the data that was previously compressed with [compress()](#function-compress) |
 
 <br>
 
@@ -837,6 +841,18 @@ Don't use negative values and don't skip numbers.
   
 The values are functions that take the data in the old format as the sole argument and should return the data in the new format.  
 The old data is a copy of the cached object, so you can mutate it directly, use `delete data.foo` to delete properties, etc.
+
+<br>
+
+### `type DataStoreData`
+```ts
+type DataStoreData<TData extends SerializableVal = SerializableVal> = Record<string, SerializableVal | TData>;
+```
+  
+A type that represents the data stored in a DataStore instance.  
+It is a record of string keys to values that can be serialized to JSON via `JSON.stringify()`.  
+This means that the values can be primitive types (string, number, boolean, null), arrays or objects that only contain serializable values.  
+Refer to the [`SerializableVal` type](#type-serializableval) for more information.
 
 <br><br>
 
@@ -853,7 +869,7 @@ Also, by default a checksum is calculated and importing data with a mismatching 
   
 The class' internal methods are all declared as protected, so you can extend this class and override them if you need to add your own functionality.  
   
-⚠️ Needs to run in a secure context (HTTPS) due to the use of the SubtleCrypto API.  
+- ⚠️ Needs to run in a secure context (HTTPS) due to the use of the SubtleCrypto API.  
   
 <details><summary><b>Example - click to view</b></summary>
 
@@ -890,7 +906,7 @@ const barStore = new DataStore({
   // this is how you can set custom encoding and decoding functions:
   encodeData: ["gzip", (data) => compress(data, "gzip", "string")],
   decodeData: ["gzip", (data) => decompress(data, "gzip", "string")],
-  // ensure the algorithm always stays the same!
+  // ensure the algorithm always stays consistent!
 });
 
 const serializer = new DataStoreSerializer([fooStore, barStore], {
@@ -1176,16 +1192,19 @@ Argument for filtering DataStore instances in the methods [`DataStoreSerializer.
 ### `class DataStoreEngine`
 Signature:
 ```ts
-abstract class DataStoreEngine<TData extends object = object>;
+abstract class DataStoreEngine<TData extends DataStoreData>;
 ```
   
 Usage:
 ```ts
-class MyStorageEngine<TData extends object = object> extends DataStoreEngine<TData> {
-  protected options: MyStorageEngineOptions;
-  constructor(options: MyStorageEngineOptions) {
-    super();
-    this.options = options;
+type MyStorageEngineOptions<TData extends DataStoreData> = {
+  dataStoreOptions?: DataStoreEngineDSOptions<TData>;
+  // ...
+}
+
+class MyStorageEngine<TData extends DataStoreData> extends DataStoreEngine<TData> {
+  constructor(protected options: MyStorageEngineOptions<TData>) {
+    super(options?.dataStoreOptions);
   }
 }
 ```
@@ -1197,16 +1216,23 @@ While this library offers some premade engines [in the Storage Engines section,]
 <details><summary>Example - click to view</summary>
 
 ```ts
-import { DataStoreEngine } from "@sv443-network/coreutils";
+import { DataStoreEngine, type DataStoreData, type DataStoreEngineDSOptions } from "@sv443-network/coreutils";
 
-class MyStorageEngine<TData extends object = object> extends DataStoreEngine<TData> {
-  protected options: MyStorageEngineOptions;
+type MyStorageEngineOptions<TData extends DataStoreData> = {
+  dataStoreOptions?: DataStoreEngineDSOptions<TData>;
+  // custom engine options here:
+}
 
-  constructor(options: MyStorageEngineOptions) {
-    super();
+class MyStorageEngine<TData extends DataStoreData> extends DataStoreEngine<TData> {
+  protected options: MyStorageEngineOptions<TData>;
+
+  constructor(options: MyStorageEngineOptions<TData>) {
+    // if this engine is used standalone, this is how it needs to be initialized, to ensure the "id", "encodeData" and "decodeData" properties are set:
+    super(options?.dataStoreOptions);
     this.options = options;
   }
 
+  /** Required - returns the value of the given name from persistent storage, or defaultValue if it doesn't exist */
   async getValue(name: string, defaultValue: string): Promise<string> {
     // implement your own logic in here
 
@@ -1215,18 +1241,84 @@ class MyStorageEngine<TData extends object = object> extends DataStoreEngine<TDa
     return value ?? defaultValue;
   }
 
+  /** Required - sets the value of the given name in persistent storage */
   async setValue(name: string, value: string): Promise<void> {
     // implement your own logic in here
 
     await saveMyValue(`${this.dataStoreOptions.id}-${name}`, value);
   }
 
+  /** Required - deletes the value of the given name from persistent storage */
   async deleteValue(name: string): Promise<void> {
     // implement your own logic in here
 
     await deleteMyValue(`${this.dataStoreOptions.id}-${name}`);
   }
+
+  /** Optional - deletes the entire storage container, e.g. a file or database */
+  async deleteStorage(): Promise<void> {
+    // this method is optional, so you can remove it if it doesn't apply to your storage logic
+
+    await deleteMyStorageContainer(this.dataStoreOptions.id);
+  }
+
+  // implementing new behavior and use the default implementation as a fallback:
+
+  public deepCopy<T>(obj: T): T {
+    try {
+      // use your own deep copy logic here
+      return myCustomDeepCopy(obj);
+    }
+    catch {
+      // if the custom deep copy fails, fall back to the default implementation:
+      return super.deepCopy(obj);
+    }
+  }
+
+  // other methods that can be overridden (or used as-is):
+
+  // public async serializeData(data: TData, useEncoding?: boolean): Promise<string>;
+  // public async deserializeData(data: string, useEncoding?: boolean): Promise<TData>;
+  // protected ensureDataStoreOptions(): void;
+  // public setDataStoreOptions(dataStoreOptions: DataStoreEngineDSOptions<TData>): void;
 }
+
+
+// using the engine standalone:
+
+const engine = new MyStorageEngine({
+  // since there's no DataStore instance to initialize the engine, the dataStoreOptions need to be passed here
+  // if they aren't passed, most methods will throw an error
+  dataStoreOptions: {
+    id: "my-engine",
+    encodeData: ["gzip", (data) => compress(data, "gzip", "string")],
+    decodeData: ["gzip", (data) => decompress(data, "gzip", "string")],
+  },
+});
+
+await engine.setValue("foo", "bar");
+console.log(await engine.getValue("foo", "default")); // "bar"
+await engine.deleteValue("foo");
+console.log(await engine.getValue("foo", "default")); // "default"
+
+
+// using the engine in a DataStore instance:
+
+import { DataStore } from "@sv443-network/coreutils";
+
+const store = new DataStore({
+  id: "my-store",
+  defaultData: {
+    foo: "hello",
+  },
+  formatVersion: 1,
+  engine: new MyStorageEngine({
+    // no need to pass dataStoreOptions here, as the DataStore instance will override them automatically using the method `DataStoreEngine.setDataStoreOptions()`
+  }),
+});
+
+await store.loadData(); // DataStore uses the engine internally for persistent storage
+await store.engine.setValue("bar", "baz"); // the store's engine instance can also be used manually (though not really recommended)
 ```
 </details>
 
@@ -1270,6 +1362,16 @@ Is called to delete the value of the given name from persistent storage.
 
 <br>
 
+### `DataStoreEngine.deleteStorage()`
+Signature:
+```ts
+deleteStorage?(): Promise<void>;
+```
+Optional method that may be implemented by the engine subclass. Gets called when the [`DataStore.deleteData()`](#datastoredeletedata) method is called.  
+If called, it should delete all data stored by the engine by deleting the storage container itself (e.g. the file or database).
+
+<br>
+
 ### `DataStoreEngine.serializeData()`
 Signature:
 ```ts
@@ -1277,7 +1379,7 @@ serializeData(data: TData, useEncoding?: boolean): Promise<string>;
 ```
   
 Is called to serialize the data before it will be saved.  
-In the default implementation, if `useEncoding` is set to `true`, the data will be encoded using the `dataStoreOptions.encodeData` function.
+In the default implementation, if `useEncoding` is set to `true`, the data will be encoded using the function at `dataStoreOptions.encodeData[1]`.
 
 <br>
 
@@ -1307,11 +1409,27 @@ If it isn't available, it defaults to a more primitive `JSON.parse(JSON.stringif
 ### `DataStoreEngine.setDataStoreOptions()`
 Signature:
 ```ts
-setDataStoreOptions(dataStoreOptions: DataStoreOptions<TData>): void;
+setDataStoreOptions(dataStoreOptions: DataStoreEngineDSOptions<TData>): void;
 ```
   
-Called by the [`DataStore` class](#class-datastore) instance to pass its options object.  
-Either overwrite this method or wait for the member `dataStoreOptions` to be set by it and use that.
+Called by the [`DataStore` constructor](#class-datastore) instance to pass a reduced version of its options object (see also [`DataStoreEngineDSOptions`](#type-datastoreenginedsoptions)).  
+If you are using a DataStoreEngine subclass standalone, you can call this method yourself to set the options object.
+
+<br>
+
+### `type DataStoreEngineDSOptions`
+```ts
+type DataStoreEngineDSOptions<TData extends DataStoreData> =
+  Pick<DataStoreOptions<TData>, "decodeData" | "encodeData" | "id">;
+```
+  
+A reduced version of the [`DataStoreOptions`](#type-datastoreoptions) object that is set via the respective [`DataStoreEngine` subclass constructor](#storage-engines), or the method [`DataStoreEngine.setDataStoreOptions()`](#datastoreenginesetdatastoreoptions).  
+It contains only the properties necessary for storage engines to function properly:
+| Property | Type | Description |
+| :-- | :-- | :-- |
+| `id` | `string` | The ID of the namespace under which to store the data. This is used to prevent collisions between different "realms". |
+| `encodeData` | `[format: string, encode: (data: string) => string \| Promise<string>]` | Format identifier and function that encodes the data before saving - you can use [`compress()`](#function-compress) here to save space at the cost of a little bit of performance |
+| `decodeData` | `[format: string, decode: (data: string) => string \| Promise<string>]` | Format identifier and function that decodes the data when loading - you can use [`decompress()`](#function-decompress) here to decode the data that was previously compressed with [compress()](#function-compress) |
 
 <br><br>
 
@@ -1323,7 +1441,7 @@ Either overwrite this method or wait for the member `dataStoreOptions` to be set
 ### `class BrowserStorageEngine`
 Signature:
 ```ts
-class BrowserStorageEngine<TData extends object = object>
+class BrowserStorageEngine<TData extends DataStoreData>
   extends DataStoreEngine<TData>;
 ```
   
@@ -1334,8 +1452,8 @@ const engine = new BrowserStorageEngine(options?: BrowserStorageEngineOptions);
   
 Storage engine for the [`DataStore` class](#class-datastore) that uses the browser's LocalStorage or SessionStorage to store data.  
   
-⚠️ Requires a secure DOM environment (HTTPS)  
-⚠️ Don't reuse this engine across multiple [`DataStore`](#class-datastore) instances
+- ⚠️ Requires a secure DOM environment (HTTPS)  
+- ⚠️ Don't reuse engines across multiple [`DataStore`](#class-datastore) instances
   
 <details><summary>Example - click to view</summary>
 
@@ -1389,7 +1507,7 @@ Note that the session storage will be cleared when the page is closed, while the
 ### `class FileStorageEngine`
 Signature:
 ```ts
-class FileStorageEngine<TData extends object = object>
+class FileStorageEngine<TData extends DataStoreData>
   extends DataStoreEngine<TData>;
 ```
   
@@ -1400,8 +1518,8 @@ const engine = new FileStorageEngine(options?: FileStorageEngineOptions);
   
 Storage engine for the [`DataStore` class](#class-datastore) that uses a file to store data.  
   
-⚠️ Requires Node.js or Deno with Node compatibility (v1.31+)  
-⚠️ Don't reuse this engine across multiple [`DataStore`](#class-datastore) instances  
+- ⚠️ Requires Node.js or Deno with Node compatibility (v1.31+)  
+- ⚠️ Don't reuse engines across multiple [`DataStore`](#class-datastore) instances  
   
 <details><summary>Example - click to view</summary>
 
@@ -2056,6 +2174,43 @@ mapRange(4, 0, 13, 0, 100); // 30.76923076923077
 
 <br>
 
+### `function overflowVal()`
+Signatures:
+```ts
+// with min:
+overflowVal(value: number, min: number, max: number): number
+// without min (defaults to 0):
+overflowVal(value: number, max: number): number
+```
+  
+Returns the value of a number that over- and underflows to conform to the given (inclusive) range.  
+This differs from the [`clamp()` function](#function-clamp) in that it will wrap the value around at the edges of the range instead of just pinning it to a given boundary.  
+  
+If only the `max` argument is passed, the `min` will be set to 0.  
+  
+If the given value is already within the range, it will be returned unchanged.  
+If any argument is `NaN`, `Infinity` or `-Infinity`, it will return `NaN`, since those are not real numbers in a mathematical sense.  
+  
+<details><summary><b>Example - click to view</b></summary>
+
+```ts
+import { overflowVal } from "@sv443-network/coreutils";
+
+overflowVal(5, 0, 10);     // 5
+overflowVal(15, 0, 10);    // 4
+overflowVal(-5, 0, 10);    // 6
+overflowVal(3, 2);         // 0
+
+overflowVal(NaN, 10);      // NaN
+overflowVal(Infinity, 10); // NaN
+overflowVal(3, Infinity);  // NaN
+
+overflowVal(1, 10, 0);     // throws RangeError
+```
+</details>
+
+<br>
+
 ### `function randRange()`
 Signatures:
 ```ts
@@ -2644,21 +2799,121 @@ doStuff();
 ### `NanoEmitter.on()`  
 Signature:
 ```ts
-NanoEmitter.on<K extends keyof TEventMap>(event: K, listener: TEventMap[K]): void
+NanoEmitter.on<K extends keyof TEventMap>(event: K, listener: TEventMap[K]): () => void
 ```
   
 Registers a listener function for the given event.  
-May be called multiple times for the same event.
+May be called multiple times for the same event.  
+  
+Returns a function that can be called to unsubscribe the listener from the event.
   
 <br>
 
 ### `NanoEmitter.once()`
 Signature:
 ```ts
-NanoEmitter.once<K extends keyof TEventMap>(event: K, listener: TEventMap[K]): void
+NanoEmitter.once<K extends keyof TEventMap>(event: K, listener: TEventMap[K]): () => void
 ```
   
-Registers a listener function for the given event that will only be called once.
+Registers a listener function for the given event that will only be called once.  
+  
+Returns a function that can be called to unsubscribe the listener from the event.
+
+<br>
+
+### `NanoEmitter.onMulti()`
+Signature:
+```ts
+NanoEmitter.onMulti(options: NanoEmitterOnMultiOptions<TEventMap> | Array<NanoEmitterOnMultiOptions<TEventMap>>): () => void
+```
+  
+Allows subscribing to multiple events and calling the callback only when one of, all of, or a subset of the events are emitted, either continuously or only once.  
+  
+Returns a function that can be called to unsubscribe all listeners created by this call.  
+Alternatively, pass the same [`AbortController`'s `AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortController#instance_properties) to all options objects to achieve the same effect, or use different ones for finer control.  
+  
+The `options` argument can be a single object or an array of objects with the following properties:
+| Property | Type | Description |
+| :-- | :-- | :-- |
+| `callback` | `function` | The function that will be called when the conditions are met. It will be called with the event name and spread arguments that have been passed via the `emit()` method. |
+| `oneOf?` | `Array<keyof TEventMap>` | If used, the callback will be called when any of the matching events are emitted. At least one of `oneOf` or `allOf` must be provided. If both are used, it works like an "or" condition. |
+| `allOf?` | `Array<keyof TEventMap>` | If used, the callback will be called after all of the matching events are emitted at least once, and, if `once` is false, any time any of them are emitted again. At least one of `oneOf` or `allOf` must be provided. If both are used, it works like an "or" condition. |
+| `once?` | `boolean` | If set to true, the callback will be called only once for the first event (or set of events) that match the criteria, then stop listening. Defaults to false. |
+| `signal?` | `AbortSignal` | If provided, the subscription will be aborted when the given signal is aborted. |
+
+<details><summary><b>Example - click to view</b></summary>
+
+```ts
+import { NanoEmitter } from "@sv443-network/coreutils";
+
+let result = 0;
+
+const myEmitter = new NanoEmitter<{
+  foo: (value: number) => void;
+  bar: (value: number) => void;
+  baz: (value: number) => void;
+}>({ publicEmit: true });
+
+myEmitter.onMulti([
+  {
+    oneOf: ["foo", "bar"],
+    // this callback will be called every time either foo or bar is emitted:
+    callback: (event, value) => {
+      console.log(`Event ${event} emitted with value ${value}`);
+      result += value;
+    },
+  },
+  {
+    allOf: ["foo", "bar"],
+    once: true,
+    callback: () => {
+      console.log("Both foo and bar were emitted at least once");
+      result *= 2;
+    },
+  },
+]);
+
+// the first events add their values to the result:
+myEmitter.emit("foo", 10); // "Event foo emitted with value 10" (result = 10)
+myEmitter.emit("foo", 20); // "Event foo emitted with value 20" (result = 30)
+myEmitter.emit("bar", 30); // "Event bar emitted with value 30" (result = 60)
+
+// both events were emitted at least once, so the second callback is called to multiply the result by 2:
+console.log(result); // 120
+
+// any subsequent events will not call the second callback again (because once = true), but will still call the first one:
+myEmitter.emit("bar", 10); // "Event bar emitted with value 10"
+console.log(result); // 130
+
+
+// combining allOf and oneOf:
+
+result = 0; // reset result
+
+const controller = new AbortController();
+
+myEmitter.onMulti({
+  // using both makes them work like an "or" condition:
+  oneOf: ["foo", "bar"],
+  allOf: ["bar", "baz"],
+  callback: (event, value) => {
+    console.log(`Event ${event} emitted with value ${value}`);
+    result += value;
+  },
+  // calling controller.abort() will unsubscribe all listeners created by this call:
+  signal: controller.signal,
+});
+
+myEmitter.emit("baz", 10); // doesn't match `oneOf` or `allOf`, so nothing happens
+console.log(result); // 0
+
+myEmitter.emit("foo", 20); // matches `oneOf`
+console.log(result); // 20
+
+myEmitter.emit("bar", 30); // matches `oneOf` and `allOf`
+console.log(result); // 50
+```
+</details>
 
 <br>
 
@@ -3206,7 +3461,7 @@ const bar: Bar = {
 type SerializableVal = string | number | boolean | null | SerializableVal[] | { [key: string]: SerializableVal };
 ```
   
-Any value that can be serialized to JSON with `JSON.stringify()`.  
+Any value that can be serialized to JSON with `JSON.stringify()`.
 
 <br>
 

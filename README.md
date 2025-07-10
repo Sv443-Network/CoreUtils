@@ -4,7 +4,7 @@
 Cross-platform, general-purpose, JavaScript core library for Node, Deno and the browser.  
 Intended to be used in conjunction with [`@sv443-network/userutils`](https://github.com/Sv443-Network/UserUtils) and [`@sv443-network/djsutils`](https://github.com/Sv443-Network/DJSUtils), but can be used independently as well.
 
-### [Documentation](./docs.md#readme) &bull; [Features](#features) &bull; [Installation](#installation) &bull; [License](#license) &bull; [Changelog](./CHANGELOG.md)
+### [Documentation](./docs.md#readme) &bull; [Features](#features) &bull; [Installation](#installation) &bull; [License](./LICENSE.txt) &bull; [Changelog](./CHANGELOG.md)
 
 </div>
 <br>
@@ -34,12 +34,14 @@ Intended to be used in conjunction with [`@sv443-network/userutils`](https://git
   - 🟧 [`class DataStore`](./docs.md#class-datastore) - The main class for the data store
     - 🔷 [`type DataStoreOptions`](./docs.md#type-datastoreoptions) - Options for the data store
     - 🔷 [`type DataMigrationsDict`](./docs.md#type-datamigrationsdict) - Dictionary of data migration functions
+    - 🔷 [`type DataStoreData`](./docs.md#type-datastoredata) - The type of the serializable data
   - 🟧 [`class DataStoreSerializer`](./docs.md#class-datastoreserializer) - Serializes and deserializes data for multiple DataStore instances
     - 🔷 [`type DataStoreSerializerOptions`](./docs.md#type-datastoreserializeroptions) - Options for the DataStoreSerializer
     - 🔷 [`type LoadStoresDataResult`](./docs.md#type-loadstoresdataresult) - Result of calling [`loadStoresData()`](./docs.md#datastoreserializer-loadstoresdata)
     - 🔷 [`type SerializedDataStore`](./docs.md#type-serializeddatastore) - Meta object and serialized data of a DataStore instance
     - 🔷 [`type StoreFilter`](./docs.md#type-storefilter) - Filter for selecting data stores
   - 🟧 [`class DataStoreEngine`](./docs.md#class-datastoreengine) - Base class for DataStore storage engines, which handle the data storage
+    - 🔷 [`type DataStoreEngineDSOptions`](./docs.md#type-datastoreenginedsoptions) - Reduced version of [`DataStoreOptions`](./docs.md#type-datastoreoptions)
   - [Storage Engines:](./docs.md#storage-engines)
     - 🟧 [`class BrowserStorageEngine`](./docs.md#class-browserstorageengine) - Storage engine for browser environments (localStorage, sessionStorage)
       - 🔷 [`type BrowserStorageEngineOptions`](./docs.md#browserstorageengineoptions) - Options for the browser storage engine
@@ -63,6 +65,7 @@ Intended to be used in conjunction with [`@sv443-network/userutils`](https://git
   - 🟣 [`function formatNumber()`](./docs.md#function-formatnumber) - Formats a number to a string using the given locale and format identifier
     - 🔷 [`type NumberFormat`](./docs.md#type-numberformat) - Number format identifier
   - 🟣 [`function mapRange()`](./docs.md#function-maprange) - Maps a number from one range to another
+  - 🟣 [`function overflowVal()`](./docs.md#function-overflowVal) - Makes sure a number is in a range by over- & underflowing it
   - 🟣 [`function randRange()`](./docs.md#function-randrange) - Returns a random number in the given range
   - 🟣 [`function roundFixed()`](./docs.md#function-roundfixed) - Rounds the given number to the given number of decimal places
   - 🟣 [`function valsWithin()`](./docs.md#function-valswithin) - Checks if the given numbers are within a certain range of each other
@@ -90,7 +93,7 @@ Intended to be used in conjunction with [`@sv443-network/userutils`](https://git
     - 🟩 [`const defaultPbChars`](./docs.md#const-defaultpbchars) - Default characters for the progress bar
     - 🔷 [`type ProgressBarChars`](./docs.md#type-progressbarchars) - Type for the progress bar characters object
   - 🟣 [`function joinArrayReadable()`](./docs.md#function-joinarrayreadable) - Joins the given array into a string, using the given separators and last separator
-  - 🟣 [`function secsToTimeStr()`](./docs.md#function-sectostimestr) - Turns the given number of seconds into a string in the format `(hh:)mm:ss` with intelligent zero-padding
+  - 🟣 [`function secsToTimeStr()`](./docs.md#function-secstotimestr) - Turns the given number of seconds into a string in the format `(hh:)mm:ss` with intelligent zero-padding
   - 🟣 [`function truncStr()`](./docs.md#function-truncstr) - Truncates the given string to the given length
 <!-- - *[**TieredCache:**](./docs.md#tieredcache)
   - 🟧 *[`class TieredCache`](./docs.md#class-tieredcache) - A multi-tier cache that uses multiple storage engines with different expiration times
@@ -122,7 +125,7 @@ Intended to be used in conjunction with [`@sv443-network/userutils`](https://git
 > 🟣 = function  
 > 🟧 = class  
 > 🔷 = type  
-> 🔶 = const
+> 🟩 = const
 
 <br>
 
@@ -135,11 +138,11 @@ yarn add @sv443-network/coreutils
 npx jsr install @sv443-network/coreutils
 deno add jsr:@sv443-network/coreutils
 ```
-- If you are in a DOM environment, you can include the UMD bundle using your favorite CDN:
+- If you are in a DOM environment, you can include the UMD bundle using your favorite CDN (after inserting the version number):
 ```html
-<script src="https://cdn.jsdelivr.net/npm/@sv443-network/coreutils@latest/dist/CoreUtils.min.umd.js"></script>
-<script src="https://unpkg.com/@sv443-network/coreutils@latest/dist/CoreUtils.min.umd.js"></script>
-<script src="https://esm.sh/@sv443-network/coreutils@latest/dist/CoreUtils.min.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@sv443-network/coreutils@INSERT_VERSION_HERE/dist/CoreUtils.min.umd.js"></script>
+<script src="https://unpkg.com/@sv443-network/coreutils@INSERT_VERSION_HERE/dist/CoreUtils.min.umd.js"></script>
+<script src="https://esm.sh/@sv443-network/coreutils@INSERT_VERSION_HERE/dist/CoreUtils.min.umd.js"></script>
 ```
 - Then, import parts of the library as needed:
 ```ts
@@ -164,5 +167,18 @@ const CoreUtils = require("@sv443-network/coreutils");
 // - to make the global variable `CoreUtils` available, import this file:
 // "@sv443-network/coreutils/dist/CoreUtils.min.umd.js"
 // - or import the library on your HTML page:
-// <script src="https://cdn.jsdelivr.net/npm/@sv443-network/coreutils@latest/dist/CoreUtils.min.umd.js"></script>
+// <script src="https://cdn.jsdelivr.net/npm/@sv443-network/coreutils@INSERT_VERSION_HERE/dist/CoreUtils.min.umd.js"></script>
+// (make sure to insert the version number above. Use 'latest' (not recommended) or a specific version, e.g. '9.4.3')
 ```
+
+<br><br>
+
+<div align="center" style="text-align: center;">
+
+Made with ❤️ by [Sv443](https://github.com/Sv443)  
+If you like this userscript, please consider [supporting the development](https://github.com/sponsors/Sv443)  
+  
+© 2025 Sv443 & Sv443 Network  
+[MIT license](./LICENSE.txt)
+
+</div>

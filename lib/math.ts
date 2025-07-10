@@ -98,6 +98,29 @@ export function mapRange(value: number, range1min: number, range1max: number, ra
   return (value - range1min) * ((range2max - range2min) / (range1max - range1min)) + range2min;
 }
 
+/** Makes the {@linkcode value} over- & underflow so it is always between {@linkcode min} and {@linkcode max}, if it's outside the range */
+export function overflowVal(value: number, min: number, max: number): number;
+/** Makes the {@linkcode value} over- & underflow so it is always between `0` and {@linkcode max}, if it's outside the range */
+export function overflowVal(value: number, max: number): number;
+/** Makes the {@linkcode value} over- & underflow so it is always in a certain range */
+export function overflowVal(value: number, minOrMax: number, max?: number): number {
+  const min = typeof max === "number" ? minOrMax : 0;
+  max = typeof max === "number" ? max : minOrMax;
+
+  if(min > max)
+    throw new RangeError("Parameter \"min\" can't be bigger than \"max\"");
+
+  if(isNaN(value) || isNaN(min) || isNaN(max) || !isFinite(value) || !isFinite(min) || !isFinite(max))
+    return NaN;
+
+  if(value >= min && value <= max)
+    return value;
+
+  const range = max - min + 1;
+  const wrappedValue = ((value - min) % range + range) % range + min;
+  return wrappedValue;
+}
+
 /**
  * Returns a random number between {@linkcode min} and {@linkcode max} (inclusive)  
  * Set {@linkcode enhancedEntropy} to true to use `crypto.getRandomValues()` for better cryptographic randomness (this also makes it take longer to generate)

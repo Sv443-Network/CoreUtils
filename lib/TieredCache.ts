@@ -60,7 +60,7 @@ export type TieredCacheTierOptions<TData extends DataStoreData> = Prettify<{
   /**
    * Engine used for persistent storage. Can be a function that returns a DataStoreEngine or a DataStoreEngine instance.  
    * If this property is not set, this tier will not persist data and only keeps it in memory.  
-   * ⚠️ **Don't reuse instances in multiple tiers and make sure the ID is always unique!**
+   * - ⚠️ **Don't reuse instances in multiple tiers and make sure the ID is always unique!**
    */
   engine?: (() => DataStoreEngine<TData>) | DataStoreEngine<TData>;
   /** Which compression format to use for this tier's persistent storage. Defaults to `deflate-raw` - set to `null` to disable compression. */
