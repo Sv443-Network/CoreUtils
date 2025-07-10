@@ -2183,7 +2183,7 @@ overflowVal(value: number, min: number, max: number): number
 overflowVal(value: number, max: number): number
 ```
   
-Returns the value of a number that over- and underflows to conform to the given range.  
+Returns the value of a number that over- and underflows to conform to the given (inclusive) range.  
 This differs from the [`clamp()` function](#function-clamp) in that it will wrap the value around at the edges of the range instead of just pinning it to a given boundary.  
   
 If only the `max` argument is passed, the `min` will be set to 0.  
