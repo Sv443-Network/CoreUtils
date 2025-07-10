@@ -12,8 +12,6 @@ Parts of the code have been overhauled, and some features have been added:
   - Added [`truncStr()`](https://github.com/Sv443-Network/CoreUtils/blob/main/docs.md#function-truncstr) to truncate a string to a given length, optionally adding an ellipsis.
   - Added [`valsWithin()`](https://github.com/Sv443-Network/CoreUtils/blob/main/docs.md#function-valswithin) to check if two values, rounded at the given decimal, are within a certain range of each other.
   - Added [`scheduleExit()`](https://github.com/Sv443-Network/CoreUtils/blob/main/docs.md#function-scheduleexit) to schedule a Node/Deno process to exit with the given code, after the microtask queue is empty or after the given timeout.
-  - Added [`overflowVal()`](https://github.com/Sv443-Network/CoreUtils/blob/main/docs.md#function-overflowval) to conform a value to an over- & underflowing range.
-  - Added [`NanoEmitter.onMulti()`](https://github.com/Sv443-Network/CoreUtils/blob/main/docs.md#nanoemitteronmulti) to listen for multiple events at once, with the option to specify if any or all of the events should be emitted before calling the callback.
 - **BREAKING CHANGES:**
   - Reworked `DataStore`
     - The constructor now needs an `engine` property that is an instance of a [`DataStoreEngine`](https://github.com/Sv443-Network/CoreUtils/blob/main/docs.md#class-datastoreengine.)
