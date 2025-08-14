@@ -1,6 +1,6 @@
 # CoreUtils Documentation
 Cross-platform, general-purpose, JavaScript core library for Node, Deno and the browser.  
-Intended to be used in conjunction with [`@sv443-network/coreutils`](https://github.com/Sv443-Network/UserUtils) and [`@sv443-network/djsutils`](https://github.com/Sv443-Network/DJSUtils), but can be used independently as well.  
+Intended to be used in conjunction with [`@sv443-network/userutils`](https://github.com/Sv443-Network/UserUtils) and [`@sv443-network/djsutils`](https://github.com/Sv443-Network/DJSUtils), but can be used independently as well.  
   
 If you like using this library, please consider [supporting the development ❤️](https://github.com/sponsors/Sv443)
 
