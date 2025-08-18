@@ -108,7 +108,7 @@ For submitting bug reports or feature requests, please use the [GitHub issue tra
     - 🟣 [`function autoPlural()`](#function-autoplural) - Turns the given term into its plural form, depending on the given number or list length
     - 🟣 [`function capitalize()`](#function-capitalize) - Capitalizes the first letter of the given string
     - 🟣 [`function createProgressBar()`](#function-createprogressbar) - Creates a progress bar string with the given percentage and length
-      - 🟩 [`const defaultPbChars`](#const-defaultpbchars) - Default characters for the progress bar
+      - ⬜ [`const defaultPbChars`](#const-defaultpbchars) - Default characters for the progress bar
       - 🔷 [`type ProgressBarChars`](#type-progressbarchars) - Type for the progress bar characters object
     - 🟣 [`function joinArrayReadable()`](#function-joinarrayreadable) - Joins the given array into a string, using the given separators and last separator
     - 🟣 [`function secsToTimeStr()`](#function-secstotimestr) - Turns the given number of seconds into a string in the format `(hh:)mm:ss` with intelligent zero-padding
@@ -143,7 +143,7 @@ For submitting bug reports or feature requests, please use the [GitHub issue tra
 > 🟣 = function  
 > 🟧 = class  
 > 🔷 = type  
-> 🟩 = const
+> ⬜ = const
 
 <br><br><br>
 
@@ -828,8 +828,8 @@ It has the following properties:
 | `migrations?` | [`DataMigrationsDict`](#type-datamigrationsdict) | (Optional) A dictionary of functions that can be used to migrate data from older versions of the data to newer ones. The keys of the dictionary should be the format version number that the function migrates to, from the previous whole integer value. The values should be functions that take the data in the old format and return the data in the new format. The functions will be run in order from the oldest to the newest version. If the current format version is not in the dictionary, no migrations will be run. |
 | `migrateIds?` | `string \| string[]` | (Optional) A string or array of strings that migrate from one or more old IDs to the ID set in the constructor. If no data exist for the old ID(s), nothing will be done, but some time may still pass trying to fetch the non-existent data. The ID migration will be done once per session in the call to [`loadData()`](#datastoreloaddata). |
 | `compressionFormat?` | [`CompressionFormat`](https://developer.mozilla.org/en-US/docs/Web/API/CompressionStream/CompressionStream#format) \| `null` | (Optional, disallowed when `encodeData` and `decodeData` are set) The compression format to use when saving the data. If set, the data will be compressed before saving and decompressed after loading. The default is `"deflate-raw"`. Explicitly set to `null` to disable compression. |
-| `encodeData?` | `[format: string, encode: (data: string) => string \| Promise<string>]` | (Optional, but required when `decodeData` is also set and disallowed when `compressionFormat` is set) Format identifier and function that encodes the data before saving - you can use [`compress()`](#function-compress) here to save space at the cost of a little bit of performance |
-| `decodeData?` | `[format: string, decode: (data: string) => string \| Promise<string>]` | (Optional, but required when `encodeData` is also set and disallowed when `compressionFormat` is set) Format identifier and function that decodes the data when loading - you can use [`decompress()`](#function-decompress) here to decode the data that was previously compressed with [compress()](#function-compress) |
+| `encodeData?` | `[format: string, encode: (data: string) => string \| Promise<string>]` | (Optional, but required when `decodeData` is also set and disallowed when `compressionFormat` is set) Tuple of format identifier and function that encodes the data before saving - you can use [`compress()`](#function-compress) here to save space at the cost of a little bit of performance |
+| `decodeData?` | `[format: string, decode: (data: string) => string \| Promise<string>]` | (Optional, but required when `encodeData` is also set and disallowed when `compressionFormat` is set) Tuple of format identifier and function that decodes the data when loading - you can use [`decompress()`](#function-decompress) here to decode the data that was previously compressed with [compress()](#function-compress) |
 
 <br>
 
@@ -907,6 +907,7 @@ const barStore = new DataStore({
   encodeData: ["gzip", (data) => compress(data, "gzip", "string")],
   decodeData: ["gzip", (data) => decompress(data, "gzip", "string")],
   // ensure the algorithm always stays consistent!
+  // for the first tuple item you may use `null`, `"identity"` or any custom string to indicate encoding without compression
 });
 
 const serializer = new DataStoreSerializer([fooStore, barStore], {
@@ -988,7 +989,7 @@ serialize(useEncoding?: boolean, stringified?: boolean): Promise<string | Serial
 ```
   
 Serializes all DataStore instances passed in the constructor and returns the serialized data as a JSON string by deafault.  
-If `useEncoding` is set to `true` (default), the data will be encoded using the `encodeData` function set on the DataStore instance.  
+If `useEncoding` is set to `true` (default), the data will be encoded using the `encodeData[1]` function set on the DataStore instance.  
 If `stringified` is set to `true` (default), the serialized data will be returned as a stringified JSON array, otherwise the unencoded objects will be returned in an array.  
   
 If you need a partial export, use the method [`DataStoreSerializer.serializePartial()`](#datastoreserializerserializepartial) instead.  
@@ -1026,7 +1027,7 @@ serializePartial(stores: string[] | ((id: string) => boolean), useEncoding?: boo
 Serializes only the DataStore instances that have an ID that is included in the `stores` array.  
   
 The `stores` argument can be an array containing the IDs of the DataStore instances, or a function that takes each ID as an argument and returns a boolean, indicating whether the store should be serialized.  
-If `useEncoding` is set to `true` (default), the data will be encoded using the `encodeData` function set on the DataStore instance.  
+If `useEncoding` is set to `true` (default), the data will be encoded using the `encodeData[1]` function set on the DataStore instance.  
 If `stringified` is set to `true` (default), the serialized data will be returned as a stringified JSON array, otherwise the unencoded objects will be returned in an array.  
   
 For more information or to export all DataStore instances, refer to the method [`DataStoreSerializer.serialize()`](#datastoreserializerserialize)
@@ -1227,7 +1228,7 @@ class MyStorageEngine<TData extends DataStoreData> extends DataStoreEngine<TData
   protected options: MyStorageEngineOptions<TData>;
 
   constructor(options: MyStorageEngineOptions<TData>) {
-    // if this engine is used standalone, this is how it needs to be initialized, to ensure the "id", "encodeData" and "decodeData" properties are set:
+    // if this engine is used standalone, this is how it needs to be initialized, to ensure the "id" and "encodeData" & "decodeData" or "compressionFormat" properties are set:
     super(options?.dataStoreOptions);
     this.options = options;
   }
@@ -1293,6 +1294,8 @@ const engine = new MyStorageEngine({
     id: "my-engine",
     encodeData: ["gzip", (data) => compress(data, "gzip", "string")],
     decodeData: ["gzip", (data) => decompress(data, "gzip", "string")],
+    // ensure the algorithm always stays consistent!
+    // for the first tuple item you may use `null`, `"identity"` or any custom string to indicate encoding without compression
   },
 });
 
@@ -1428,8 +1431,8 @@ It contains only the properties necessary for storage engines to function proper
 | Property | Type | Description |
 | :-- | :-- | :-- |
 | `id` | `string` | The ID of the namespace under which to store the data. This is used to prevent collisions between different "realms". |
-| `encodeData` | `[format: string, encode: (data: string) => string \| Promise<string>]` | Format identifier and function that encodes the data before saving - you can use [`compress()`](#function-compress) here to save space at the cost of a little bit of performance |
-| `decodeData` | `[format: string, decode: (data: string) => string \| Promise<string>]` | Format identifier and function that decodes the data when loading - you can use [`decompress()`](#function-decompress) here to decode the data that was previously compressed with [compress()](#function-compress) |
+| `encodeData` | `[format: string, encode: (data: string) => string \| Promise<string>]` | Tuple of format identifier and function that encodes the data before saving - you can use [`compress()`](#function-compress) here to save space at the cost of a little bit of performance |
+| `decodeData` | `[format: string, decode: (data: string) => string \| Promise<string>]` | Tuple of format identifier and function that decodes the data when loading - you can use [`decompress()`](#function-decompress) here to decode the data that was previously compressed with [compress()](#function-compress) |
 
 <br><br>
 
@@ -1472,8 +1475,10 @@ const myStore = new DataStore({
     type: "localStorage", // or "sessionStorage"
   }),
   // ensure the algorithm always stays the same!
-  encodeData: (data) => compress(data, "deflate-raw", "string"),
-  decodeData: (data) => decompress(data, "deflate-raw", "string"),
+  encodeData: ["deflate-raw", (data) => compress(data, "deflate-raw", "string")],
+  decodeData: ["deflate-raw", (data) => decompress(data, "deflate-raw", "string")],
+  // ensure the algorithm always stays consistent!
+  // for the first tuple item you may use `null`, `"identity"` or any custom string to indicate encoding without compression
 });
 
 async function init() {
@@ -1538,9 +1543,10 @@ const myStore = new DataStore({
     // since the data is encoded, the file contains raw data instead of JSON, so it's saved as .dat:
     filePath: (id) => `./.data/store-${id}.dat`,
   }),
-  // ensure the algorithm always stays the same!
   encodeData: (data) => compress(data, "deflate-raw", "string"),
   decodeData: (data) => decompress(data, "deflate-raw", "string"),
+  // ensure the algorithm always stays consistent!
+  // for the first tuple item you may use `null`, `"identity"` or any custom string to indicate encoding without compression
 });
 
 async function init() {
