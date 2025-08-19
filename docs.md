@@ -74,6 +74,7 @@ For submitting bug reports or feature requests, please use the [GitHub issue tra
   - [**Errors:**](#errors)
     - 🟧 [`class DatedError`](#class-datederror) - Base error class with a `date` property
       - 🟧 [`class ChecksumMismatchError`](#class-checksummismatcherror) - Error thrown when two checksums don't match
+      - 🟧 [`class CustomError`](#class-customerror) - Custom error with a configurable name for one-off situations
       - 🟧 [`class MigrationError`](#class-migrationerror) - Error thrown in a failed data migration
       - 🟧 [`class ValidationError`](#class-validationerror) - Error while validating data
   - [**Math:**](#math)
@@ -1924,10 +1925,15 @@ This is the event map for the [`Debouncer` class.](#class-debouncer)
 <br>
 
 ### `class DatedError`
-Signature:
+Inheritance:
 ```ts
 class DatedError
   extends Error;
+```
+  
+Signature:
+```ts
+new DatedError(message: string, options?: { cause?: Error });
 ```
   
 Base class for all custom error classes of this library.  
@@ -1966,11 +1972,16 @@ catch(err) {
 <br>
 
 ### `class ChecksumMismatchError`
-Signature:
+Inheritance:
 ```ts
 class ChecksumMismatchError
   extends DatedError
     extends Error;
+```
+  
+Signature:
+```ts
+new ChecksumMismatchError(message: string, options?: { cause?: Error });
 ```
   
 Error while validating a checksum.  
@@ -1978,12 +1989,35 @@ This error may be thrown by the [`DataStoreSerializer` class](#class-datastorese
 
 <br>
 
-### `class MigrationError`
+### `class CustomError`
+Inheritance:
+```ts
+class CustomError
+  extends DatedError
+    extends Error;
+```
+  
 Signature:
+```ts
+new CustomError(name: string, message: string, options?: { cause?: Error });
+```
+
+Custom error class that has an extra `name` property.  
+This is useful for one-off custom errors where creating a whole class is too much overhead.
+
+<br>
+
+### `class MigrationError`
+Inheritance:
 ```ts
 class MigrationError
   extends DatedError
     extends Error;
+```
+  
+Signature:
+```ts
+new MigrationError(message: string, options?: { cause?: Error });
 ```
   
 Error while migrating data.  
@@ -1992,11 +2026,16 @@ This error may be thrown by [`DataStore.loadData()`](#datastoreloaddata) and [`D
 <br>
 
 ### `class ValidationError`
-Signature:
+Inheritance:
 ```ts
 class ValidationError
   extends DatedError
     extends Error;
+```
+  
+Signature:
+```ts
+new ValidationError(message: string, options?: { cause?: Error });
 ```
   
 Error while validating data.  

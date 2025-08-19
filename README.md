@@ -56,6 +56,7 @@ Intended to be used in conjunction with [`@sv443-network/userutils`](https://git
 - [**Errors:**](./docs.md#errors)
   - 🟧 [`class DatedError`](./docs.md#class-datederror) - Base error class with a `date` property
     - 🟧 [`class ChecksumMismatchError`](./docs.md#class-checksummismatcherror) - Error thrown when two checksums don't match
+    - 🟧 [`class CustomError`](./docs.md#class-customerror) - Custom error with a configurable name for one-off situations
     - 🟧 [`class MigrationError`](./docs.md#class-migrationerror) - Error thrown in a failed data migration
     - 🟧 [`class ValidationError`](./docs.md#class-validationerror) - Error while validating data
 - [**Math:**](./docs.md#math)
