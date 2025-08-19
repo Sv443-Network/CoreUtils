@@ -118,7 +118,8 @@ const dsFmtVer = 1;
  * - ⚠️ The data is stored as a JSON string, so only data compatible with [`JSON.stringify()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify) can be used. Circular structures and complex objects (containing functions, symbols, etc.) will either throw an error on load and save or cause otherwise unexpected behavior. Properties with a value of `undefined` will be removed from the data prior to saving it, so use `null` instead.  
  * - ⚠️ Make sure to call {@linkcode loadData()} at least once after creating an instance, or the returned data will be the same as `options.defaultData`  
  * 
- * @template TData The type of the data that is saved in persistent storage for the currently set format version (FIXME:will be automatically inferred from `defaultData` if not provided)
+ * @template TData The type of the data that is saved in persistent storage for the currently set format version  
+ * (TODO:FIXME: will be automatically inferred from `defaultData` if not provided)
  */
 export class DataStore<TData extends DataStoreData> {
   public readonly id: string;
@@ -249,7 +250,7 @@ export class DataStore<TData extends DataStoreData> {
       // save default if no data is found
       if(typeof storedDataRaw !== "string") {
         await this.saveDefaultData();
-        return { ...this.defaultData };
+        return this.engine.deepCopy(this.defaultData);
       }
 
       const storedData = storedDataRaw ?? JSON.stringify(this.defaultData);
@@ -379,7 +380,7 @@ export class DataStore<TData extends DataStoreData> {
       this.engine.setValue(`__ds-${this.id}-enf`, this.compressionFormat),
     ]);
 
-    return this.cachedData = { ...newData as TData };
+    return this.cachedData = this.engine.deepCopy(newData as TData);
   }
 
   /**
