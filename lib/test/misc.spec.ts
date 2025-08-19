@@ -1,6 +1,6 @@
-import { describe, expect, it } from "vitest";
-import { consumeGen, consumeStringGen, fetchAdvanced, getListLength, pauseFor, pureObj, scheduleExit, setImmediateInterval, setImmediateTimeoutLoop } from "./misc.js";
-import { vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import { consumeGen, consumeStringGen, fetchAdvanced, getListLength, pauseFor, pureObj, scheduleExit, setImmediateInterval, setImmediateTimeoutLoop } from "../misc.js";
+import { softExpect } from "./softExpect.js";
 
 //#region pauseFor
 describe("misc/pauseFor", () => {
@@ -124,7 +124,8 @@ describe("misc/setImmediateInterval", () => {
     const len = times.length;
     expect(len).toBeLessThanOrEqual(7);
     expect(len).toBeGreaterThanOrEqual(6);
-    expect(times.every(t => t <= 202 && t >= 0)).toBe(true);
+
+    softExpect(times.every(t => t <= 202 && t >= 0)).toBe(true);
 
     await new Promise(resolve => setTimeout(resolve, 100)); // wait for another 100 ms to ensure no more calls
     expect(times.length).toEqual(len);
@@ -149,7 +150,8 @@ describe("misc/setImmediateTimeoutLoop", () => {
 
     expect(times.length).toBeLessThanOrEqual(3);
     expect(times.length).toBeGreaterThanOrEqual(1);
-    expect(times.every(t => t <= 200 && t >= 0)).toBe(true);
+
+    softExpect(times.every(t => t <= 200 && t >= 0)).toBe(true);
   });
 });
 

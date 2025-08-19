@@ -1,11 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { DataStore, type DataStoreData } from "./DataStore.js";
-import { BrowserStorageEngine } from "./DataStoreEngine.js";
-import type { SerializableVal } from "./types.js";
+import { DataStore, type DataStoreData } from "../DataStore.js";
+import { BrowserStorageEngine } from "../DataStoreEngine.js";
+import type { SerializableVal } from "../types.js";
 
-//#region TestDataStore
+//#region DirectAccessDataStore
 
-class TestDataStore<TData extends DataStoreData> extends DataStore<TData> {
+/** Wrapper around {@link DataStore} to allow direct access to the engine methods for testing purposes. */
+class DirectAccessDataStore<TData extends DataStoreData> extends DataStore<TData> {
   public async direct_getValue<TValue extends SerializableVal = string>(name: string, defaultValue: TValue): Promise<string | TValue> {
     return await this.engine.getValue(name, defaultValue);
   }
@@ -134,7 +135,7 @@ describe("DataStore", () => {
     expect(data2.c).toBe(69);
 
     // migrate with migrateId method:
-    const thirdStore = new TestDataStore({
+    const thirdStore = new DirectAccessDataStore({
       id: "test-5",
       defaultData: secondStore.defaultData,
       formatVersion: 3,
@@ -194,7 +195,7 @@ describe("DataStore", () => {
 
   //#region migrate from UU-v9 format
   it("Migrate from UU-v9 format", async () => {
-    const store1 = new TestDataStore({
+    const store1 = new DirectAccessDataStore({
       id: "test-migrate-from-uu-v9",
       defaultData: { a: 1, b: 2 },
       formatVersion: 1,
@@ -222,7 +223,7 @@ describe("DataStore", () => {
 
   //#region invalid persistent data
   it("Invalid persistent data", async () => {
-    const store1 = new TestDataStore({
+    const store1 = new DirectAccessDataStore({
       id: "test-6",
       defaultData: { a: 1, b: 2 },
       formatVersion: 1,
@@ -232,7 +233,7 @@ describe("DataStore", () => {
     await store1.loadData();
     await store1.setData({ ...store1.getData(), a: 2 });
 
-    await store1.direct_setValue(`__ds-${store1.id}-dat`, "invalid");
+    await store1.direct_setValue(`__ds-${store1.id}-dat`, "invalid_json");
 
     try {
       // should reset to defaultData:
@@ -252,7 +253,7 @@ describe("DataStore", () => {
       setValue: async () => undefined,
     }
 
-    const store2 = new TestDataStore({
+    const store2 = new DirectAccessDataStore({
       id: "test-7",
       defaultData: { a: 1, b: 2 },
       formatVersion: 1,
@@ -261,7 +262,8 @@ describe("DataStore", () => {
 
     await store1.setData({ ...store1.getData(), a: 2 });
 
-    // invalid type number should reset to defaultData:
+    // invalid type number should reset to defaultData
+    // note: this logs an error to the console which can be ignored
     await store2.loadData();
 
     expect(store2.getData().a).toBe(1);
