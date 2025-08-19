@@ -20,7 +20,7 @@ export interface DataStoreEngine<TData extends DataStoreData> { // eslint-disabl
 
 /**
  * Base class for creating {@linkcode DataStore} storage engines.  
- * This acts as an interchangeable API for writing and reading persistent data in various environments.
+ * This acts as an interchangeable API for writing and reading persistent JSON-serializable data in various environments.
  */
 export abstract class DataStoreEngine<TData extends DataStoreData> {
   protected dataStoreOptions!: DataStoreEngineDSOptions<TData>; // setDataStoreOptions() is called from inside the DataStore constructor to set this value
@@ -39,14 +39,16 @@ export abstract class DataStoreEngine<TData extends DataStoreData> {
 
   /** Fetches a value from persistent storage. Defaults to `defaultValue` if the value does not exist. `null` is considered a valid value. */
   public abstract getValue<TValue extends SerializableVal = string>(name: string, defaultValue: TValue): Promise<string | TValue>;
+
   /** Sets a value in persistent storage */
   public abstract setValue(name: string, value: SerializableVal): Promise<void>;
+
   /** Deletes a value from persistent storage */
   public abstract deleteValue(name: string): Promise<void>;
 
   //#region serialization api
 
-  /** Serializes the given object to a string, optionally encoded with `options.encodeData` if {@linkcode useEncoding} is set to true */
+  /** Serializes the given object to a string, optionally encoded with `options.encodeData` if {@linkcode useEncoding} is not set to false and the `encodeData` and `decodeData` options are set */
   public async serializeData(data: TData, useEncoding?: boolean): Promise<string> {
     this.ensureDataStoreOptions();
 
@@ -111,7 +113,7 @@ export type BrowserStorageEngineOptions = {
 };
 
 /**
- * Storage engine for the {@linkcode DataStore} class that uses the browser's LocalStorage or SessionStorage to store data.  
+ * Storage engine for the {@linkcode DataStore} class that uses the browser's LocalStorage or SessionStorage to store JSON-serializable data.  
  *   
  * - ⚠️ Requires a DOM environment
  * - ⚠️ Don't reuse engines across multiple {@linkcode DataStore} instances
@@ -181,7 +183,7 @@ export type FileStorageEngineOptions = {
 };
 
 /**
- * Storage engine for the {@linkcode DataStore} class that uses a JSON file to store data.  
+ * Storage engine for the {@linkcode DataStore} class that uses a JSON file to store JSON-serializable data.  
  *   
  * - ⚠️ Requires Node.js or Deno with Node compatibility (v1.31+)  
  * - ⚠️ Don't reuse engines across multiple {@linkcode DataStore} instances
@@ -312,7 +314,8 @@ export class FileStorageEngine<TData extends DataStoreData> extends DataStoreEng
       const path = typeof this.options.filePath === "string"
         ? this.options.filePath
         : this.options.filePath(this.dataStoreOptions.id);
-      await fs.unlink(path);
+
+      return await fs.unlink(path);
     }
     catch(err) {
       console.error("Error deleting file:", err);
