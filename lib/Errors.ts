@@ -13,7 +13,7 @@ export class DatedError extends Error {
   }
 }
 
-/** Error while validating checksum */
+/** Error while validating checksum - extends {@linkcode DatedError} */
 export class ChecksumMismatchError extends DatedError {
   constructor(message: string, options?: ErrorOptions) {
     super(message, options);
@@ -21,7 +21,15 @@ export class ChecksumMismatchError extends DatedError {
   }
 }
 
-/** Error while migrating data */
+/** Custom error class that can have a custom name - extends {@linkcode DatedError} */
+export class CustomError extends DatedError {
+  constructor(name: string, message: string, options?: ErrorOptions) {
+    super(message, options);
+    this.name = name;
+  }
+}
+
+/** Error while migrating data - extends {@linkcode DatedError} */
 export class MigrationError extends DatedError {
   constructor(message: string, options?: ErrorOptions) {
     super(message, options);
@@ -29,7 +37,7 @@ export class MigrationError extends DatedError {
   }
 }
 
-/** Error while validating data */
+/** Error while validating data - extends {@linkcode DatedError} */
 export class ValidationError extends DatedError {
   constructor(message: string, options?: ErrorOptions) {
     super(message, options);
