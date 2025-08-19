@@ -8,6 +8,7 @@ export default defineConfig({
       include: ["lib/**/*.ts"],
       exclude: [
         "lib/**/*.spec.ts",
+        "lib/test/*.ts",
         "lib/TieredCache.ts",
         "lib/Translate.ts",
         "lib/index.ts",
