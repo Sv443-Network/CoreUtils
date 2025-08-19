@@ -106,7 +106,7 @@ describe("DataStore", () => {
     expect(data2.c).toBe(69);
 
     // migrate with migrateId method:
-    const thirdStore = new TestDataStore({
+    const thirdStore = new DirectAccessDataStore({
       id: "test-5",
       defaultData: secondStore.defaultData,
       formatVersion: 3,
@@ -166,7 +166,7 @@ describe("DataStore", () => {
 
   //#region migrate from UU-v9 format
   it("Migrate from UU-v9 format", async () => {
-    const store1 = new TestDataStore({
+    const store1 = new DirectAccessDataStore({
       id: "test-migrate-from-uu-v9",
       defaultData: { a: 1, b: 2 },
       formatVersion: 1,
@@ -194,7 +194,7 @@ describe("DataStore", () => {
 
   //#region invalid persistent data
   it("Invalid persistent data", async () => {
-    const store1 = new TestDataStore({
+    const store1 = new DirectAccessDataStore({
       id: "test-6",
       defaultData: { a: 1, b: 2 },
       formatVersion: 1,
@@ -204,7 +204,7 @@ describe("DataStore", () => {
     await store1.loadData();
     await store1.setData({ ...store1.getData(), a: 2 });
 
-    await store1.direct_setValue(`__ds-${store1.id}-dat`, "invalid");
+    await store1.direct_setValue(`__ds-${store1.id}-dat`, "invalid_json");
 
     try {
       // should reset to defaultData:
@@ -225,7 +225,7 @@ describe("DataStore", () => {
       setValue: async () => undefined,
     }
 
-    const store2 = new TestDataStore({
+    const store2 = new DirectAccessDataStore({
       id: "test-7",
       defaultData: { a: 1, b: 2 },
       formatVersion: 1,
@@ -234,7 +234,8 @@ describe("DataStore", () => {
 
     await store1.setData({ ...store1.getData(), a: 2 });
 
-    // invalid type number should reset to defaultData:
+    // invalid type number should reset to defaultData
+    // note: this logs an error to the console which can be ignored
     await store2.loadData();
 
     expect(store2.getData().a).toBe(1);

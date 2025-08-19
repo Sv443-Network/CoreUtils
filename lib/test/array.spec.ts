@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { randomItem, randomItemIndex, randomizeArray, takeRandomItem } from "./array.ts";
+import { randomItem, randomItemIndex, randomizeArray, takeRandomItem } from "./array.js";
 
 //#region randomItem
 describe("array/randomItem", () => {
