@@ -44,3 +44,19 @@ export class ValidationError extends DatedError {
     this.name = "ValidationError";
   }
 }
+
+/** Error related to script context (e.g. trying to access APIs that aren't supported by the executing JS engine) - extends {@linkcode DatedError} */
+export class ScriptContextError extends DatedError {
+  constructor(message: string, options?: ErrorOptions) {
+    super(message, options);
+    this.name = "ScriptContextError";
+  }
+}
+
+/** Error related to networking - extends {@linkcode DatedError} */
+export class NetworkError extends DatedError {
+  constructor(message: string, options?: ErrorOptions) {
+    super(message, options);
+    this.name = "NetworkError";
+  }
+}
