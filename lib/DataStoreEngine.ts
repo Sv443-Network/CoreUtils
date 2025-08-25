@@ -216,7 +216,7 @@ export class FileStorageEngine<TData extends DataStoreData> extends DataStoreEng
       if(!fs)
         fs = (await import("node:fs/promises"))?.default;
       if(!fs)
-        throw new DatedError("FileStorageEngine requires Node.js or Deno with Node compatibility (v1.31+)", { cause: new Error("'node:fs/promises' module not available") });
+        throw new ScriptContextError("FileStorageEngine requires Node.js or Deno with Node compatibility (v1.31+)", { cause: new DatedError("'node:fs/promises' module not available") });
 
       const path = typeof this.options.filePath === "string"
         ? this.options.filePath
@@ -240,7 +240,7 @@ export class FileStorageEngine<TData extends DataStoreData> extends DataStoreEng
       if(!fs)
         fs = (await import("node:fs/promises"))?.default;
       if(!fs)
-        throw new DatedError("FileStorageEngine requires Node.js or Deno with Node compatibility (v1.31+)", { cause: new Error("'node:fs/promises' module not available") });
+        throw new ScriptContextError("FileStorageEngine requires Node.js or Deno with Node compatibility (v1.31+)", { cause: new DatedError("'node:fs/promises' module not available") });
 
       const path = typeof this.options.filePath === "string"
         ? this.options.filePath
@@ -309,7 +309,7 @@ export class FileStorageEngine<TData extends DataStoreData> extends DataStoreEng
       if(!fs)
         fs = (await import("node:fs/promises"))?.default;
       if(!fs)
-        throw new DatedError("FileStorageEngine requires Node.js or Deno with Node compatibility (v1.31+)", { cause: new Error("'node:fs/promises' module not available") });
+        throw new ScriptContextError("FileStorageEngine requires Node.js or Deno with Node compatibility (v1.31+)", { cause: new DatedError("'node:fs/promises' module not available") });
 
       const path = typeof this.options.filePath === "string"
         ? this.options.filePath
