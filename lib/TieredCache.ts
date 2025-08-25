@@ -269,7 +269,7 @@ const lyricsUrlCache = new TieredCache({
       }
     );
     if(res.status >= 300 || res.status < 200)
-      throw new Error(`Failed to fetch lyrics URL: ${res.statusText}`);
+      throw new NetworkError(`Failed to fetch lyrics URL: ${res.statusText}`);
 
     const data = await res.json();
 
@@ -280,7 +280,7 @@ const lyricsUrlCache = new TieredCache({
         maxTTL: 60 * 60 * 24 * 60, // 60 days
       };
     else
-      throw new Error("No URL found in response");
+      throw new NetworkError("No URL found in response");
   }
 });
 */

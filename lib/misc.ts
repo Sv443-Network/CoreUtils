@@ -80,7 +80,7 @@ export async function fetchAdvanced(input: string | RequestInfo | URL, options: 
   }
   catch(err) {
     typeof id !== "undefined" && clearTimeout(id);
-    throw new Error("Error while calling fetch", { cause: err });
+    throw new NetworkError("Error while calling fetch", { cause: err });
   }
 }
 
@@ -112,7 +112,7 @@ export function pauseFor(time: number, signal?: AbortSignal, rejectOnAbort = fal
     const timeout = setTimeout(() => res(), time);
     signal?.addEventListener("abort", () => {
       clearTimeout(timeout);
-      rejectOnAbort ? rej(new Error("The pause was aborted")) : res();
+      rejectOnAbort ? rej(new CustomError("AbortError", "The pause was aborted")) : res();
     });
   });
 }
@@ -196,7 +196,7 @@ export function scheduleExit(code: number = 0, timeout = 0): void {
   else if(typeof Deno !== "undefined" && "exit" in Deno)
     exit = () => Deno.exit(code);
   else
-    throw new Error("Cannot exit the process, no exit method available");
+    throw new ScriptContextError("Cannot exit the process, no exit method available");
 
   setTimeout(exit, timeout);
 }
