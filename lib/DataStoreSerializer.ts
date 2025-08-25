@@ -13,6 +13,8 @@ export type DataStoreSerializerOptions = {
   addChecksum?: boolean;
   /** Whether to ensure the integrity of the data when importing it by throwing an error (doesn't throw when the checksum property doesn't exist). Defaults to `true` */
   ensureIntegrity?: boolean;
+  /** If provided, all stores with an ID in the value's array will be remapped to the key's ID when deserialization is called. If they don't match a DataStore instance's ID, nothing will happen. */
+  remapIds?: Record<string, string[]>;
 };
 
 /** Meta object and serialized data of a DataStore instance */
@@ -54,12 +56,13 @@ export class DataStoreSerializer<TData extends DataStoreData> {
 
   constructor(stores: DataStore<TData>[], options: DataStoreSerializerOptions = {}) {
     if(!crypto || !crypto.subtle)
-      throw new Error("DataStoreSerializer has to run in a secure context (HTTPS) or in another environment that implements the subtleCrypto API!");
+      throw new ScriptContextError("DataStoreSerializer has to run in a secure context (HTTPS) or in another environment that implements the subtleCrypto API!");
 
     this.stores = stores;
     this.options = {
       addChecksum: true,
       ensureIntegrity: true,
+      remapIds: {},
       ...options,
     };
   }
@@ -151,9 +154,14 @@ export class DataStoreSerializer<TData extends DataStoreData> {
       throw new TypeError("Invalid serialized data format! Expected an array of SerializedDataStore objects.");
 
     for(const storeData of deserStores.filter(s => typeof stores === "function" ? stores(s.id) : stores.includes(s.id))) {
-      const storeInst = this.stores.find(s => s.id === storeData.id);
+      const storeInst = this.stores.find(s => s.id === storeData.id)
+        ?? this.stores.find(s => s.id === (
+          Object.entries(this.options.remapIds)
+            .find(([, v]) => v.includes(storeData.id))
+        )?.[0]);
+
       if(!storeInst)
-        throw new Error(`DataStore instance with ID "${storeData.id}" not found! Make sure to provide it in the DataStoreSerializer constructor.`);
+        throw new DatedError(`Can't deserialize data because no DataStore instance with the ID "${storeData.id}" was found! Make sure to provide it in the DataStoreSerializer constructor.`);
 
       if(this.options.ensureIntegrity && typeof storeData.checksum === "string") {
         const checksum = await this.calcChecksum(storeData.data);

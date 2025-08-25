@@ -102,4 +102,32 @@ describe("DataStoreSerializer", () => {
     expect(store1.getData().a).toBe(1);
     expect(store2.getData().c).toBe(422);
   });
+
+  //#region migrate IDs
+
+  it("Migrates store IDs on deserialization", async () => {
+    const stores = getStores();
+
+    for(const store of stores)
+      await store.loadData();
+
+    const ser = new DataStoreSerializer([
+      ...stores,
+      new DataStore({
+        id: "dss-test-3",
+        defaultData: { e: 6, f: 9 },
+        formatVersion: 1,
+        engine: () => new FileStorageEngine({
+          filePath: () => "./test.json",
+        }),
+        encodeData: ["identity", (data) => data],
+        decodeData: ["identity", (data) => data],
+      }),
+    ], {
+      remapIds: {
+        "dss-test-3": ["dss-test-2"],
+      },
+    });
+    await ser.loadStoresData();
+  });
 });
