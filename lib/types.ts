@@ -11,6 +11,13 @@ export type ListLike = unknown[] | { length: number } | { count: number } | { si
 /**
  * A type that offers autocomplete for the passed union but also allows any arbitrary value of the same type to be passed.  
  * Supports unions of strings, numbers and objects.
+ * @example ```ts
+ * type MyUnion = LooseUnion<"foo" | "bar" | "baz">;
+ * 
+ * const a: MyUnion = "foo"; // Valid
+ * const b: MyUnion = "qux"; // Also valid, even though "qux" is not part of the union
+ * const c: MyUnion = 123;   // Not valid, because it's not the same type
+ * ```
  */
 export type LooseUnion<TUnion extends string | number | object> =
   | (TUnion)

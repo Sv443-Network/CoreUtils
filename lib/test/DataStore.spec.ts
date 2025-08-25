@@ -244,4 +244,24 @@ describe("DataStore", () => {
     // @ts-expect-error
     delete window.GM;
   });
+
+  //#region no in-mem cache
+
+  it("Works as expected with no in-mem cache", async () => {
+    const store = new DirectAccessDataStore({
+      id: "test-no-in-mem-cache",
+      defaultData: { a: 1, b: 2 },
+      formatVersion: 1,
+      engine: new BrowserStorageEngine({ type: "localStorage" }),
+      memoryCache: false,
+    });
+
+    // should default to {} if memoryCache is disabled:
+    expect(Object.keys(store.direct_getMemData()).length).toBe(0);
+
+    // should throw:
+    expect(() => {
+      store.getData();
+    }).toThrow();
+  });
 });
