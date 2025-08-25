@@ -685,6 +685,11 @@ export const manager = new DataStore({
    * sure the data is migrated to the current ID when `loadData()` is called
    */
   migrateIds: ["my-data", "config"],
+  /**
+   * Set this to false to disable the in-memory cache.  
+   * This will make `getData()` always throw an error. Use `loadData()` instead.
+   */
+  inMemoryCache: true,
 
   // Compression example:
   // Adding the following will save space at the cost of a little bit of performance (only for the initial loading and every time new data is saved)
@@ -828,6 +833,7 @@ It has the following properties:
 | `engine` | [`DataStoreEngine \| () => DataStoreEngine`](#storage-engines) | Either a storage engine instance or a function that creates and returns a new storage engine instance. The engine implements the API used to persist all key-value pairs. See the [Storage Engines section.](#storage-engines) |
 | `migrations?` | [`DataMigrationsDict`](#type-datamigrationsdict) | (Optional) A dictionary of functions that can be used to migrate data from older versions of the data to newer ones. The keys of the dictionary should be the format version number that the function migrates to, from the previous whole integer value. The values should be functions that take the data in the old format and return the data in the new format. The functions will be run in order from the oldest to the newest version. If the current format version is not in the dictionary, no migrations will be run. |
 | `migrateIds?` | `string \| string[]` | (Optional) A string or array of strings that migrate from one or more old IDs to the ID set in the constructor. If no data exist for the old ID(s), nothing will be done, but some time may still pass trying to fetch the non-existent data. The ID migration will be done once per session in the call to [`loadData()`](#datastoreloaddata). |
+| `inMemoryCache?` | `boolean` | (Optional, default: `true`) If set to `false`, the in-memory cache will be disabled. This means that `getData()` will always throw an error and the data needs to be loaded from persistent storage using `loadData()`. This may be useful if the data is very large and you want to save memory, but it will make accessing the data slower, especially when combined with compression. |
 | `compressionFormat?` | [`CompressionFormat`](https://developer.mozilla.org/en-US/docs/Web/API/CompressionStream/CompressionStream#format) \| `null` | (Optional, disallowed when `encodeData` and `decodeData` are set) The compression format to use when saving the data. If set, the data will be compressed before saving and decompressed after loading. The default is `"deflate-raw"`. Explicitly set to `null` to disable compression. |
 | `encodeData?` | `[format: string, encode: (data: string) => string \| Promise<string>]` | (Optional, but required when `decodeData` is also set and disallowed when `compressionFormat` is set) Tuple of format identifier and function that encodes the data before saving - you can use [`compress()`](#function-compress) here to save space at the cost of a little bit of performance |
 | `decodeData?` | `[format: string, decode: (data: string) => string \| Promise<string>]` | (Optional, but required when `encodeData` is also set and disallowed when `compressionFormat` is set) Tuple of format identifier and function that decodes the data when loading - you can use [`decompress()`](#function-decompress) here to decode the data that was previously compressed with [compress()](#function-compress) |

@@ -16,6 +16,11 @@ type MigrationFunc = (oldData: any) => any | Promise<any>; // eslint-disable-lin
 /** Dictionary of format version numbers and the function that migrates to them from the previous whole integer */
 export type DataMigrationsDict = Record<number, MigrationFunc>;
 
+/** Tuple of a compression format identifier and a function to use to encode the data */
+export type EncodeTuple = [format: LooseUnion<CompressionFormat> | null, encode: (data: string) => string | Promise<string>];
+/** Tuple of a compression format identifier and a function to use to decode the data */
+export type DecodeTuple = [format: LooseUnion<CompressionFormat> | null, decode: (data: string) => string | Promise<string>];
+
 /** Options for the DataStore instance */
 export type DataStoreOptions<TData extends DataStoreData> = Prettify<
   & {
@@ -61,6 +66,13 @@ export type DataStoreOptions<TData extends DataStoreData> = Prettify<
      * To migrate IDs manually, use the method {@linkcode DataStore.migrateId()} instead.
      */
     migrateIds?: string | string[];
+    /**
+     * Whether to keep a copy of the data in memory for synchronous read access. Defaults to `true`.  
+     *   
+     * - ⚠️ If turned off, {@linkcode DataStore.getData()} will throw an error and only {@linkcode DataStore.loadData()} can be used to access the data.  
+     *   This may be useful if the data is very large and you want to save memory, but it will make accessing the data slower, especially when combined with compression.
+     */
+    memoryCache?: boolean;
   }
   & (
     // make sure that encodeData and decodeData are *both* either defined or undefined
@@ -69,7 +81,7 @@ export type DataStoreOptions<TData extends DataStoreData> = Prettify<
       decodeData?: never;
       /**
        * The format to use for compressing the data. Defaults to `deflate-raw`. Explicitly set to `null` to store data uncompressed.  
-       * - ⚠️ Use either this property, or both `encodeData` and `decodeData`, but not all three!
+       * - ⚠️ Use either this property, or both `encodeData` and `decodeData`, but not a combination of the three!
        */
       compressionFormat?: CompressionFormat | null;
     }
@@ -83,7 +95,7 @@ export type DataStoreOptions<TData extends DataStoreData> = Prettify<
        * You can make use of the [`compress()` function](https://github.com/Sv443-Network/CoreUtils/blob/main/docs.md#function-compress) here to make the data use up less space at the cost of a little bit of performance.
        * @param data The input data as a serialized object (JSON string)
        */
-      encodeData: [format: LooseUnion<CompressionFormat> | null, encode: (data: string) => string | Promise<string>];
+      encodeData: EncodeTuple;
       /**
        * Tuple of a compression format identifier and a function to use to decode the data after reading it from persistent storage.  
        * Set the identifier to `null` or `"identity"` to indicate that no traditional compression is used.  
@@ -93,7 +105,7 @@ export type DataStoreOptions<TData extends DataStoreData> = Prettify<
        * You can make use of the [`decompress()` function](https://github.com/Sv443-Network/CoreUtils/blob/main/docs.md#function-decompress) here to make the data use up less space at the cost of a little bit of performance.
        * @returns The resulting data as a valid serialized object (JSON string)
        */
-      decodeData: [format: LooseUnion<CompressionFormat> | null, decode: (data: string) => string | Promise<string>];
+      decodeData: DecodeTuple;
       compressionFormat?: never;
     }
   )
@@ -104,7 +116,7 @@ export type DataStoreData<TData extends SerializableVal = SerializableVal> = Rec
 
 //#region class
 
-/** Current version of the general DataStore format (mostly referring to keys in persistent storage) */
+/** Current version of the overarching DataStore format */
 const dsFmtVer = 1;
 
 /**
@@ -128,6 +140,7 @@ export class DataStore<TData extends DataStoreData> {
   public readonly encodeData: DataStoreOptions<TData>["encodeData"];
   public readonly decodeData: DataStoreOptions<TData>["decodeData"];
   public readonly compressionFormat: Exclude<DataStoreOptions<TData>["compressionFormat"], undefined> = "deflate-raw";
+  public readonly memoryCache: boolean = true;
   public readonly engine: DataStoreEngine<TData>;
   public options: DataStoreOptions<TData>;
 
@@ -139,9 +152,11 @@ export class DataStore<TData extends DataStoreData> {
   protected firstInit = true;
 
   /** In-memory cached copy of the data that is saved in persistent storage used for synchronous read access. */
-  private cachedData: TData;
-  private migrations?: DataMigrationsDict;
-  private migrateIds: string[] = [];
+  protected cachedData: TData;
+  protected migrations?: DataMigrationsDict;
+  protected migrateIds: string[] = [];
+
+  //#region constructor
 
   /**
    * Creates an instance of DataStore to manage a sync & async database that is cached in memory and persistently saved across sessions.  
@@ -156,7 +171,8 @@ export class DataStore<TData extends DataStoreData> {
     this.id = opts.id;
     this.formatVersion = opts.formatVersion;
     this.defaultData = opts.defaultData;
-    this.cachedData = opts.defaultData;
+    this.memoryCache = Boolean(opts.memoryCache ?? true);
+    this.cachedData = this.memoryCache ? opts.defaultData : {} as TData;
     this.migrations = opts.migrations;
     if(opts.migrateIds)
       this.migrateIds = Array.isArray(opts.migrateIds) ? opts.migrateIds : [opts.migrateIds];
@@ -189,7 +205,7 @@ export class DataStore<TData extends DataStoreData> {
     this.engine.setDataStoreOptions(opts);
   }
 
-  //#region public
+  //#region loadData
 
   /**
    * Loads the data saved in persistent storage into the in-memory cache and also returns a copy of it.  
@@ -277,8 +293,10 @@ export class DataStore<TData extends DataStoreData> {
       if(saveData)
         await this.setData(parsed);
 
-      // save copy of the data to cache and return it
-      return this.cachedData = this.engine.deepCopy(parsed);
+      if(this.memoryCache)
+        return this.cachedData = this.engine.deepCopy(parsed);
+      else
+        return this.engine.deepCopy(parsed);
     }
     catch(err) {
       console.warn("Error while parsing JSON data, resetting it to the default value.", err);
@@ -287,17 +305,27 @@ export class DataStore<TData extends DataStoreData> {
     }
   }
 
+  //#region getData
+
   /**
    * Returns a copy of the data from the in-memory cache.  
-   * Use {@linkcode loadData()} to get fresh data from persistent storage (usually not necessary since the cache should always exactly reflect persistent storage).
+   * Use {@linkcode loadData()} to get fresh data from persistent storage (usually not necessary since the cache should always exactly reflect persistent storage).  
+   * ⚠️ If `memoryCache` was set to `false` in the constructor options, this method will throw an error.
    */
   public getData(): TData {
+    if(!this.memoryCache)
+      throw new DatedError("In-memory cache is disabled for this DataStore instance, so getData() can't be used. Please use loadData() instead.");
+
     return this.engine.deepCopy(this.cachedData);
   }
 
+  //#region setData
+
   /** Saves the data synchronously to the in-memory cache and asynchronously to the persistent storage */
   public setData(data: TData): Promise<void> {
-    this.cachedData = data;
+    if(this.memoryCache)
+      this.cachedData = data;
+
     return new Promise<void>(async (resolve) => {
       await Promise.allSettled([
         this.engine.setValue(`__ds-${this.id}-dat`, await this.engine.serializeData(data, this.encodingEnabled())),
@@ -308,15 +336,21 @@ export class DataStore<TData extends DataStoreData> {
     });
   }
 
+  //#region saveDefaultData
+
   /** Saves the default data passed in the constructor synchronously to the in-memory cache and asynchronously to persistent storage */
   public async saveDefaultData(): Promise<void> {
-    this.cachedData = this.defaultData;
+    if(this.memoryCache)
+      this.cachedData = this.defaultData;
+
     await Promise.allSettled([
       this.engine.setValue(`__ds-${this.id}-dat`, await this.engine.serializeData(this.defaultData, this.encodingEnabled())),
       this.engine.setValue(`__ds-${this.id}-ver`, this.formatVersion),
       this.engine.setValue(`__ds-${this.id}-enf`, this.compressionFormat),
     ]);
   }
+
+  //#region deleteData
 
   /**
    * Call this method to clear all persistently stored data associated with this DataStore instance, including the storage container (if supported by the DataStoreEngine).  
@@ -332,12 +366,14 @@ export class DataStore<TData extends DataStoreData> {
     await this.engine.deleteStorage?.();
   }
 
+  //#region encodingEnabled
+
   /** Returns whether encoding and decoding are enabled for this DataStore instance */
   public encodingEnabled(): this is Required<Pick<DataStoreOptions<TData>, "encodeData" | "decodeData">> {
     return Boolean(this.encodeData && this.decodeData) && this.compressionFormat !== null || Boolean(this.compressionFormat);
   }
 
-  //#region migrations
+  //#region runMigrations
 
   /**
    * Runs all necessary migration functions consecutively and saves the result to the in-memory cache and persistent storage and also returns it.  
@@ -380,8 +416,13 @@ export class DataStore<TData extends DataStoreData> {
       this.engine.setValue(`__ds-${this.id}-enf`, this.compressionFormat),
     ]);
 
-    return this.cachedData = this.engine.deepCopy(newData as TData);
+    if(this.memoryCache)
+      return this.cachedData = this.engine.deepCopy(newData as TData);
+    else
+      return this.engine.deepCopy(newData as TData);
   }
+
+  //#region migrateId
 
   /**
    * Tries to migrate the currently saved persistent data from one or more old IDs to the ID set in the constructor.  
