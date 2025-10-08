@@ -109,18 +109,21 @@ export function joinArrayReadable(array: unknown[], separators = ", ", lastSepar
 
 /** Converts seconds into the timestamp format `(hh:)mm:ss`, with intelligent zero-padding */
 export function secsToTimeStr(seconds: number): string {
-  if(seconds < 0)
-    throw new TypeError("Seconds must be a positive number");
+  const isNegative = seconds < 0;
+  const s = Math.abs(seconds);
 
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  const secs = Math.floor(seconds % 60);
+  if(isNaN(s) || !isFinite(s))
+    throw new TypeError("The seconds argument must be a valid number");
 
-  return [
-    hours ? hours + ":" : "",
-    String(minutes).padStart(minutes > 0 || hours > 0 ? 2 : 1, "0"),
+  const hrs = Math.floor(s / 3600);
+  const mins = Math.floor((s % 3600) / 60);
+  const secs = Math.floor(s % 60);
+
+  return (isNegative ? "-" : "") + [
+    hrs ? hrs + ":" : "",
+    String(mins).padStart(mins > 0 || hrs > 0 ? 2 : 1, "0"),
     ":",
-    String(secs).padStart(secs > 0 || minutes > 0 || hours > 0 ? 2 : 1, "0")
+    String(secs).padStart(secs > 0 || mins > 0 || hrs > 0 || seconds === 0 ? 2 : 1, "0")
   ].join("");
 }
 
