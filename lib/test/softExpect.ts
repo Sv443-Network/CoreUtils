@@ -1,20 +1,11 @@
 import { styleText } from "node:util";
-import { expect } from "vitest";
-
-type SoftExpectResult<T> = {
-  toBe: (expected: T) => void;
-  toEqual: (expected: T) => void;
-};
+import { expect, type Assertion } from "vitest";
 
 /** Wrapper around {@linkcode expect()} that catches errors and logs them instead of throwing. */
-export function softExpect<T>(actual: T): SoftExpectResult<T> {
+export function softExpect<T>(actual: T, message?: string): Assertion<T> | undefined {
   try {
-    return expect(actual);
+    return expect(actual, message);
   } catch (err) {
     console.warn(styleText("yellow", "Soft assertion failed:"), err);
-    return {
-      toBe: () => {},
-      toEqual: () => {},
-    };
   }
 }

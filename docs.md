@@ -3036,6 +3036,8 @@ Turns the given [`Stringifiable`](#type-stringifiable) term that's in singular f
 The `num` argument can be a number or a quantifiable [`ListLike` value](#type-listlike).  
 By default, the plural form will be determined automatically, but you can also manually force it to be `-s` or `-ies`.  
   
+This will only work in English and is mostly meant for simple cases.
+  
 <details><summary>Example - click to view</summary>
 
 ```ts
@@ -3054,7 +3056,7 @@ autoPlural("category", 2); // "categories"
 autoPlural({ toString: () => "category" }, 2); // "categories"
 autoPlural(new Map<unknown, unknown>(), 2);    // "[object Map]s"
 
-// The passed `num` object just needs to have a numeric length, count or size property:
+// The passed `num` object just needs to have a numeric "length", "count" or "size" property:
 const collection = new Collection<string, string>();
 collection.set("foo", "bar");
 console.log(collection.size, autoPlural("item", collection)); // "1 item"
@@ -3062,7 +3064,7 @@ console.log(collection.size, autoPlural("item", collection)); // "1 item"
 const items = [1, 2, 3, 4, "foo", "bar"];
 console.log(items.length, autoPlural("item", items)); // "6 items"
 
-// And you can also force pluralization with one or the other if needed:
+// And you can also force pluralization with one or the other if needed for whatever reason:
 autoPlural("category", 1, "-s"); // "category"
 autoPlural("category", 2, "-s"); // "categorys"
 autoPlural("apple", 1, "-ies");  // "apply"
@@ -3176,27 +3178,29 @@ secsToTimeStr(seconds: number): string;
 ```
   
 Turns the given number of seconds into a string in the format `(hh:)mm:ss` with intelligent zero-padding.  
+Also works with negative numbers.  
   
 <details><summary>Example - click to view</summary>
 
 ```ts
 import { secsToTimeStr } from "@sv443-network/coreutils";
 
-console.log(secsToTimeStr(0));    // 0:0
-console.log(secsToTimeStr(1));    // 0:01
-console.log(secsToTimeStr(10));   // 0:10
-console.log(secsToTimeStr(59));   // 0:59
-console.log(secsToTimeStr(60));   // 01:00
-console.log(secsToTimeStr(61));   // 01:01
-console.log(secsToTimeStr(599));  // 09:59
-console.log(secsToTimeStr(600));  // 10:00
-console.log(secsToTimeStr(601));  // 10:01
-console.log(secsToTimeStr(3599)); // 59:59
-console.log(secsToTimeStr(3600)); // 1:00:00
-console.log(secsToTimeStr(3601)); // 1:00:01
+console.log(secsToTimeStr(0));     //   0:00
+console.log(secsToTimeStr(1));     //   0:01
+console.log(secsToTimeStr(10));    //   0:10
+console.log(secsToTimeStr(59));    //   0:59
+console.log(secsToTimeStr(60));    //  01:00
+console.log(secsToTimeStr(61));    //  01:01
+console.log(secsToTimeStr(599));   //  09:59
+console.log(secsToTimeStr(600));   //  10:00
+console.log(secsToTimeStr(601));   //  10:01
+console.log(secsToTimeStr(3599));  //  59:59
+console.log(secsToTimeStr(3600));  //  1:00:00
+console.log(secsToTimeStr(3601));  //  1:00:01
+console.log(secsToTimeStr(-3600)); // -1:00:00
 
 // @ts-expect-error
-secsToTimeStr(-1); // TypeError: Seconds must be a positive number
+console.log(secsToTimeStr(NaN));   // TypeError: The seconds argument must be a valid number
 ```
 </details>
 

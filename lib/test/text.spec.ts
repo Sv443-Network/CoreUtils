@@ -3,7 +3,7 @@ import { autoPlural, capitalize, createProgressBar, insertValues, joinArrayReada
 
 //#region autoPlural
 describe("misc/autoPlural", () => {
-  it("Tests if autoPlural uses the correct forms", () => {
+  it("Autodetects the correct types", () => {
     expect(autoPlural("apple", -1)).toBe("apples");
     expect(autoPlural("apple", 0)).toBe("apples");
     expect(autoPlural("apple", 1)).toBe("apple");
@@ -50,7 +50,7 @@ describe("misc/capitalize", () => {
 
 //#region createProgressBar
 describe("misc/createProgressBar", () => {
-  it("Creates a progress bar with the correct characters", () => {
+  it("Creates a progress bar with correct characters", () => {
     expect(createProgressBar(100, 10)).toBe("██████████");
     expect(createProgressBar(75, 10)).toBe("███████▓──");
     expect(createProgressBar(50, 10)).toBe("█████▓────");
@@ -104,12 +104,17 @@ describe("misc/joinArrayReadable", () => {
 //#region secsToTimeStr
 describe("misc/secsToTimeStr", () => {
   it("Converts seconds to a time string", () => {
-    expect(secsToTimeStr(0)).toBe("0:0");
+    expect(secsToTimeStr(0)).toBe("0:00");
     expect(secsToTimeStr(5)).toBe("0:05");
     expect(secsToTimeStr(60)).toBe("01:00");
     expect(secsToTimeStr(3661)).toBe("1:01:01");
     expect(secsToTimeStr(86399)).toBe("23:59:59");
-    expect(() => secsToTimeStr(-1)).toThrow(TypeError);
+    expect(secsToTimeStr(-1)).toBe("-0:01");
+    expect(secsToTimeStr(-3600)).toBe("-1:00:00");
+
+    expect(() => secsToTimeStr(Infinity)).toThrow(TypeError);
+    expect(() => secsToTimeStr(-Infinity)).toThrow(TypeError);
+    expect(() => secsToTimeStr(NaN)).toThrow(TypeError);
   });
 });
 
