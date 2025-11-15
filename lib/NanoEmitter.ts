@@ -14,9 +14,9 @@ export interface NanoEmitterOptions {
 }
 
 type NanoEmitterOnMultiTriggerOptions<TEvtMap extends EventsMap, TKey extends keyof TEvtMap = keyof TEvtMap> = {
-  /** Calls the callback when one of the given events is emitted */
+  /** Calls the callback when one of the given events is emitted. Either one of or both of `oneOf` and `allOf` need to be set. If both are set, they behave like an "AND" condition. */
   oneOf?: TKey[];
-  /** Calls the callback when all of the given events are emitted */
+  /** Calls the callback when all of the given events are emitted. Either one of or both of `oneOf` and `allOf` need to be set. If both are set, they behave like an "AND" condition. */
   allOf?: TKey[];
 }
 
@@ -25,7 +25,7 @@ export type NanoEmitterOnMultiOptions<TEvtMap extends EventsMap, TKey extends ke
   & {
     /** If true, the callback will be called only once for the first event (or set of events) that match the criteria */
     once?: boolean;
-    /** If provided, can be used to abort the subscription if the signal is aborted */
+    /** If provided, can be used to cancel the subscription if the signal is aborted */
     signal?: AbortSignal;
     /** The callback to call when the event with the given name is emitted */
     callback: (event: TKey, ...args: Parameters<TEvtMap[TKey]>) => void;
@@ -140,11 +140,12 @@ export class NanoEmitter<TEvtMap extends EventsMap = DefaultEvents> {
    * `callback` (required) is the function that will be called when the conditions are met.  
    *   
    * Set `once` to true to call the callback only once for the first event (or set of events) that match the criteria, then stop listening.  
-   * If `signal` is provided, the subscription will be aborted when the given signal is aborted.  
+   * If `signal` is provided, the subscription will be canceled when the given signal is aborted.  
    *   
    * If `oneOf` is used, the callback will be called when any of the matching events are emitted.  
    * If `allOf` is used, the callback will be called after all of the matching events are emitted at least once, then any time any of them are emitted.  
-   * You may use a combination of the above two options, but at least one of them must be provided.  
+   * If both `oneOf` and `allOf` are used together, the callback will be called when any of the `oneOf` events are emitted AND all of the `allOf` events have been emitted at least once.  
+   * At least one of `oneOf` or `allOf` must be provided.  
    *   
    * @returns Returns a function that can be called to unsubscribe all listeners created by this call. Alternatively, pass an `AbortSignal` to all options objects to achieve the same effect or for finer control.
    */
@@ -182,6 +183,10 @@ export class NanoEmitter<TEvtMap extends EventsMap = DefaultEvents> {
       if(signal?.aborted)
         return unsubAll;
 
+      // if no events are provided, throw an error
+      if(oneOf.length === 0 && allOf.length === 0)
+        throw new TypeError("NanoEmitter.onMulti(): Either `oneOf` or `allOf` or both must be provided in the options");
+
       // unsubs:
 
       const curEvtUnsubs: Unsubscribe[] = [];
@@ -195,14 +200,21 @@ export class NanoEmitter<TEvtMap extends EventsMap = DefaultEvents> {
         this.eventUnsubscribes = this.eventUnsubscribes.filter(u => !curEvtUnsubs.includes(u));
       };
 
+      // track allOf state:
+      const allOfEmitted: Set<TEvt> = new Set();
+      const allOfConditionMet = (): boolean => allOf.length === 0 || allOfEmitted.size === allOf.length;
+
       // oneOf:
 
       for(const event of oneOf) {
         const unsub = this.events.on(event, ((...args: Parameters<TEvtMap[typeof event]>) => {
           checkUnsubAllEvt();
-          callback(event, ...args);
-          if(once)
-            checkUnsubAllEvt(true);
+          // only call callback if allOf condition is met (or not applicable)
+          if(allOfConditionMet()) {
+            callback(event, ...args);
+            if(once)
+              checkUnsubAllEvt(true);
+          }
         }) as TEvtMap[typeof event]);
 
         curEvtUnsubs.push(unsub);
@@ -210,30 +222,21 @@ export class NanoEmitter<TEvtMap extends EventsMap = DefaultEvents> {
 
       // allOf:
 
-      const allOfEmitted: Set<TEvt> = new Set();
-
-      const checkAllOf = (event: TEvt, ...args: Parameters<TEvtMap[TEvt]>): void => {
-        checkUnsubAllEvt();
-        allOfEmitted.add(event);
-        if(allOfEmitted.size === allOf.length) {
-          callback(event, ...args);
-          if(once)
-            checkUnsubAllEvt(true);
-        }
-      };
-
       for(const event of allOf) {
         const unsub = this.events.on(event, ((...args: Parameters<TEvtMap[typeof event]>) => {
           checkUnsubAllEvt();
-          checkAllOf(event as TEvt, ...args);
+          allOfEmitted.add(event as TEvt);
+          
+          // only call callback if oneOf condition is met (or not applicable) AND allOf is complete
+          if(allOfConditionMet() && (oneOf.length === 0 || oneOf.includes(event as TEvt))) {
+            callback(event, ...args);
+            if(once)
+              checkUnsubAllEvt(true);
+          }
         }) as TEvtMap[typeof event]);
 
         curEvtUnsubs.push(unsub);
       }
-
-      // if no events are provided, throw an error
-      if(oneOf.length === 0 && allOf.length === 0)
-        throw new TypeError("NanoEmitter.onMulti(): Either `oneOf` or `allOf` or both must be provided in the options");
 
       allUnsubs.push(() => checkUnsubAllEvt(true));
     }
