@@ -182,7 +182,7 @@ describe("NanoEmitter onMulti", () => {
   });
 
   // #region onMulti oneOf + allOf
-  it("allOf + oneOf", () => {
+  it("allOf + oneOf (AND condition)", () => {
     const evts = new NanoEmitter<{
       val1: (val: number) => void;
       val2: (val: number) => void;
@@ -201,17 +201,29 @@ describe("NanoEmitter onMulti", () => {
       },
     });
 
+    // val1 emitted, but allOf not complete yet (val2 and val3 not emitted)
     evts.emit("val1", 1);
-    expect(cbVal).toBe(1);
+    expect(cbVal).toBe(-1);
 
-    evts.emit("val3", 3);
-    expect(cbVal).toBe(1);
-
+    // val2 emitted (part of oneOf), but allOf still not complete (val3 not emitted)
     evts.emit("val2", 2);
-    expect(cbVal).toBe(2);
+    expect(cbVal).toBe(-1);
 
-    evts.emit("val1", 1);
-    expect(cbVal).toBe(1);
+    // val3 emitted, now allOf is complete, but val3 is not in oneOf
+    evts.emit("val3", 3);
+    expect(cbVal).toBe(-1);
+
+    // val1 emitted (part of oneOf) AND allOf is complete -> callback fires
+    evts.emit("val1", 10);
+    expect(cbVal).toBe(10);
+
+    // val2 emitted (part of oneOf AND allOf) -> callback fires
+    evts.emit("val2", 20);
+    expect(cbVal).toBe(20);
+
+    // val3 emitted (only in allOf, not in oneOf) -> callback doesn't fire
+    evts.emit("val3", 30);
+    expect(cbVal).toBe(20);
   });
 
   //#region onMulti edge cases
