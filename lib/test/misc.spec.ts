@@ -157,7 +157,7 @@ describe("misc/setImmediateTimeoutLoop", () => {
 
 //#region scheduleExit
 describe("misc/scheduleExit", () => {
-  it("Schedules an exit with the specified code", async () => {
+  it("Schedules an exit (Node.js)", async () => {
     const exitSpy = vi.spyOn(process, "exit").mockImplementation((code?: string | number | null) => void code as never);
 
     scheduleExit(0);
@@ -169,5 +169,104 @@ describe("misc/scheduleExit", () => {
     expect(exitSpy).toHaveBeenCalledWith(1);
 
     exitSpy.mockRestore();
+  });
+
+  it("Schedules an exit (Deno)", async () => {
+    const originalExit = globalThis.process.exit;
+    // @ts-ignore
+    delete globalThis.process.exit;
+
+    const originalDeno = globalThis.Deno;
+    globalThis.Deno = {
+      // @ts-expect-error
+      exit: (code: number) => void code,
+    };
+
+    // @ts-expect-error
+    const denoExitSpy = vi.spyOn(globalThis.Deno, "exit").mockImplementation((code: number) => void code as never);
+
+    scheduleExit(0);
+    await pauseFor(1);
+    expect(denoExitSpy).toHaveBeenCalledWith(0);
+
+    scheduleExit(1);
+    await pauseFor(1);
+    expect(denoExitSpy).toHaveBeenCalledWith(1);
+
+    denoExitSpy.mockRestore();
+    // @ts-ignore
+    globalThis.Deno = originalDeno;
+    // @ts-ignore
+    globalThis.process.exit = originalExit;
+  });
+
+  it("Throws ScriptContextError if no exit method is available", () => {
+    const originalProcess = globalThis.process;
+    // @ts-ignore
+    delete globalThis.process;
+
+    expect(() => scheduleExit(0)).toThrowError("Cannot exit the process, no exit method available");
+
+    // @ts-ignore
+    globalThis.process = originalProcess;
+  });
+});
+
+//#region getCallStack
+describe("misc/getCallStack", () => {
+  it("Returns the current call stack as an array", () => {
+    function level1() {
+      return level2();
+    }
+    function level2() {
+      return level3();
+    }
+    function level3() {
+      return getCallStack();
+    }
+
+    const stack = level1();
+    expect(Array.isArray(stack)).toBe(true);
+    expect(stack.length).toBeGreaterThanOrEqual(3);
+    expect(stack[0]).toMatch(/at level3/);
+    expect(stack[1]).toMatch(/at level2/);
+    expect(stack[2]).toMatch(/at level1/);
+  });
+
+  it("Returns the current call stack as a string", () => {
+    function levelA() {
+      return levelB();
+    }
+    function levelB() {
+      return levelC();
+    }
+    function levelC() {
+      return getCallStack(false);
+    }
+
+    const stackStr = levelA();
+    expect(typeof stackStr).toBe("string");
+    const stackLines = stackStr.split("\n");
+    expect(stackLines.length).toBeGreaterThanOrEqual(3);
+    expect(stackLines[0]).toMatch(/at levelC/);
+    expect(stackLines[1]).toMatch(/at levelB/);
+    expect(stackLines[2]).toMatch(/at levelA/);
+  });
+
+  it("Limits the number of lines returned", () => {
+    function first() {
+      return second();
+    }
+    function second() {
+      return third();
+    }
+    function third() {
+      return getCallStack(true, 2);
+    }
+
+    const limitedStack = first();
+    expect(limitedStack.length).toBe(2);
+    expect(limitedStack[0]).toMatch(/at third/);
+    expect(limitedStack[1]).toMatch(/at second/);
   });
 });

@@ -70,7 +70,7 @@ export type DataStoreOptions<TData extends DataStoreData> = Prettify<
      * Whether to keep a copy of the data in memory for synchronous read access. Defaults to `true`.  
      *   
      * - ⚠️ If turned off, {@linkcode DataStore.getData()} will throw an error and only {@linkcode DataStore.loadData()} can be used to access the data.  
-     *   This may be useful if the data is very large and you want to save memory, but it will make accessing the data slower, especially when combined with compression.
+     *   This may be useful if multiple sources are modifying the data, or the data is very large and you want to save memory, but it will make accessing the data slower, especially when combined with compression.
      */
     memoryCache?: boolean;
   }
