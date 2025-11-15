@@ -200,3 +200,22 @@ export function scheduleExit(code: number = 0, timeout = 0): void {
 
   setTimeout(exit, timeout);
 }
+
+/**
+ * Returns the current call stack, starting at the caller of this function.
+ * @param asArray Whether to return the stack as an array of strings or a single string. Defaults to true.
+ * @param lines The number of lines to return from the stack. Defaults to Infinity (all of them).
+ */
+export function getCallStack<TAsArray extends boolean = true>(asArray?: TAsArray, lines = Infinity): TAsArray extends true ? string[] : string {
+  try {
+    throw new Error("getCallStack() stack trace capture");
+  }
+  catch(err) {
+    const stack = ((err as Error).stack ?? "")
+      .split("\n").map((line) => line.trim())
+      .slice(2, lines + 2);
+
+    // @ts-expect-error
+    return asArray !== false ? stack : stack.join("\n");
+  }
+}

@@ -102,6 +102,7 @@ For submitting bug reports or feature requests, please use the [GitHub issue tra
     - 🟣 [`function setImmediateInterval()`](#function-setimmediateinterval) - Like `setInterval()`, but instantly calls the callback and supports passing an [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal)
     - 🟣 [`function setImmediateTimeoutLoop()`](#function-setimmediatetimeoutloop) - Like a recursive `setTimeout()` loop, but instantly calls the callback and supports passing an [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal)
     - 🟣 [`function scheduleExit()`](#function-scheduleexit) - Schedules a process exit after the next event loop tick, to allow operations like IO writes to finish.
+    - 🟣 [`function getCallStack()`](#function-getcallstack) - Returns the current call stack, starting at the caller of this function.
   - [**NanoEmitter:**](#nanoemitter)
     - 🟧 [`class NanoEmitter`](#class-nanoemitter) - Simple, lightweight event emitter class that can be used in both FP and OOP, inspired by [`EventEmitter` from `node:events`](https://nodejs.org/api/events.html#class-eventemitter), based on [`nanoevents`](https://npmjs.com/package/nanoevents)
       - 🔷 [`type NanoEmitterOptions`](#type-nanoemitteroptions) - Options for the [`NanoEmitter` class](#class-nanoemitter)
@@ -610,11 +611,12 @@ To see a list of available engines, see the [Storage Engines section.](#storage-
 To make your own engine, refer to the [`DataStoreEngine` class.](#class-datastoreengine)  
   
 If you have multiple DataStore instances and you want to be able to easily and safely export and import their data, take a look at the [DataStoreSerializer class.](#class-datastoreserializer)  
-It combines the data of multiple DataStore instances into a single object that can be exported and imported as a whole, including partial im- and exports.  
+It combines the data of multiple DataStore instances into a single object that can be exported and imported as a whole, including partial imports and exports.  
   
-If you were using the `DataStore` class from the `@sv443-network/coreutils` package before, all your data should be migrated automatically on the first call to `loadData()`.  
+Note: If you were using the `DataStore` class from the `@sv443-network/userutils` package before, all your data should be migrated automatically on the first call to `loadData()`.  
   
-- ⚠️ The data is serialized as a JSON string, so only JSON-compatible data can be used. Circular structures and complex objects (containing functions, symbols, etc.) will either throw an error on load and save or cause otherwise unexpected behavior. Properties with a value of `undefined` will be removed from the data prior to saving it, so use `null` instead.  
+- ⚠️ The data is cloned using [`structuredClone()`](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm) and serialized with [`JSON.serialize()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify). So make sure to only use data that can be cloned / serialized properly. Circular structures and complex objects (containing functions, symbols, etc.) will either not be cloned properly, throw an error on load and save, or cause otherwise unexpected behavior. Properties with a value of `undefined` will be removed from the data prior to saving it, so use `null` instead if you need to preserve the key.
+- ⚠️ Though it is not recommended, you can use multiple DataStore instances with the same ID, as long as `memoryCache` is set to false. However, this can still lead to data loss through race conditions, so you'd have to implement your own locking mechanism to prevent that.
   
 <details><summary><b>Example - click to view</b></summary>
 
@@ -1006,7 +1008,7 @@ Signature:
 serialize(useEncoding?: boolean, stringified?: boolean): Promise<string | SerializedDataStore[]>;
 ```
   
-Serializes all DataStore instances passed in the constructor and returns the serialized data as a JSON string by deafault.  
+Serializes all DataStore instances passed in the constructor and returns the serialized data as a JSON string by default.  
 If `useEncoding` is set to `true` (default), the data will be encoded using the `encodeData[1]` function set on the DataStore instance.  
 If `stringified` is set to `true` (default), the serialized data will be returned as a stringified JSON array, otherwise the unencoded objects will be returned in an array.  
   
@@ -1048,7 +1050,7 @@ The `stores` argument can be an array containing the IDs of the DataStore instan
 If `useEncoding` is set to `true` (default), the data will be encoded using the `encodeData[1]` function set on the DataStore instance.  
 If `stringified` is set to `true` (default), the serialized data will be returned as a stringified JSON array, otherwise the unencoded objects will be returned in an array.  
   
-For more information or to export all DataStore instances, refer to the method [`DataStoreSerializer.serialize()`](#datastoreserializerserialize)
+For more information, an example, or to export all DataStore instances, refer to [`DataStoreSerializer.serialize()`](#datastoreserializerserialize)
 
 <br>
 
@@ -1089,7 +1091,7 @@ If `ensureIntegrity` is set to `false`, the checksum check will be skipped entir
 If the `checksum` property is missing on the imported data, the checksum check will also be skipped.  
 If `encoded` is set to `true`, the data will be decoded using the `decodeData` function set on the DataStore instance.  
   
-If you want to import all serialized data, refer to the method [`DataStoreSerializer.deserialize()`](#datastoreserializerdeserialize)
+If you want to import all serialized data, or see an example, refer to [`DataStoreSerializer.deserialize()`](#datastoreserializerdeserialize)
 
 <br>
 
@@ -1222,8 +1224,11 @@ type MyStorageEngineOptions<TData extends DataStoreData> = {
 }
 
 class MyStorageEngine<TData extends DataStoreData> extends DataStoreEngine<TData> {
-  constructor(protected options: MyStorageEngineOptions<TData>) {
+  protected options: MyStorageEngineOptions<TData>;
+
+  constructor(options: MyStorageEngineOptions<TData>) {
     super(options?.dataStoreOptions);
+    this.options = options;
   }
 }
 ```
@@ -2727,6 +2732,53 @@ If no exit code is given, it will default to 0 (success). Set it to 1 to indicat
 If no timeout is given, the process will exit immediately after the current microtask queue is cleared (0ms).  
 If a timeout is given, the process will exit after the timeout has elapsed, regardless of whether there are still microtasks in the queue.  
 
+<br>
+
+### `function getCallStack()`
+Signature:
+```ts
+function getCallStack(asArray = true, lines = Infinity): string[] | string;
+```
+  
+Returns the current call stack as a string or an array of strings, starting from the caller of this function.  
+If `asArray` is set to true (default), it will return an array of strings where each string is a line in the call stack, without any leading/trailing whitespace.  
+If `asArray` is set to false, it will return the full call stack as a single string, still without leading/trailing whitespace.  
+The `lines` parameter can be used to limit the amount of lines returned. It defaults to `Infinity`, meaning all lines will be returned.  
+Each line will start with `at`, exactly how Error call stacks are usually formatted.
+
+<details><summary><b>Example - click to view</b></summary>
+
+```ts
+import { getCallStack } from "@sv443-network/coreutils";
+
+firstFunction();
+
+function firstFunction() {
+  secondFunction();
+}
+
+function secondFunction() {
+  (() => {
+    console.log("Call stack as array:", getCallStack(true, 3));
+    /*
+      Call stack as array: [
+        'at <anonymous> (/path/to/file.js:11:41)',  
+        'at secondFunction (/path/to/file.js:26:3)',
+        'at firstFunction (/path/to/file.js:6:3)'   
+      ]
+    */
+    console.log(`Call stack as string:\n${getCallStack(false, 3)}`);
+    /*
+      Call stack as string:
+      at <anonymous> (/path/to/file.js:11:43)
+      at secondFunction (/path/to/file.js:26:3)
+      at firstFunction (/path/to/file.js:6:3)
+    */
+  })();
+}
+```
+</details>
+
 <br><br>
 
 
@@ -2740,6 +2792,7 @@ Usage:
 ```ts
 // functional:
 const emitter = new NanoEmitter<TEventMap = EventsMap>(options?: NanoEmitterOptions);
+
 // object-oriented:
 class MyClass extends NanoEmitter<TEventMap = EventsMap> {
   constructor() {
@@ -2748,7 +2801,7 @@ class MyClass extends NanoEmitter<TEventMap = EventsMap> {
 }
 ```
   
-A class that provides a minimalistic event emitter with a tiny footprint powered by [the nanoevents library.](https://npmjs.com/package/nanoevents)  
+A class that provides a minimalistic event emitter with a small footprint, powered by [the nanoevents library.](https://npmjs.com/package/nanoevents)  
   
 The main intention behind this class is to extend it in your own classes to provide a simple event system directly built into the class.  
 However in a functional environment you can also just create instances for use as standalone event emitters throughout your project.  
@@ -2908,8 +2961,8 @@ The `options` argument can be a single object or an array of objects with the fo
 | Property | Type | Description |
 | :-- | :-- | :-- |
 | `callback` | `function` | The function that will be called when the conditions are met. It will be called with the event name and spread arguments that have been passed via the `emit()` method. |
-| `oneOf?` | `Array<keyof TEventMap>` | If used, the callback will be called when any of the matching events are emitted. At least one of `oneOf` or `allOf` must be provided. If both are used, it works like an "or" condition. |
-| `allOf?` | `Array<keyof TEventMap>` | If used, the callback will be called after all of the matching events are emitted at least once, and, if `once` is false, any time any of them are emitted again. At least one of `oneOf` or `allOf` must be provided. If both are used, it works like an "or" condition. |
+| `oneOf?` | `Array<keyof TEventMap>` | If used, the callback will be called when any of the matching events are emitted. At least one of `oneOf` or `allOf` must be provided. If both are used, it works like an "AND" condition. |
+| `allOf?` | `Array<keyof TEventMap>` | If used, the callback will be called after all of the matching events are emitted at least once, and, if `once` is false, any time any of them are emitted again. At least one of `oneOf` or `allOf` must be provided. If both are used, it works like an "AND" condition. |
 | `once?` | `boolean` | If set to true, the callback will be called only once for the first event (or set of events) that match the criteria, then stop listening. Defaults to false. |
 | `signal?` | `AbortSignal` | If provided, the subscription will be aborted when the given signal is aborted. |
 
