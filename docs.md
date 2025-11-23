@@ -96,7 +96,6 @@ For submitting bug reports or feature requests, please use the [GitHub issue tra
     - 🟣 [`function fetchAdvanced()`](#function-fetchadvanced) - Wrapper around [`fetch()`](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) with options like a timeout
       - 🔷 [`type FetchAdvancedOpts`](#type-fetchadvancedopts) - Options for the [`fetchAdvanced()` function](#function-fetchadvanced)
     - 🟣 [`function getListLength()`](#function-getlistlength) - Returns the length of a [`ListLike` object](#type-listlike)
-      - 🔷 [`type ListLike`](#type-listlike) - Any value with a quantifiable `length`, `count` or `size` property
     - 🟣 [`function pauseFor()`](#function-pausefor) - Pauses async execution for the given amount of time
     - 🟣 [`function pureObj()`](#function-pureobj) - Applies an object's props to a null object (object without prototype chain) or just returns a new null object
     - 🟣 [`function setImmediateInterval()`](#function-setimmediateinterval) - Like `setInterval()`, but instantly calls the callback and supports passing an [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal)
@@ -2536,11 +2535,11 @@ The options object for the [`fetchAdvanced()` function.](#function-fetchadvanced
 ### `function getListLength()`
 Signature:
 ```ts
-getListLength(obj: ListWithLength, zeroOnInvalid?: boolean): number
+getListLength(listLike: ListLike, zeroOnInvalid?: boolean): number
 ```
   
 Returns the length of the given list-like object (anything with a numeric `length`, `size` or `count` property, like an array, Map or NodeList).  
-Refer to the [`ListWithLength` type](#type-listwithlength) for more info.  
+Refer to the [type `ListLike`](#type-listlike) for more info.  
   
 If the object doesn't have any of these properties, it will return 0 by default.  
 Set `zeroOnInvalid` to false to return NaN instead of 0 if the object doesn't have any of the properties.  
