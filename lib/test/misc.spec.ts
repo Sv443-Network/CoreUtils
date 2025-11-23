@@ -71,7 +71,7 @@ describe("misc/consumeStringGen", () => {
 
 //#region getListLength
 describe("misc/getListLength", () => {
-  it("Resolves all types of ListWithLength", () => {
+  it("Resolves all types of ListLike", () => {
     const cont = document.createElement("div");
     for(let i = 0; i < 3; i++) {
       const span = document.createElement("span");
