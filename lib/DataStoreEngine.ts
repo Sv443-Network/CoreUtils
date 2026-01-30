@@ -116,7 +116,7 @@ export type BrowserStorageEngineOptions = {
  * Storage engine for the {@linkcode DataStore} class that uses the browser's LocalStorage or SessionStorage to store JSON-serializable data.  
  *   
  * - ⚠️ Requires a DOM environment
- * - ⚠️ Don't reuse engines across multiple {@linkcode DataStore} instances
+ * - ⚠️ Don't reuse engine instances, always create a new one for each {@linkcode DataStore} instance
  */
 export class BrowserStorageEngine<TData extends DataStoreData> extends DataStoreEngine<TData> {
   protected options: BrowserStorageEngineOptions & Required<Pick<BrowserStorageEngineOptions, "type">>;
@@ -125,7 +125,7 @@ export class BrowserStorageEngine<TData extends DataStoreData> extends DataStore
    * Creates an instance of `BrowserStorageEngine`.  
    *   
    * - ⚠️ Requires a DOM environment  
-   * - ⚠️ Don't reuse engines across multiple {@linkcode DataStore} instances
+   * - ⚠️ Don't reuse engine instances, always create a new one for each {@linkcode DataStore} instance
    */
   constructor(options?: BrowserStorageEngineOptions) {
     super(options?.dataStoreOptions);
@@ -186,7 +186,7 @@ export type FileStorageEngineOptions = {
  * Storage engine for the {@linkcode DataStore} class that uses a JSON file to store JSON-serializable data.  
  *   
  * - ⚠️ Requires Node.js or Deno with Node compatibility (v1.31+)  
- * - ⚠️ Don't reuse engines across multiple {@linkcode DataStore} instances
+ * - ⚠️ Don't reuse engine instances, always create a new one for each {@linkcode DataStore} instance
  */
 export class FileStorageEngine<TData extends DataStoreData> extends DataStoreEngine<TData> {
   protected options: FileStorageEngineOptions & Required<Pick<FileStorageEngineOptions, "filePath">>;
@@ -196,7 +196,7 @@ export class FileStorageEngine<TData extends DataStoreData> extends DataStoreEng
    * Creates an instance of `FileStorageEngine`.  
    *   
    * - ⚠️ Requires Node.js or Deno with Node compatibility (v1.31+)  
-   * - ⚠️ Don't reuse engines across multiple {@linkcode DataStore} instances
+   * - ⚠️ Don't reuse engine instances, always create a new one for each {@linkcode DataStore} instance
    */
   constructor(options?: FileStorageEngineOptions) {
     super(options?.dataStoreOptions);
