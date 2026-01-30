@@ -1,5 +1,11 @@
 # @sv443-network/coreutils
 
+## 2.0.1
+
+### Patch Changes
+
+- a011cb3: Fix FileStorageEngine path problems on Windows
+
 ## 2.0.0
 
 ### Major Changes

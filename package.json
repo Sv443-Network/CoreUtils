@@ -1,7 +1,7 @@
 {
   "name": "@sv443-network/coreutils",
   "libName": "@sv443-network/coreutils",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Cross-platform, general-purpose, JavaScript core library for Node, Deno and the browser. Intended to be used in conjunction with `@sv443-network/userutils` and `@sv443-network/djsutils`, but can be used independently as well.",
   "main": "dist/CoreUtils.cjs",
   "module": "dist/CoreUtils.mjs",
