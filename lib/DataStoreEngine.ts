@@ -242,7 +242,7 @@ export class FileStorageEngine<TData extends DataStoreData> extends DataStoreEng
         ? this.options.filePath
         : this.options.filePath(this.dataStoreOptions.id);
 
-      await fs.mkdir(path.slice(0, path.lastIndexOf("/")), { recursive: true });
+      await fs.mkdir(path.slice(0, path.lastIndexOf(path.includes("/") ? "/" : "\\")), { recursive: true });
       await fs.writeFile(path, await this.dataStoreOptions?.encodeData?.[1]?.(JSON.stringify(data)) ?? JSON.stringify(data, undefined, 2), "utf-8");
     }
     catch(err) {
