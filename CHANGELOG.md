@@ -1,5 +1,11 @@
 # @sv443-network/coreutils
 
+## 2.0.2
+
+### Patch Changes
+
+- a0a8d7e: Fixed race condition and getValue method return type in FileStorageEngine
+
 ## 2.0.1
 
 ### Patch Changes
