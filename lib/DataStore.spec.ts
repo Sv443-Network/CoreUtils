@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { DataStore } from "./DataStore.js";
-import { BrowserStorageEngine } from "./DataStoreEngine.js";
-import { TestDataStore } from "./TestDataStore.js";
+import { DataStore } from "./DataStore.ts";
+import { BrowserStorageEngine } from "./DataStoreEngine.ts";
+import { TestDataStore } from "./TestDataStore.ts";
 
 //#region >> tests
 

@@ -3,7 +3,7 @@
  * This module contains various functions for working with colors - [see the documentation for more info](https://github.com/Sv443-Network/CoreUtils/blob/main/docs.md#colors)
  */
 
-import { clamp } from "./math.js";
+import { clamp } from "./math.ts";
 
 /**
  * Darkens a CSS color value (in `#HEX`, `HEX`, `rgb()` or `rgba()` format) by a given percentage.  

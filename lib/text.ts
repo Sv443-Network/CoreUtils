@@ -1,4 +1,4 @@
-import type { ListLike, Prettify, Stringifiable } from "./types.js";
+import type { ListLike, Prettify, Stringifiable } from "./types.ts";
 
 /**
  * Automatically pluralizes the given string an `-s` or `-ies` to the passed {@linkcode term}, if {@linkcode num} is not equal to 1.  

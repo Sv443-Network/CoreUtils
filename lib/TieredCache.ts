@@ -3,13 +3,13 @@
  * This module contains the TieredCache class, which is a cache that can have multiple tiers with different max TTLs, with data being moved between tiers based on what is fetched the most.
  */
 
-import { compress, decompress } from "./crypto.js";
-import { DataStore, DataStoreOptions, type DataStoreData } from "./DataStore.js";
-import { ValidationError } from "./Errors.js";
-import { NanoEmitter, type NanoEmitterOptions } from "./NanoEmitter.js";
-import { autoPlural } from "./text.js";
-import type { DataStoreEngine } from "./DataStoreEngine.js";
-import type { Prettify } from "./types.js";
+import { compress, decompress } from "./crypto.ts";
+import { DataStore, DataStoreOptions, type DataStoreData } from "./DataStore.ts";
+import { ValidationError } from "./Errors.ts";
+import { NanoEmitter, type NanoEmitterOptions } from "./NanoEmitter.ts";
+import { autoPlural } from "./text.ts";
+import type { DataStoreEngine } from "./DataStoreEngine.ts";
+import type { Prettify } from "./types.ts";
 
 //#region types
 

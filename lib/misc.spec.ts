@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { consumeGen, consumeStringGen, fetchAdvanced, getListLength, pauseFor, pureObj, scheduleExit, setImmediateInterval, setImmediateTimeoutLoop } from "./misc.js";
+import { consumeGen, consumeStringGen, fetchAdvanced, getListLength, pauseFor, pureObj, scheduleExit, setImmediateInterval, setImmediateTimeoutLoop } from "./misc.ts";
 import { vi } from "vitest";
 
 //#region pauseFor

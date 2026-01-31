@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { NanoEmitter } from "./NanoEmitter.js";
+import { NanoEmitter } from "./NanoEmitter.ts";
 
 describe("NanoEmitter base functionality", () => {
   //#region base - FP

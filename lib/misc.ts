@@ -3,7 +3,7 @@
  * This module contains miscellaneous functions that don't fit in another category - [see the documentation for more info](https://github.com/Sv443-Network/UserUtils/blob/main/docs.md#misc)
  */
 
-import type { ListLike, Prettify, Stringifiable } from "./types.js";
+import type { ListLike, Prettify, Stringifiable } from "./types.ts";
 
 /**
  * A ValueGen value is either its type, a promise that resolves to its type, or a function that returns its type, either synchronous or asynchronous.  

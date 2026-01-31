@@ -3,8 +3,8 @@
  * This module contains various cryptographic functions, like compression and Uint8Array encoding - [see the documentation for more info](https://github.com/Sv443-Network/CoreUtils/blob/main/docs.md#crypto)
  */
 
-import { mapRange, randRange } from "./math.js";
-import type { Stringifiable } from "./types.js";
+import { mapRange, randRange } from "./math.ts";
+import type { Stringifiable } from "./types.ts";
 
 /** Converts an Uint8Array to a base64-encoded (ASCII) string */
 export function abtoa(buf: Uint8Array): string {

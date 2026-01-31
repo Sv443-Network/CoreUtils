@@ -4,9 +4,9 @@
  * [See the documentation for more info.](https://github.com/Sv443-Network/CoreUtils/blob/main/docs.md#class-datastoreengine)
  */
 
-import type { DataStoreData, DataStoreOptions } from "./DataStore.js";
-import { DatedError } from "./Errors.js";
-import type { Prettify, SerializableVal } from "./types.js";
+import type { DataStoreData, DataStoreOptions } from "./DataStore.ts";
+import { DatedError } from "./Errors.ts";
+import type { Prettify, SerializableVal } from "./types.ts";
 
 //#region >> DataStoreEngine
 

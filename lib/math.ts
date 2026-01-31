@@ -3,7 +3,7 @@
  * This module contains general-purpose math functions like clamping, mapping and random number generation - [see the documentation for more info](https://github.com/Sv443-Network/CoreUtils/blob/main/docs.md#math)
  */
 
-import type { NumberFormat, Stringifiable } from "./types.js";
+import type { NumberFormat, Stringifiable } from "./types.ts";
 
 /** Checks if the given {@linkcode bitSet} contains the given {@linkcode checkVal} */
 export function bitSetHas<TType extends number | bigint>(bitSet: TType, checkVal: TType): boolean {

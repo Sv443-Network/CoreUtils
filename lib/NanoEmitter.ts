@@ -4,7 +4,7 @@
  */
 
 import { createNanoEvents, type DefaultEvents, type Emitter, type EventsMap, type Unsubscribe } from "nanoevents";
-import type { Prettify } from "./types.js";
+import type { Prettify } from "./types.ts";
 
 //#region types
 

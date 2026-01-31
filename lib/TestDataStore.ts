@@ -1,5 +1,5 @@
-import { DataStore, type DataStoreData } from "./DataStore.js";
-import type { SerializableVal } from "./types.js";
+import { DataStore, type DataStoreData } from "./DataStore.ts";
+import type { SerializableVal } from "./types.ts";
 
 /**
  * A DataStore wrapper subclass that exposes internal methods for testing via the `direct_` prefixed methods.

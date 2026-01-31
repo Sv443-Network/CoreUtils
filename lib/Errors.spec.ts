@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { ChecksumMismatchError, DatedError, MigrationError, ValidationError } from "./Errors.js";
-import { valsWithin } from "./math.js";
+import { ChecksumMismatchError, DatedError, MigrationError, ValidationError } from "./Errors.ts";
+import { valsWithin } from "./math.ts";
 
 describe("Errors", () => {
   it("All class instances have the date property", () => {

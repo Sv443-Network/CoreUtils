@@ -3,9 +3,9 @@
  * This module contains the DataStoreSerializer class, which allows you to import and export serialized DataStore data - [see the documentation for more info](https://github.com/Sv443-Network/UserUtils/blob/main/docs.md#datastoreserializer)
  */
 
-import { computeHash } from "./crypto.js";
-import { ChecksumMismatchError } from "./Errors.js";
-import type { DataStore, DataStoreData } from "./DataStore.js";
+import { computeHash } from "./crypto.ts";
+import { ChecksumMismatchError } from "./Errors.ts";
+import type { DataStore, DataStoreData } from "./DataStore.ts";
 
 /** Options for the DataStoreSerializer class */
 export type DataStoreSerializerOptions = {

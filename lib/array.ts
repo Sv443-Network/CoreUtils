@@ -3,7 +3,7 @@
  * This module contains various functions for working with arrays - [see the documentation for more info](https://github.com/Sv443-Network/CoreUtils/blob/main/docs.md#arrays)
  */
 
-import { randRange } from "./math.js";
+import { randRange } from "./math.ts";
 
 /** Describes an array with at least one item */
 export type NonEmptyArray<TArray = unknown> = [TArray, ...TArray[]];

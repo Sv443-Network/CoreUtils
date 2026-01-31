@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { darkenColor, hexToRgb, lightenColor, rgbToHex } from "./colors.js";
+import { darkenColor, hexToRgb, lightenColor, rgbToHex } from "./colors.ts";
 
 //#region hexToRgb
 describe("colors/hexToRgb", () => {

@@ -4,21 +4,21 @@
  */
 
 // features:
-export * from "./array.js";
-export * from "./colors.js";
-export * from "./crypto.js";
-export * from "./math.js";
-export * from "./misc.js";
-export * from "./text.js";
-export * from "./types.js";
+export * from "./array.ts";
+export * from "./colors.ts";
+export * from "./crypto.ts";
+export * from "./math.ts";
+export * from "./misc.ts";
+export * from "./text.ts";
+export * from "./types.ts";
 
 // classes:
-export * from "./DataStore.js";
-export * from "./DataStoreEngine.js";
-export * from "./DataStoreSerializer.js";
-export * from "./Debouncer.js";
-export * from "./Errors.js";
-export * from "./NanoEmitter.js";
+export * from "./DataStore.ts";
+export * from "./DataStoreEngine.ts";
+export * from "./DataStoreSerializer.ts";
+export * from "./Debouncer.ts";
+export * from "./Errors.ts";
+export * from "./NanoEmitter.ts";
 // unfinished:
-// export * from "./TieredCache.js";
-// export * from "./Translate.js";
+// export * from "./TieredCache.ts";
+// export * from "./Translate.ts";
