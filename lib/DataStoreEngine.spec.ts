@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { access, readFile } from "node:fs/promises";
+import { access } from "node:fs/promises";
 import { FileStorageEngine } from "./DataStoreEngine";
 import { DatedError } from "./Errors";
+import { TestDataStore } from "./TestDataStore";
 
 describe("FileStorageEngine", () => {
   //#region storage API
@@ -74,9 +75,53 @@ describe("FileStorageEngine", () => {
     });
 
     const foo = { bar: 1 };
-    expect(engine.deepCopy(foo)).toEqual(foo);
+    expect(JSON.stringify(engine.deepCopy(foo))).toEqual(JSON.stringify(foo));
     expect(engine.deepCopy(foo) === foo).toBe(false);
 
     globalThis.structuredClone = originalStructuredClone;
+  });
+});
+
+describe("Full DataStore integration test", () => {
+  it("Initializes the storage correctly", async () => {
+    const id = "integration-test-uncompressed";
+    const defaultData = { a: 1, b: 2 };
+    const storeUncomp = new TestDataStore({
+      id,
+      defaultData,
+      formatVersion: 1,
+      engine: () => new FileStorageEngine({
+        filePath: (id) => `./.test-data-${id}`,
+      }),
+      compressionFormat: null,
+    });
+
+    const data = await storeUncomp.loadData();
+
+    expect(data).toEqual(defaultData);
+
+    // parse file manually and check for contents:
+    // __ds_fmt_ver = 1
+    // __ds-integration-test-uncompressed-ver = 1
+    // __ds-integration-test-uncompressed-enf = null
+    // __ds-integration-test-uncompressed-dat = {"a":1,"b":2}
+
+    expect(await storeUncomp.engine.getValue(`__ds_fmt_ver`, "error")).toBe(1);
+    expect(await storeUncomp.engine.getValue(`__ds-${id}-ver`, "error")).toBe(1);
+    expect(await storeUncomp.engine.getValue(`__ds-${id}-enf`, "error")).toBe(null);
+    expect(await storeUncomp.engine.getValue(`__ds-${id}-dat`, "error")).toBe(JSON.stringify(defaultData));
+
+    const newData = { a: 3, b: 4 };
+
+    await storeUncomp.setData(newData);
+
+    expect(await storeUncomp.engine.getValue(`__ds-${id}-dat`, "error")).toBe(JSON.stringify(newData));
+
+    await storeUncomp.engine.deleteStorage?.();
+
+    expect(await storeUncomp.engine.getValue(`__ds_fmt_ver`, "error")).toBe("error");
+    expect(await storeUncomp.engine.getValue(`__ds-${id}-ver`, "error")).toBe("error");
+    expect(await storeUncomp.engine.getValue(`__ds-${id}-enf`, "error")).toBe("error");
+    expect(await storeUncomp.engine.getValue(`__ds-${id}-dat`, "error")).toBe("error");
   });
 });

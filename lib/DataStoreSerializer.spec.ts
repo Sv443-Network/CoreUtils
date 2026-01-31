@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it } from "vitest";
 import { unlink } from "node:fs/promises";
 import { DataStoreSerializer } from "./DataStoreSerializer.js";
 import { DataStore } from "./DataStore.js";

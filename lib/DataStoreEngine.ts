@@ -37,7 +37,7 @@ export abstract class DataStoreEngine<TData extends DataStoreData> {
 
   //#region storage api
 
-  /** Fetches a value from persistent storage */
+  /** Fetches a value from persistent storage. Defaults to `defaultValue` if the value does not exist. `null` is considered a valid value. */
   public abstract getValue<TValue extends SerializableVal = string>(name: string, defaultValue: TValue): Promise<string | TValue>;
   /** Sets a value in persistent storage */
   public abstract setValue(name: string, value: SerializableVal): Promise<void>;
@@ -137,11 +137,12 @@ export class BrowserStorageEngine<TData extends DataStoreData> extends DataStore
 
   /** Fetches a value from persistent storage */
   public async getValue<TValue extends SerializableVal = string>(name: string, defaultValue: TValue): Promise<string | TValue> {
-    return (
+    const val = (
       this.options.type === "localStorage"
         ? globalThis.localStorage.getItem(name) as TValue
         : globalThis.sessionStorage.getItem(name) as string
-    ) ?? defaultValue;
+    );
+    return typeof val === "undefined" ? defaultValue : val;
   }
 
   /** Sets a value in persistent storage */
@@ -187,6 +188,7 @@ export type FileStorageEngineOptions = {
  */
 export class FileStorageEngine<TData extends DataStoreData> extends DataStoreEngine<TData> {
   protected options: FileStorageEngineOptions & Required<Pick<FileStorageEngineOptions, "filePath">>;
+  private fileAccessQueue: Promise<void> = Promise.resolve();
 
   /**
    * Creates an instance of `FileStorageEngine`.  
@@ -258,29 +260,37 @@ export class FileStorageEngine<TData extends DataStoreData> extends DataStoreEng
     if(!data)
       return defaultValue;
     const value = data?.[name as keyof TData];
-    if(value === undefined)
+    if(typeof value === "undefined")
       return defaultValue;
     if(typeof value === "string")
       return value;
-    return String(value ?? defaultValue);
+    return value as unknown as TValue;
   }
 
   /** Sets a value in persistent storage */
   public async setValue<TValue extends SerializableVal = string>(name: string, value: TValue): Promise<void> {
-    let data = await this.readFile() as TData | undefined;
-    if(!data)
-      data = {} as TData;
-    data[name as keyof TData] = value as unknown as TData[keyof TData];
-    await this.writeFile(data);
+    // serialize file access to prevent race conditions
+    this.fileAccessQueue = this.fileAccessQueue.then(async () => {
+      let data = await this.readFile() as TData | undefined;
+      if(!data)
+        data = {} as TData;
+      data[name as keyof TData] = value as unknown as TData[keyof TData];
+      await this.writeFile(data);
+    });
+    await this.fileAccessQueue;
   }
 
   /** Deletes a value from persistent storage */
   public async deleteValue(name: string): Promise<void> {
-    const data = await this.readFile();
-    if(!data)
-      return;
-    delete data[name as keyof TData];
-    await this.writeFile(data);
+    // serialize file access to prevent race conditions
+    this.fileAccessQueue = this.fileAccessQueue.then(async () => {
+      const data = await this.readFile();
+      if(!data)
+        return;
+      delete data[name as keyof TData];
+      await this.writeFile(data);
+    });
+    await this.fileAccessQueue;
   }
 
   /** Deletes the file that contains the data of this DataStore. */

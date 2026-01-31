@@ -1,35 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { DataStore, type DataStoreData } from "./DataStore.js";
+import { DataStore } from "./DataStore.js";
 import { BrowserStorageEngine } from "./DataStoreEngine.js";
-import type { SerializableVal } from "./types.js";
-
-//#region TestDataStore
-
-class TestDataStore<TData extends DataStoreData> extends DataStore<TData> {
-  public async direct_getValue<TValue extends SerializableVal = string>(name: string, defaultValue: TValue): Promise<string | TValue> {
-    return await this.engine.getValue(name, defaultValue);
-  }
-
-  public async direct_setValue(name: string, value: SerializableVal): Promise<void> {
-    return await this.engine.setValue(name, value);
-  }
-
-  public async direct_renameKey(oldName: string, newName: string): Promise<void> {
-    const value = await this.engine.getValue(oldName, null);
-    if(value) {
-      await this.engine.setValue(newName, value);
-      await this.engine.deleteValue(oldName);
-    }
-  }
-
-  public async direct_deleteValue(name: string): Promise<void> {
-    return await this.engine.deleteValue(name);
-  }
-
-  public setFirstInit(value: boolean): void {
-    this.firstInit = value;
-  }
-}
+import { TestDataStore } from "./TestDataStore.js";
 
 //#region >> tests
 
@@ -148,12 +120,12 @@ describe("DataStore", () => {
     expect(thirdData.b).toBe(-1337);
     expect(thirdData.c).toBe(69);
 
-    expect(await thirdStore.direct_getValue("__ds-test-5-ver", "")).toBe("2");
+    expect(await thirdStore.direct_getValue("__ds-test-5-ver", "error")).toBe("2");
     await thirdStore.setData(thirdStore.getData());
-    expect(await thirdStore.direct_getValue("__ds-test-5-ver", "")).toBe("3");
+    expect(await thirdStore.direct_getValue("__ds-test-5-ver", "error")).toBe("3");
 
-    expect(await thirdStore.direct_getValue("__ds-test-3-ver", "")).toBe("");
-    expect(await thirdStore.direct_getValue("__ds-test-4-ver", "")).toBe("");
+    expect(await thirdStore.direct_getValue("__ds-test-3-ver", "error")).toBe(null);
+    expect(await thirdStore.direct_getValue("__ds-test-4-ver", "error")).toBe(null);
 
     // restore initial state:
     await firstStore.deleteData();
@@ -202,7 +174,7 @@ describe("DataStore", () => {
     });
 
     await store1.loadData();
-    store1.setFirstInit(true);
+    store1.direct_setFirstInit(true);
 
     await store1.direct_deleteValue("__ds_fmt_ver");
     await store1.direct_renameKey(`__ds-${store1.id}-dat`, `_uucfg-${store1.id}`);
@@ -240,7 +212,8 @@ describe("DataStore", () => {
     }
     catch (err) {
       expect(err).toBeInstanceOf(Error);
-      expect(err.message).toContain("parsing JSON");
+      if(err instanceof Error)
+        expect(err.message).toContain("parsing JSON");
     }
 
     expect(store1.getData().a).toBe(1);

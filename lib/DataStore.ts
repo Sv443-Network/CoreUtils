@@ -166,7 +166,7 @@ export class DataStore<TData extends DataStoreData> {
     this.options = opts;
 
     if(typeof opts.compressionFormat === "undefined")
-      opts.compressionFormat = opts.encodeData?.[0] as CompressionFormat | undefined ?? "deflate-raw";
+      this.compressionFormat = opts.compressionFormat = opts.encodeData?.[0] as CompressionFormat | undefined ?? "deflate-raw";
 
     if(typeof opts.compressionFormat === "string") {
       this.encodeData = [opts.compressionFormat, async (data: string) => await compress(data, opts.compressionFormat!, "string")];
@@ -175,10 +175,12 @@ export class DataStore<TData extends DataStoreData> {
     else if("encodeData" in opts && "decodeData" in opts && Array.isArray(opts.encodeData) && Array.isArray(opts.decodeData)) {
       this.encodeData = [opts.encodeData![0], opts.encodeData![1]];
       this.decodeData = [opts.decodeData![0], opts.decodeData![1]];
+      this.compressionFormat = opts.encodeData[0] as CompressionFormat ?? null;
     }
     else if(opts.compressionFormat === null) {
       this.encodeData = undefined;
       this.decodeData = undefined;
+      this.compressionFormat = null;
     }
     else
       throw new TypeError("Either `compressionFormat` or `encodeData` and `decodeData` have to be set and valid, but not all three at a time. Please refer to the documentation for more info.");
