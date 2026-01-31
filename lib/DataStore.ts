@@ -243,14 +243,16 @@ export class DataStore<TData extends DataStoreData> {
       }
 
       // load data
-      const storedData = await this.engine.getValue(`__ds-${this.id}-dat`, JSON.stringify(this.defaultData));
+      const storedDataRaw = await this.engine.getValue(`__ds-${this.id}-dat`, null);
       let storedFmtVer = Number(await this.engine.getValue(`__ds-${this.id}-ver`, NaN));
 
       // save default if no data is found
-      if(typeof storedData !== "string") {
+      if(typeof storedDataRaw !== "string") {
         await this.saveDefaultData();
         return { ...this.defaultData };
       }
+
+      const storedData = storedDataRaw ?? JSON.stringify(this.defaultData);
 
       // check if the data is encoded
       const encodingFmt = String(await this.engine.getValue(`__ds-${this.id}-enf`, null));
