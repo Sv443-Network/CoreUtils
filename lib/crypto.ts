@@ -30,6 +30,7 @@ export async function compress(input: Stringifiable | Uint8Array, compressionFor
     : new TextEncoder().encode(input?.toString() ?? String(input));
   const comp = new CompressionStream(compressionFormat);
   const writer = comp.writable.getWriter();
+  // @ts-ignore in some envs Uint8Array<ArrayBufferLike> and ArrayBufferView<ArrayBuffer> don't sufficiently overlap
   writer.write(byteArray);
   writer.close();
   const uintArr = new Uint8Array(await (new Response(comp.readable).arrayBuffer()));
@@ -49,6 +50,7 @@ export async function decompress(input: Stringifiable | Uint8Array, compressionF
     : atoab(input?.toString() ?? String(input));
   const decomp = new DecompressionStream(compressionFormat);
   const writer = decomp.writable.getWriter();
+  // @ts-ignore in some envs Uint8Array<ArrayBufferLike> and ArrayBufferView<ArrayBuffer> don't sufficiently overlap
   writer.write(byteArray);
   writer.close();
   const uintArr = new Uint8Array(await (new Response(decomp.readable).arrayBuffer()));
@@ -72,6 +74,7 @@ export async function computeHash(input: string | Uint8Array, algorithm = "SHA-2
   else
     data = input;
 
+  // @ts-ignore in some envs SharedArrayBuffer and ArrayBuffer don't sufficiently overlap
   const hashBuffer = await crypto.subtle.digest(algorithm, data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   const hashHex = hashArray.map(byte => byte.toString(16).padStart(2, "0")).join("");
