@@ -276,8 +276,11 @@ export class FileStorageEngine<TData extends DataStoreData> extends DataStoreEng
         data = {} as TData;
       data[name as keyof TData] = value as unknown as TData[keyof TData];
       await this.writeFile(data);
+    }).catch((err) => {
+      console.error("Error in setValue:", err);
+      throw err;
     });
-    await this.fileAccessQueue;
+    await this.fileAccessQueue.catch(() => {});
   }
 
   /** Deletes a value from persistent storage */
@@ -289,8 +292,11 @@ export class FileStorageEngine<TData extends DataStoreData> extends DataStoreEng
         return;
       delete data[name as keyof TData];
       await this.writeFile(data);
+    }).catch((err) => {
+      console.error("Error in deleteValue:", err);
+      throw err;
     });
-    await this.fileAccessQueue;
+    await this.fileAccessQueue.catch(() => {});
   }
 
   /** Deletes the file that contains the data of this DataStore. */
