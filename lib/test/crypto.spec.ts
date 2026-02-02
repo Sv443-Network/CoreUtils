@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { abtoa, atoab, compress, computeHash, decompress, randomId } from "./crypto.ts";
+import { abtoa, atoab, compress, computeHash, decompress, randomId } from "../crypto.ts";
 
 //#region compress
 describe("crypto/compress", () => {

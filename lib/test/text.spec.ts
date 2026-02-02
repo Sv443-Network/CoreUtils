@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { autoPlural, capitalize, createProgressBar, insertValues, joinArrayReadable, secsToTimeStr, truncStr } from "./text.ts";
+import { autoPlural, capitalize, createProgressBar, insertValues, joinArrayReadable, secsToTimeStr, truncStr } from "../text.ts";
 
 //#region autoPlural
 describe("misc/autoPlural", () => {

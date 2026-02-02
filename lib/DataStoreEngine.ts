@@ -5,7 +5,7 @@
  */
 
 import type { DataStoreData, DataStoreOptions } from "./DataStore.ts";
-import { DatedError } from "./Errors.ts";
+import { DatedError, ScriptContextError } from "./Errors.ts";
 import type { Prettify, SerializableVal } from "./types.ts";
 
 //#region >> DataStoreEngine

@@ -4,7 +4,7 @@
  */
 
 import { computeHash } from "./crypto.ts";
-import { ChecksumMismatchError } from "./Errors.ts";
+import { ChecksumMismatchError, DatedError, ScriptContextError } from "./Errors.ts";
 import type { DataStore, DataStoreData } from "./DataStore.ts";
 
 /** Options for the DataStoreSerializer class */
