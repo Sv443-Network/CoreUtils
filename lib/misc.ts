@@ -3,6 +3,7 @@
  * This module contains miscellaneous functions that don't fit in another category - [see the documentation for more info](https://github.com/Sv443-Network/UserUtils/blob/main/docs.md#misc)
  */
 
+import { CustomError, NetworkError, ScriptContextError } from "./Errors.ts";
 import type { ListLike, Prettify, Stringifiable } from "./types.ts";
 
 /**

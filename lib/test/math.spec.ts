@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bitSetHas, clamp, digitCount, formatNumber, mapRange, overflowVal, randRange, roundFixed, valsWithin } from "./math.ts";
+import { bitSetHas, clamp, digitCount, formatNumber, mapRange, overflowVal, randRange, roundFixed, valsWithin } from "../math.ts";
 
 //#region clamp
 describe("math/clamp", () => {

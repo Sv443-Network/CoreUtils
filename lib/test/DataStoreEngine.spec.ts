@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { access } from "node:fs/promises";
-import { FileStorageEngine } from "./DataStoreEngine";
-import { DatedError } from "./Errors";
-import { TestDataStore } from "./TestDataStore";
+import { FileStorageEngine } from "../DataStoreEngine";
+import { DatedError } from "../Errors";
+import { TestDataStore } from "../TestDataStore";
 
 describe("FileStorageEngine", () => {
   //#region storage API

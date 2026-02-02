@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { debounce, Debouncer } from "./Debouncer.ts";
-import { pauseFor } from "./misc.ts";
+import { debounce, Debouncer } from "../Debouncer.ts";
+import { pauseFor } from "../misc.ts";
 
 describe("Debouncer", () => {
   //#region deltaT

@@ -1,10 +1,10 @@
 import { afterAll, describe, expect, it } from "vitest";
 import { unlink } from "node:fs/promises";
-import { DataStoreSerializer } from "./DataStoreSerializer.ts";
-import { DataStore } from "./DataStore.ts";
+import { DataStoreSerializer } from "../DataStoreSerializer.ts";
+import { DataStore } from "../DataStore.ts";
 import { beforeEach } from "node:test";
-import { compress, decompress } from "./crypto.ts";
-import { FileStorageEngine } from "./DataStoreEngine.ts";
+import { compress, decompress } from "../crypto.ts";
+import { FileStorageEngine } from "../DataStoreEngine.ts";
 
 //#region consts
 
