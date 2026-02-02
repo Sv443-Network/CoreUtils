@@ -1,5 +1,11 @@
 # @sv443-network/coreutils
 
+## 2.0.3
+
+### Patch Changes
+
+- d4a043d: Fixed DataStore defaultData initialization
+
 ## 2.0.2
 
 ### Patch Changes
