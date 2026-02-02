@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { access } from "node:fs/promises";
-import { FileStorageEngine } from "../DataStoreEngine";
-import { DatedError } from "../Errors";
-import { TestDataStore } from "../TestDataStore";
+import { FileStorageEngine } from "../DataStoreEngine.ts";
+import { DatedError } from "../Errors.ts";
+import { DataStore } from "../DataStore.ts";
 
 describe("FileStorageEngine", () => {
   //#region storage API
@@ -78,7 +78,7 @@ describe("Full DataStore integration test", () => {
   it("Initializes the storage correctly", async () => {
     const id = "integration-test-uncompressed";
     const defaultData = { a: 1, b: 2 };
-    const storeUncomp = new TestDataStore({
+    const storeUncomp = new DataStore({
       id,
       defaultData,
       formatVersion: 1,
