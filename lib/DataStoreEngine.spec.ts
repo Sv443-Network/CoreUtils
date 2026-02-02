@@ -40,24 +40,16 @@ describe("FileStorageEngine", () => {
   it("Throws when no DataStoreOptions are provided", async () => {
     try {
       const engine = new FileStorageEngine({ filePath: "./test-data" });
-      await engine.setValue("key", "val");
-
-      throw new Error("Should have thrown an error");
+      expect(await engine.setValue("key", "val")).toThrow(DatedError);
     }
-    catch(e) {
-      expect(e).toBeInstanceOf(DatedError);
-    }
+    catch {}
 
     try {
       // @ts-expect-error
       const engine = new FileStorageEngine({ filePath: "./test-data", dataStoreOptions: {} });
-      await engine.setValue("key", "val");
-
-      throw new Error("Should have thrown an error");
+      expect(await engine.setValue("key", "val")).toThrow(DatedError);
     }
-    catch(e) {
-      expect(e).toBeInstanceOf(DatedError);
-    }
+    catch {}
   });
 
   //#region w/o structuredClone
