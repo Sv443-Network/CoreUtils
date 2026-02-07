@@ -102,11 +102,13 @@ export class DataStoreSerializer<TData extends DataStoreData> {
   public async serializePartial(stores: StoreFilter, useEncoding = true, stringified = true): Promise<string | SerializedDataStore[]> {
     const serData: SerializedDataStore[] = [];
 
-    for(const storeInst of this.stores.filter(s => typeof stores === "function" ? stores(s.id) : stores.includes(s.id))) {
+    const filteredStores = this.stores.filter(s => typeof stores === "function" ? stores(s.id) : stores.includes(s.id));
+    for(const storeInst of filteredStores) {
       const encoded = Boolean(useEncoding && storeInst.encodingEnabled() && storeInst.encodeData?.[1]);
+      const rawData = storeInst.memoryCache ? storeInst.getData() : await storeInst.loadData();
       const data = encoded
-        ? await storeInst.encodeData![1](JSON.stringify(storeInst.getData()))
-        : JSON.stringify(storeInst.getData());
+        ? await storeInst.encodeData![1](JSON.stringify(rawData))
+        : JSON.stringify(rawData);
 
       serData.push({
         id: storeInst.id,
@@ -153,15 +155,22 @@ export class DataStoreSerializer<TData extends DataStoreData> {
     if(!Array.isArray(deserStores) || !deserStores.every(DataStoreSerializer.isSerializedDataStoreObj))
       throw new TypeError("Invalid serialized data format! Expected an array of SerializedDataStore objects.");
 
-    for(const storeData of deserStores.filter(s => typeof stores === "function" ? stores(s.id) : stores.includes(s.id))) {
-      const storeInst = this.stores.find(s => s.id === storeData.id)
-        ?? this.stores.find(s => s.id === (
-          Object.entries(this.options.remapIds)
-            .find(([, v]) => v.includes(storeData.id))
-        )?.[0]);
+    const resolveStoreId = (id: string): string => (
+      Object.entries(this.options.remapIds)
+        .find(([, v]) => v.includes(id))
+    )?.[0] ?? id;
+
+    const matchesFilter = (id: string): boolean => typeof stores === "function" ? stores(id) : stores.includes(id);
+
+    for(const storeData of deserStores) {
+      const effectiveId = resolveStoreId(storeData.id);
+      if(!matchesFilter(effectiveId))
+        continue;
+
+      const storeInst = this.stores.find(s => s.id === effectiveId);
 
       if(!storeInst)
-        throw new DatedError(`Can't deserialize data because no DataStore instance with the ID "${storeData.id}" was found! Make sure to provide it in the DataStoreSerializer constructor.`);
+        throw new DatedError(`Can't deserialize data because no DataStore instance with the ID "${effectiveId}" was found! Make sure to provide it in the DataStoreSerializer constructor.`);
 
       if(this.options.ensureIntegrity && typeof storeData.checksum === "string") {
         const checksum = await this.calcChecksum(storeData.data);

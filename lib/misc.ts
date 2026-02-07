@@ -192,9 +192,9 @@ export function scheduleExit(code: number = 0, timeout = 0): void {
     throw new TypeError("Timeout must be a non-negative number");
 
   let exit: (() => void) | undefined;
-  if(typeof process !== "undefined" && "exit" in process)
+  if(typeof process !== "undefined" && "exit" in process && typeof process.exit === "function")
     exit = () => process.exit(code);
-  else if(typeof Deno !== "undefined" && "exit" in Deno)
+  else if(typeof Deno !== "undefined" && "exit" in Deno && typeof Deno.exit === "function")
     exit = () => Deno.exit(code);
   else
     throw new ScriptContextError("Cannot exit the process, no exit method available");
@@ -208,8 +208,11 @@ export function scheduleExit(code: number = 0, timeout = 0): void {
  * @param lines The number of lines to return from the stack. Defaults to Infinity (all of them).
  */
 export function getCallStack<TAsArray extends boolean = true>(asArray?: TAsArray, lines = Infinity): TAsArray extends true ? string[] : string {
+  if(typeof lines !== "number" || isNaN(lines) || lines < 0)
+    throw new TypeError("lines parameter must be a non-negative number");
+
   try {
-    throw new Error("getCallStack() stack trace capture");
+    throw new Error("This is to capture a stack trace with CoreUtils.getCallStack(). (If you see this somewhere, you can safely ignore it.)");
   }
   catch(err) {
     const stack = ((err as Error).stack ?? "")

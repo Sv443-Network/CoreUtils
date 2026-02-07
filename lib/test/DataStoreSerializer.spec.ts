@@ -74,6 +74,34 @@ describe("DataStoreSerializer", () => {
     ]);
   });
 
+  it("Serialization with memoryCache disabled", async () => {
+    const stores = [
+      new DataStore({
+        id: "dss-test-nocache",
+        defaultData: { x: 10, y: 20 },
+        formatVersion: 1,
+        engine: () => new FileStorageEngine({ filePath: "./test.json" }),
+        compressionFormat: null,
+        memoryCache: false,
+      }),
+    ];
+    const ser = new DataStoreSerializer(stores);
+    await ser.loadStoresData();
+
+    const result = await ser.serialize(false, false);
+    expect(result).toEqual([
+      {
+        id: "dss-test-nocache",
+        data: "{\"x\":10,\"y\":20}",
+        encoded: false,
+        formatVersion: 1,
+        checksum: expect.any(String),
+      },
+    ]);
+
+    await ser.deleteStoresData();
+  });
+
   //#region deserialization
 
   it("Deserialization", async () => {

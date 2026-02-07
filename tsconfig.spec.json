@@ -2,9 +2,9 @@
   "extends": "./tsconfig.json",
   "include": [
     "**/*.spec.ts",
-    "**/test/*.ts",
+    "**/test/*.ts"
   ],
   "compilerOptions": {
-    "noEmit": true,
+    "noEmit": true
   }
 }

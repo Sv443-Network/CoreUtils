@@ -687,8 +687,8 @@ export const manager = new DataStore({
    */
   migrateIds: ["my-data", "config"],
   /**
-   * Set this to false to disable the in-memory cache.  
-   * This will make `getData()` always throw an error. Use `loadData()` instead.
+   * Set this to false to disable the in-memory cache, in case of large amounts of less frequently accessed data.
+   * This will also make `getData()` always throw an error. Use `loadData()` instead, which will always fetch the data from persistent storage.
    */
   memoryCache: true,
 
