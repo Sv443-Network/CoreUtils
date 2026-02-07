@@ -28,7 +28,7 @@ UserUtils v9 DataStore to CoreUtils DataStore Migration Test:
   <script src="./test_utils.js"></script>
 
   <!-- CoreUtils v2.0.3 -->
-  <script src="https://cdn.jsdelivr.net/npm/@sv443-network/coreutils@2.0.3/dist/CoreUtils.umd.js"></script>
+  <script src="../../../../dist/CoreUtils.umd.js"></script>
 
   <!-- UserUtils v9.4.4 -->
   <script src="https://cdn.jsdelivr.net/npm/@sv443-network/userutils@9.4.4/dist/index.global.js"></script>
@@ -42,12 +42,12 @@ UserUtils v9 DataStore to CoreUtils DataStore Migration Test:
   <!---------------------------------------------------[ UUv9 Setup ]----------------------------------------------------------------->
 
   <!-- Setup Script (UUv9) -->
-  <script src="./test_setup.js"></script>
+  <!-- <script src="./test_setup.js"></script> -->
 
   <!--------------------------------------------------[ CUv2 Migration ]-------------------------------------------------------------->
 
   <!-- Migration Script (CUv2) -->
-  <!-- <script src="./test_migration.js"></script> -->
+  <script src="./test_migration.js"></script>
 
   <!---------------------------------------------------------------------------------------------------------------------------------->
 </head>
@@ -102,6 +102,10 @@ UserUtils v9 DataStore to CoreUtils DataStore Migration Test:
 
   <h2>Actions:</h2>
 
+  <input type="text" id="input-decode" placeholder="Decode compressed value" />
+  <button id="btn-decode" title="Decodes the compressed input value and logs the result to the console.">Decode</button>
+  <br>
+  <br>
   <button id="btn-log-storage" title="Logs all values in GM or localStorage to the console.">Log Storage</button>
   <br>
   <button id="btn-delete-storage" title="Deletes all values in GM or localStorage.">Delete Storage</button>

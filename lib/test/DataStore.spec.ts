@@ -171,6 +171,7 @@ describe("DataStore", () => {
       defaultData: { a: 1, b: 2 },
       formatVersion: 1,
       engine: new BrowserStorageEngine({ type: "localStorage" }),
+      compressionFormat: null,
     });
 
     await store1.loadData();
@@ -179,17 +180,101 @@ describe("DataStore", () => {
     await store1.direct_deleteValue("__ds_fmt_ver");
     await store1.direct_renameKey(`__ds-${store1.id}-dat`, `_uucfg-${store1.id}`);
     await store1.direct_renameKey(`__ds-${store1.id}-ver`, `_uucfgver-${store1.id}`);
-    await store1.direct_renameKey(`__ds-${store1.id}-enc`, `_uucfgenc-${store1.id}`);
-
-    // let key: string | null, i = 0;
-    // while((key = globalThis.localStorage.key(i)) !== null) {
-    //   console.log(key, globalThis.localStorage.getItem(key));
-    //   i++;
-    // }
+    await store1.direct_deleteValue(`__ds-${store1.id}-enf`);
+    await store1.direct_setValue(`_uucfgenc-${store1.id}`, false);
 
     expect(await store1.direct_getValue(`__ds-${store1.id}-ver`, null)).toBeNull();
+    expect(await store1.direct_getValue(`__ds-${store1.id}-enf`, null)).toBeNull();
+    expect(await store1.direct_getValue(`_uucfg-${store1.id}`, null)).not.toBeNull();
+
     await store1.loadData();
+
     expect(await store1.direct_getValue(`__ds-${store1.id}-ver`, null)).toBe("1");
+    expect(await store1.direct_getValue(`__ds-${store1.id}-enf`, null)).not.toBeNull();
+    // old keys should be deleted after migration:
+    expect(await store1.direct_getValue(`_uucfg-${store1.id}`, null)).toBeNull();
+    expect(await store1.direct_getValue(`_uucfgver-${store1.id}`, null)).toBeNull();
+    expect(await store1.direct_getValue(`_uucfgenc-${store1.id}`, null)).toBeNull();
+    expect(store1.getData()).toEqual({ a: 1, b: 2 });
+
+    // restore initial state:
+    await store1.deleteData();
+    await store1.direct_deleteValue("__ds_fmt_ver");
+  });
+
+  //#region migrate multiple stores from UU-v9
+  it("Migrate multiple stores from UU-v9 format", async () => {
+    const engine = new BrowserStorageEngine({ type: "localStorage" });
+
+    // first set up two stores with data:
+    const storeA = new DirectAccessDataStore({
+      id: "test-multi-uu-v9-a",
+      defaultData: { x: 10 },
+      formatVersion: 1,
+      engine,
+      compressionFormat: null,
+    });
+    const storeB = new DirectAccessDataStore({
+      id: "test-multi-uu-v9-b",
+      defaultData: { y: 20, migrated: false },
+      formatVersion: 1,
+      engine: new BrowserStorageEngine({ type: "localStorage" }),
+      compressionFormat: null,
+    });
+
+    await storeA.loadData();
+    await storeB.loadData();
+    await storeA.setData({ x: 42 });
+    await storeB.setData({ y: 99, migrated: false });
+
+    // simulate UU v9 format by renaming keys and clearing __ds_fmt_ver:
+    for(const store of [storeA, storeB]) {
+      store.direct_setFirstInit(true);
+      await store.direct_renameKey(`__ds-${store.id}-dat`, `_uucfg-${store.id}`);
+      await store.direct_renameKey(`__ds-${store.id}-ver`, `_uucfgver-${store.id}`);
+      await store.direct_deleteValue(`__ds-${store.id}-enf`);
+      await store.direct_setValue(`_uucfgenc-${store.id}`, false);
+    }
+    await storeA.direct_deleteValue("__ds_fmt_ver");
+
+    // now create new stores that should migrate from the old format:
+    const newA = new DirectAccessDataStore({
+      id: "test-multi-uu-v9-a",
+      defaultData: { x: -1 },
+      formatVersion: 1,
+      engine: new BrowserStorageEngine({ type: "localStorage" }),
+      compressionFormat: null,
+    });
+    const newB = new DirectAccessDataStore({
+      id: "test-multi-uu-v9-b",
+      defaultData: { y: -1, migrated: false },
+      formatVersion: 2,
+      engine: new BrowserStorageEngine({ type: "localStorage" }),
+      compressionFormat: null,
+      migrations: {
+        2: (old: Record<string, unknown>) => ({ ...old, migrated: true }),
+      },
+    });
+
+    // load A first (sets __ds_fmt_ver = 1), then B should still migrate:
+    const dataA = await newA.loadData();
+    expect(dataA).toEqual({ x: 42 });
+
+    const dataB = await newB.loadData();
+    expect(dataB).toEqual({ y: 99, migrated: true });
+
+    // all old keys should be deleted:
+    expect(await newA.direct_getValue(`_uucfg-${newA.id}`, null)).toBeNull();
+    expect(await newA.direct_getValue(`_uucfgver-${newA.id}`, null)).toBeNull();
+    expect(await newA.direct_getValue(`_uucfgenc-${newA.id}`, null)).toBeNull();
+    expect(await newB.direct_getValue(`_uucfg-${newB.id}`, null)).toBeNull();
+    expect(await newB.direct_getValue(`_uucfgver-${newB.id}`, null)).toBeNull();
+    expect(await newB.direct_getValue(`_uucfgenc-${newB.id}`, null)).toBeNull();
+
+    // restore initial state:
+    await newA.deleteData();
+    await newB.deleteData();
+    await newA.direct_deleteValue("__ds_fmt_ver");
   });
 
   //#region invalid persistent data

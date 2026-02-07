@@ -216,39 +216,40 @@ export class DataStore<TData extends DataStoreData> {
     try {
       if(this.firstInit) {
         this.firstInit = false;
-        // migrate from UserUtils <=9.x format:
         const dsVer = Number(await this.engine.getValue("__ds_fmt_ver", 0));
-        if(isNaN(dsVer) || dsVer < 1) {
-          const oldData = await this.engine.getValue(`_uucfg-${this.id}`, null);
 
-          if(oldData) {
-            const oldVer = Number(await this.engine.getValue(`_uucfgver-${this.id}`, NaN));
-            const oldEnc = await this.engine.getValue(`_uucfgenc-${this.id}`, null);
+        // migrate from UserUtils <=9.x format (per-instance, independent of __ds_fmt_ver):
+        const oldData = await this.engine.getValue(`_uucfg-${this.id}`, null);
+        if(oldData) {
+          const oldVer = Number(await this.engine.getValue(`_uucfgver-${this.id}`, NaN));
+          const oldEnc = await this.engine.getValue(`_uucfgenc-${this.id}`, null);
 
-            const promises: Promise<void>[] = [];
+          const promises: Promise<void>[] = [];
 
-            /** Migrates one UserUtils key */
-            const migrateFmt = (oldKey: string, newKey: string, value: SerializableVal): void => {
-              promises.push(this.engine.setValue(newKey, value));
-              promises.push(this.engine.deleteValue(oldKey));
-            };
+          /** Migrates one UserUtils key */
+          const migrateFmt = (oldKey: string, newKey: string, value: SerializableVal): void => {
+            promises.push(this.engine.setValue(newKey, value));
+            promises.push(this.engine.deleteValue(oldKey));
+          };
 
-            if(oldData)
-              migrateFmt(`_uucfg-${this.id}`, `__ds-${this.id}-dat`, oldData);
+          migrateFmt(`_uucfg-${this.id}`, `__ds-${this.id}-dat`, oldData);
 
-            if(!isNaN(oldVer))
-              migrateFmt(`_uucfgver-${this.id}`, `__ds-${this.id}-ver`, oldVer);
+          if(!isNaN(oldVer))
+            migrateFmt(`_uucfgver-${this.id}`, `__ds-${this.id}-ver`, oldVer);
 
-            if(typeof oldEnc === "boolean")
-              migrateFmt(`_uucfgenc-${this.id}`, `__ds-${this.id}-enf`, oldEnc === true ? Boolean(this.compressionFormat) || null : null);
-            else
-              promises.push(this.engine.setValue(`__ds-${this.id}-enf`, this.compressionFormat));
-
-            await Promise.allSettled(promises);
+          if(typeof oldEnc === "boolean")
+            migrateFmt(`_uucfgenc-${this.id}`, `__ds-${this.id}-enf`, oldEnc === true ? this.compressionFormat ?? null : null);
+          else {
+            promises.push(this.engine.setValue(`__ds-${this.id}-enf`, this.compressionFormat));
+            promises.push(this.engine.deleteValue(`_uucfgenc-${this.id}`));
           }
-          await this.engine.setValue("__ds_fmt_ver", dsFmtVer);
+
+          await Promise.allSettled(promises);
         }
-        // else if(dsVer < 2) {
+
+        if(isNaN(dsVer) || dsVer < dsFmtVer)
+          await this.engine.setValue("__ds_fmt_ver", dsFmtVer);
+        // if(dsVer < 2) {
         //   // migrations for dsFmtVer 2 in here
         // }
       }
