@@ -19,4 +19,4 @@ It is built with tsup, released with GitHub Actions and Changesets, tested with 
 - Also write unit tests for all new and changed functions, aiming for high code coverage, but not excessively so.
 - When adding or editing a feature, documentation needs to be added or adjusted in `docs.md`. Follow the existing style and structure.
 - Never use `@ts-ignore` - always use `@ts-expect-error`, but only if absolutely necessary.
-- Always use `.js` extension for local imports, even for TS files.
+- Always use `.ts` extension for local imports.
