@@ -1,5 +1,37 @@
 # @sv443-network/coreutils
 
+## 3.0.0
+
+### Major Changes
+
+- 7718855: **Changed `DataStoreEngine` instances to allow storing original values instead of only strings.**
+
+  The previous behavior of explicit serialization was prone to errors and made it hard to implement certain features, such as data migration from UserUtils.
+  If you have created a custom `DataStoreEngine`, please ensure it supports storing and retrieving all values supported by JSON, i.e. `string`, `number`, `boolean`, `null`, `object` and `array`. Values like `undefined`, `Symbol`, `Function` etc. are still not supported and will lead to errors.
+
+- 46570f4: **`NanoEmitter` multi methods' `oneOf` and `allOf` properties now behave like an AND condition instead of an OR.**
+
+### Minor Changes
+
+- 1124d2e: Added DataStoreSerializer property `remapIds` to support deserializing from stores with outdated IDs.
+- 240f83e: Added DataStore prop `memoryCache` to turn off the memory cache in data-intensive, non-latency-sensitive scenarios.
+- 7718855: Made DataStore able to migrate data from [UserUtils <=v9 DataStore](https://github.com/Sv443-Network/UserUtils/blob/v9.4.4/docs.md#datastore) instances.
+
+  In order to trigger the migration:
+
+  1. Switch the DataStore import from UserUtils to CoreUtils and keep the same DataStore ID.
+  2. Update the options object in the DataStore constructor. (You may also want to refer to the [new DataStore documentation](https://github.com/Sv443-Network/CoreUtils/blob/main/docs.md#class-datastore).)
+     - The constructor now needs an `engine` property that is an instance of a [UserUtils `GMStorageEngine`.](https://github.com/Sv443-Network/UserUtils/blob/main/docs.md#class-gmstorageengine)
+     - Encoding with `deflate-raw` will now be enabled by default. Set `compressionFormat: null` to disable compression if it wasn't enabled in the UserUtils DataStore.
+     - Added shorthand property `compressionFormat` as an alternative to the properties `encodeData` and `decodeData`
+     - `encodeData` and `decodeData` are now a tuple array, consisting of a format identifier string and the function which was previously the only value of these properties.
+  3. The next call to `loadData()` will then migrate the data automatically and transparently.
+
+### Patch Changes
+
+- 99a797f: `secsToTimeStr()` now supports negative time and will only throw if the number is `NaN` or not finite.
+- 38e7813: Implemented `DatedError`, `CustomError` and new classes `ScriptContextError` and `NetworkError` throughout the library.
+
 ## 2.0.3
 
 ### Patch Changes
