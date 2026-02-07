@@ -2750,14 +2750,18 @@ Each line will start with `at`, exactly how Error call stacks are usually format
 ```ts
 import { getCallStack } from "@sv443-network/coreutils";
 
+// global scope
 firstFunction();
 
 function firstFunction() {
+  // first layer of local scope
   secondFunction();
 }
 
 function secondFunction() {
+  // second scope layer
   (() => {
+    // third (anonymous) scope layer
     console.log("Call stack as array:", getCallStack(true, 3));
     /*
       Call stack as array: [
@@ -2789,10 +2793,10 @@ function secondFunction() {
 ### `class NanoEmitter`
 Usage:
 ```ts
-// functional:
+// in functional programming:
 const emitter = new NanoEmitter<TEventMap = EventsMap>(options?: NanoEmitterOptions);
 
-// object-oriented:
+// in object oriented programming:
 class MyClass extends NanoEmitter<TEventMap = EventsMap> {
   constructor() {
     super(options?: NanoEmitterOptions);
@@ -3010,14 +3014,15 @@ myEmitter.emit("bar", 10); // "Event bar emitted with value 10"
 console.log(result); // 130
 
 
-// combining allOf and oneOf:
+
+// combining allOf and oneOf for an AND condition:
 
 result = 0; // reset result
 
 const controller = new AbortController();
 
 myEmitter.onMulti({
-  // using both makes them work like an "or" condition:
+  // using both makes them work like a logical AND:
   oneOf: ["foo", "bar"],
   allOf: ["bar", "baz"],
   callback: (event, value) => {
@@ -3031,11 +3036,17 @@ myEmitter.onMulti({
 myEmitter.emit("baz", 10); // doesn't match `oneOf` or `allOf`, so nothing happens
 console.log(result); // 0
 
-myEmitter.emit("foo", 20); // matches `oneOf`
-console.log(result); // 20
+myEmitter.emit("foo", 20); // matches `oneOf`, but not all of `allOf` were matched yet, so nothing happens
+console.log(result); // 0
 
-myEmitter.emit("bar", 30); // matches `oneOf` and `allOf`
-console.log(result); // 50
+myEmitter.emit("bar", 30); // matches both `oneOf` and `allOf`, and since `allOf` is now fully matched, the callback is called
+console.log(result); // 30
+
+// prevent any further modification
+controller.abort();
+
+myEmitter.emit("foo", Infinity); // nothing happens because the controller was aborted
+console.log(result); // 30
 ```
 </details>
 
