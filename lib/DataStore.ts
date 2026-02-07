@@ -248,7 +248,7 @@ export class DataStore<TData extends DataStoreData> {
           }
           await this.engine.setValue("__ds_fmt_ver", dsFmtVer);
         }
-        // if(dsVer < 2) {
+        // else if(dsVer < 2) {
         //   // migrations for dsFmtVer 2 in here
         // }
       }

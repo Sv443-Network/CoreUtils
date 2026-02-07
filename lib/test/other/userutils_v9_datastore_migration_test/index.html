@@ -1,0 +1,118 @@
+<!--
+
+UserUtils v9 DataStore to CoreUtils DataStore Migration Test:
+
+1. Load page with test_setup.js uncommented to set up data in UserUtils v9 DataStores.
+2. Reload page with test_migration.js uncommented to test migration from UserUtils v9 DataStores to CoreUtils v2 DataStores.
+3. See console for test results.
+
+-->
+
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>UserUtils v9 DataStore to CoreUtils DataStore Migration Test</title>
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" href="./index.css">
+
+  <!--------------------------------------------------[ Dependencies ]---------------------------------------------------------------->
+
+  <!-- GM API polyfill -->
+  <script src="./gm_polyfill.js"></script>
+
+  <!-- Utils -->
+  <script src="./test_utils.js"></script>
+
+  <!-- CoreUtils v2.0.3 -->
+  <script src="https://cdn.jsdelivr.net/npm/@sv443-network/coreutils@2.0.3/dist/CoreUtils.umd.js"></script>
+
+  <!-- UserUtils v9.4.4 -->
+  <script src="https://cdn.jsdelivr.net/npm/@sv443-network/userutils@9.4.4/dist/index.global.js"></script>
+
+  <!-- GMStorageEngine -->
+  <script src="./GMStorageEngine.js"></script>
+
+  <!-- Actions -->
+  <script src="./test_actions.js"></script>
+
+  <!---------------------------------------------------[ UUv9 Setup ]----------------------------------------------------------------->
+
+  <!-- Setup Script (UUv9) -->
+  <script src="./test_setup.js"></script>
+
+  <!--------------------------------------------------[ CUv2 Migration ]-------------------------------------------------------------->
+
+  <!-- Migration Script (CUv2) -->
+  <!-- <script src="./test_migration.js"></script> -->
+
+  <!---------------------------------------------------------------------------------------------------------------------------------->
+</head>
+
+<body>
+  <h2>Instructions:</h2>
+  <ol>
+    <li>
+      Load this document with the <code>test_setup.js</code> script uncommented in the &lt;head&gt; section.<br>
+      This will create two UserUtils v9 DataStores and populate them with test data.
+    </li>
+    <li>
+      Reload this document with the <code>test_migration.js</code> script uncommented in the &lt;head&gt;
+      section.<br>
+      This will create two CoreUtils v2 DataStores which should automatically migrate data from the existing UserUtils
+      v9 DataStores.
+    </li>
+    <li>
+      Open the browser console to see the test results.<br>
+      The action buttons can be used to inspect and manipulate the underlying storage.
+    </li>
+  </ol>
+
+  <br>
+
+  <h2>Dependency Availability:</h2>
+  <table>
+    <tr>
+      <td>GreaseMonkey:</td>
+      <td id="lbl-greasemonkey-available">Loading...</td>
+    </tr>
+    <tr>
+      <td>UserUtils:</td>
+      <td id="lbl-userutils-available">Loading...</td>
+    </tr>
+    <tr>
+      <td>CoreUtils:</td>
+      <td id="lbl-coreutils-available">Loading...</td>
+    </tr>
+    <tr>
+      <td>Test_Setup (UUv9):</td>
+      <td id="lbl-test-setup-available">Loading...</td>
+    </tr>
+    <tr>
+      <td>Test_Migration (CUv2):</td>
+      <td id="lbl-test-migration-available">Loading...</td>
+    </tr>
+  </table>
+
+  <br>
+  <br>
+
+  <h2>Actions:</h2>
+
+  <button id="btn-log-storage" title="Logs all values in GM or localStorage to the console.">Log Storage</button>
+  <br>
+  <button id="btn-delete-storage" title="Deletes all values in GM or localStorage.">Delete Storage</button>
+  <br>
+  <br>
+  <button id="btn-load-datastores"
+    title="Initializes DataStores by either loading persisted data or initializing with defaults.">
+    1. Init DataStores
+  </button>
+  <br>
+  <button id="btn-modify-datastores-data" title="Modifies the data in the DataStores.">2. Modify data</button>
+</body>
+
+</html>
