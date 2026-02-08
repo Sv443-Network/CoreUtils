@@ -21,7 +21,7 @@
     "build": "tsup",
     "dev": "tsup --watch",
     "update-jsr-version": "node --import tsx ./tools/update-jsr-version.mts",
-    "publish-package": "changeset publish -- --provenance",
+    "publish-package": "changeset publish",
     "publish-package-jsr": "pnpm update-jsr-version && npx jsr publish --allow-dirty",
     "check-jsr": "pnpm update-jsr-version && npx jsr publish --allow-dirty --dry-run",
     "check-npm": "npm publish --dry-run",
