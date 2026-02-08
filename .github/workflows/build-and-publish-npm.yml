@@ -76,8 +76,9 @@ jobs:
         uses: changesets/action@v1
         id: changesets
         with:
-          publish: NODE_AUTH_TOKEN="" npm run publish-package
+          publish: npm run publish-package
           commit: ${{ env.COMMIT_MSG }}
           title: ${{ env.PR_TITLE }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ""
