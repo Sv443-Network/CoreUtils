@@ -1,5 +1,12 @@
 # @sv443-network/coreutils
 
+## 3.0.2
+
+### Patch Changes
+
+- 7e87d30: Update browser bundle from .min.umd.js to .mjs
+- fa4c525: Removed `DataStoreSerializer` generic parameter.
+
 ## 3.0.1
 
 ### Patch Changes
