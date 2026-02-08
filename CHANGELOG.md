@@ -1,5 +1,11 @@
 # @sv443-network/coreutils
 
+## 3.0.3
+
+### Patch Changes
+
+- 918749b: Fixed decoding step when migrating DataStore data.
+
 ## 3.0.2
 
 ### Patch Changes
