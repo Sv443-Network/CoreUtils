@@ -1,5 +1,12 @@
 # @sv443-network/coreutils
 
+## 3.0.1
+
+### Patch Changes
+
+- d6843f9: Fixed underlying `fetch()` props in `fetchAdvanced()` in stricter environments.
+- 27e60dd: Made the type `DataStoreData` much less constrained. This way it won't require an index signature anymore.
+
 ## 3.0.0
 
 ### Major Changes
