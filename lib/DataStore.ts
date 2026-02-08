@@ -6,7 +6,7 @@
 import { DatedError, MigrationError } from "./Errors.ts";
 import type { DataStoreEngine } from "./DataStoreEngine.ts";
 import type { LooseUnion, Prettify, SerializableVal } from "./types.ts";
-import { compress } from "./crypto.ts";
+import { compress, decompress } from "./crypto.ts";
 
 //#region types
 
@@ -191,7 +191,7 @@ export class DataStore<TData extends DataStoreData> {
 
     if(typeof opts.compressionFormat === "string") {
       this.encodeData = [opts.compressionFormat, async (data: string) => await compress(data, opts.compressionFormat!, "string")];
-      this.decodeData = [opts.compressionFormat, async (data: string) => await compress(data, opts.compressionFormat!, "string")];
+      this.decodeData = [opts.compressionFormat, async (data: string) => await decompress(data, opts.compressionFormat!, "string")];
     }
     else if("encodeData" in opts && "decodeData" in opts && Array.isArray(opts.encodeData) && Array.isArray(opts.decodeData)) {
       this.encodeData = [opts.encodeData![0], opts.encodeData![1]];
@@ -241,8 +241,8 @@ export class DataStore<TData extends DataStoreData> {
           if(!isNaN(oldVer))
             migrateFmt(`_uucfgver-${this.id}`, `__ds-${this.id}-ver`, oldVer);
 
-          if(typeof oldEnc === "boolean")
-            migrateFmt(`_uucfgenc-${this.id}`, `__ds-${this.id}-enf`, oldEnc === true ? this.compressionFormat ?? null : null);
+          if(typeof oldEnc === "boolean" || oldEnc === "true" || oldEnc === "false" || typeof oldEnc === "number" || oldEnc === "0" || oldEnc === "1")
+            migrateFmt(`_uucfgenc-${this.id}`, `__ds-${this.id}-enf`, [0, "0", true, "true"].includes(oldEnc) ? this.compressionFormat ?? null : null);
           else {
             promises.push(this.engine.setValue(`__ds-${this.id}-enf`, this.compressionFormat));
             promises.push(this.engine.deleteValue(`_uucfgenc-${this.id}`));
