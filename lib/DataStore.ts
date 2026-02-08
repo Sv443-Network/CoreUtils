@@ -4,7 +4,7 @@
  */
 
 import { DatedError, MigrationError } from "./Errors.ts";
-import type { DataStoreEngine } from "./DataStoreEngine.ts";
+import type { DataStoreEngine, DataStoreEngineDSOptions } from "./DataStoreEngine.ts";
 import type { LooseUnion, Prettify, SerializableVal } from "./types.ts";
 import { compress, decompress } from "./crypto.ts";
 
@@ -180,20 +180,11 @@ export class DataStore<TData extends DataStoreData> {
     this.migrations = opts.migrations;
     if(opts.migrateIds)
       this.migrateIds = Array.isArray(opts.migrateIds) ? opts.migrateIds : [opts.migrateIds];
-    this.encodeData = opts.encodeData;
-    this.decodeData = opts.decodeData;
     this.engine = typeof opts.engine === "function" ? opts.engine() : opts.engine;
 
     this.options = opts;
 
-    if(typeof opts.compressionFormat === "undefined")
-      this.compressionFormat = opts.compressionFormat = opts.encodeData?.[0] as CompressionFormat | undefined ?? "deflate-raw";
-
-    if(typeof opts.compressionFormat === "string") {
-      this.encodeData = [opts.compressionFormat, async (data: string) => await compress(data, opts.compressionFormat!, "string")];
-      this.decodeData = [opts.compressionFormat, async (data: string) => await decompress(data, opts.compressionFormat!, "string")];
-    }
-    else if("encodeData" in opts && "decodeData" in opts && Array.isArray(opts.encodeData) && Array.isArray(opts.decodeData)) {
+    if("encodeData" in opts && "decodeData" in opts && Array.isArray(opts.encodeData) && Array.isArray(opts.decodeData)) {
       this.encodeData = [opts.encodeData![0], opts.encodeData![1]];
       this.decodeData = [opts.decodeData![0], opts.decodeData![1]];
       this.compressionFormat = opts.encodeData[0] as CompressionFormat ?? null;
@@ -203,10 +194,18 @@ export class DataStore<TData extends DataStoreData> {
       this.decodeData = undefined;
       this.compressionFormat = null;
     }
-    else
-      throw new TypeError("Either `compressionFormat` or `encodeData` and `decodeData` have to be set and valid, but not all three at a time. Please refer to the documentation for more info.");
+    else {
+      const fmt = typeof opts.compressionFormat === "string" ? opts.compressionFormat : "deflate-raw";
+      this.compressionFormat = fmt;
+      this.encodeData = [fmt, async (data: string) => await compress(data, fmt, "string")];
+      this.decodeData = [fmt, async (data: string) => await decompress(data, fmt, "string")];
+    }
 
-    this.engine.setDataStoreOptions(opts);
+    this.engine.setDataStoreOptions({
+      id: this.id,
+      encodeData: this.encodeData,
+      decodeData: this.decodeData,
+    } as DataStoreEngineDSOptions<TData>);
   }
 
   //#region loadData
@@ -278,7 +277,7 @@ export class DataStore<TData extends DataStoreData> {
 
       // check if the data is encoded
       const encodingFmt = String(await this.engine.getValue(`__ds-${this.id}-enf`, null));
-      const isEncoded = encodingFmt !== "null" && encodingFmt !== "false";
+      const isEncoded = encodingFmt !== "null" && encodingFmt !== "false" && encodingFmt !== "0" && encodingFmt !== "" && encodingFmt !== null;
 
       // if no format version is found, save the current one
       let saveData = false;
@@ -416,7 +415,7 @@ export class DataStore<TData extends DataStoreData> {
     }
 
     await Promise.allSettled([
-      this.engine.setValue(`__ds-${this.id}-dat`, await this.engine.serializeData(newData as TData)),
+      this.engine.setValue(`__ds-${this.id}-dat`, await this.engine.serializeData(newData as TData, this.encodingEnabled())),
       this.engine.setValue(`__ds-${this.id}-ver`, lastFmtVer),
       this.engine.setValue(`__ds-${this.id}-enf`, this.compressionFormat),
     ]);
@@ -450,7 +449,7 @@ export class DataStore<TData extends DataStoreData> {
 
       const parsed = await this.engine.deserializeData(data, isEncoded) as TData;
       await Promise.allSettled([
-        this.engine.setValue(`__ds-${this.id}-dat`, await this.engine.serializeData(parsed)),
+        this.engine.setValue(`__ds-${this.id}-dat`, await this.engine.serializeData(parsed, this.encodingEnabled())),
         this.engine.setValue(`__ds-${this.id}-ver`, fmtVer),
         this.engine.setValue(`__ds-${this.id}-enf`, this.compressionFormat),
         this.engine.deleteValue(`__ds-${id}-dat`),
