@@ -50,11 +50,11 @@ export type StoreFilter = string[] | ((id: string) => boolean);
  *   
  * - ⚠️ Needs to run in a secure context (HTTPS) due to the use of the SubtleCrypto API if checksumming is enabled.  
  */
-export class DataStoreSerializer<TData extends DataStoreData> {
-  protected stores: DataStore<TData>[];
+export class DataStoreSerializer {
+  protected stores: DataStore<DataStoreData>[];
   protected options: Required<DataStoreSerializerOptions>;
 
-  constructor(stores: DataStore<TData>[], options: DataStoreSerializerOptions = {}) {
+  constructor(stores: DataStore<DataStoreData>[], options: DataStoreSerializerOptions = {}) {
     if(!crypto || !crypto.subtle)
       throw new ScriptContextError("DataStoreSerializer has to run in a secure context (HTTPS) or in another environment that implements the subtleCrypto API!");
 
@@ -245,7 +245,7 @@ export class DataStoreSerializer<TData extends DataStoreData> {
   }
 
   /** Returns the DataStore instances whose IDs match the provided array or function */
-  protected getStoresFiltered(stores?: StoreFilter): DataStore<TData>[] {
+  protected getStoresFiltered(stores?: StoreFilter): DataStore<DataStoreData>[] {
     return this.stores.filter(s => typeof stores === "undefined" ? true : Array.isArray(stores) ? stores.includes(s.id) : stores(s.id));
   }
 }
