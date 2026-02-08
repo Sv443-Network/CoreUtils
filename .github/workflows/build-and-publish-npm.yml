@@ -17,7 +17,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [22.x]
+        node-version: [24.x]
 
     permissions:
       contents: write # For pushing Git tags and creating releases
@@ -79,3 +79,5 @@ jobs:
           publish: NODE_AUTH_TOKEN="" npm run publish-package
           commit: ${{ env.COMMIT_MSG }}
           title: ${{ env.PR_TITLE }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
