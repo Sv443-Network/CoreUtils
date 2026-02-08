@@ -1,5 +1,11 @@
 # @sv443-network/coreutils
 
+## 3.0.4
+
+### Patch Changes
+
+- f95b4ce: Fixed encoding and decoding being inconsistent between DataStore and DataStoreEngine.
+
 ## 3.0.3
 
 ### Patch Changes
