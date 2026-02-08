@@ -854,13 +854,12 @@ The old data is a copy of the cached object, so you can mutate it directly, use 
 
 ### `type DataStoreData`
 ```ts
-type DataStoreData<TData extends SerializableVal = SerializableVal> = Record<string, SerializableVal | TData>;
+type DataStoreData = object;
 ```
   
 A type that represents the data stored in a DataStore instance.  
-It is a record of string keys to values that can be serialized to JSON via `JSON.stringify()`.  
-This means that the values can be primitive types (string, number, boolean, null), arrays or objects that only contain serializable values.  
-Refer to the [`SerializableVal` type](#type-serializableval) for more information.
+It uses `object` instead of an index signature so that interfaces without an explicit index signature can also be used as `TData`.  
+Make sure to only use JSON-serializable types here, otherwise unexpected behavior may occur.
 
 <br><br>
 

@@ -11,9 +11,9 @@ import type { Prettify, SerializableVal } from "./types.ts";
 //#region >> DataStoreEngine
 
 /** Contains the only properties of {@linkcode DataStoreOptions} that are relevant to the {@linkcode DataStoreEngine} class. */
-export type DataStoreEngineDSOptions<TData extends DataStoreData> = Prettify<Pick<DataStoreOptions<TData>, "decodeData" | "encodeData" | "id">>;
+export type DataStoreEngineDSOptions<TData extends DataStoreData = DataStoreData> = Prettify<Pick<DataStoreOptions<TData>, "decodeData" | "encodeData" | "id">>;
 
-export interface DataStoreEngine<TData extends DataStoreData> { // eslint-disable-line @typescript-eslint/no-unused-vars
+export interface DataStoreEngine<TData extends DataStoreData = DataStoreData> { // eslint-disable-line @typescript-eslint/no-unused-vars
   /** Deletes all data in persistent storage, including the data container itself (e.g. a file or a database) */
   deleteStorage?(): Promise<void>;
 }
@@ -22,7 +22,7 @@ export interface DataStoreEngine<TData extends DataStoreData> { // eslint-disabl
  * Base class for creating {@linkcode DataStore} storage engines.  
  * This acts as an interchangeable API for writing and reading persistent JSON-serializable data in various environments.
  */
-export abstract class DataStoreEngine<TData extends DataStoreData> {
+export abstract class DataStoreEngine<TData extends DataStoreData = DataStoreData> {
   protected dataStoreOptions!: DataStoreEngineDSOptions<TData>; // setDataStoreOptions() is called from inside the DataStore constructor to set this value
 
   constructor(options?: DataStoreEngineDSOptions<TData>) {
@@ -118,7 +118,7 @@ export type BrowserStorageEngineOptions = {
  * - ⚠️ Requires a DOM environment
  * - ⚠️ Don't reuse engine instances, always create a new one for each {@linkcode DataStore} instance
  */
-export class BrowserStorageEngine<TData extends DataStoreData> extends DataStoreEngine<TData> {
+export class BrowserStorageEngine<TData extends DataStoreData = DataStoreData> extends DataStoreEngine<TData> {
   protected options: BrowserStorageEngineOptions & Required<Pick<BrowserStorageEngineOptions, "type">>;
 
   /**
@@ -188,7 +188,7 @@ export type FileStorageEngineOptions = {
  * - ⚠️ Requires Node.js or Deno with Node compatibility (v1.31+)  
  * - ⚠️ Don't reuse engine instances, always create a new one for each {@linkcode DataStore} instance
  */
-export class FileStorageEngine<TData extends DataStoreData> extends DataStoreEngine<TData> {
+export class FileStorageEngine<TData extends DataStoreData = DataStoreData> extends DataStoreEngine<TData> {
   protected options: FileStorageEngineOptions & Required<Pick<FileStorageEngineOptions, "filePath">>;
   private fileAccessQueue: Promise<void> = Promise.resolve();
 

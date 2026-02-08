@@ -50,7 +50,7 @@ export type DataStoreOptions<TData extends DataStoreData> = Prettify<
      *   
      * - ⚠️ Don't reuse the same engine instance for multiple DataStores, unless it explicitly supports it!
      */
-    engine: (() => DataStoreEngine<TData>) | DataStoreEngine<TData>;
+    engine: (() => DataStoreEngine) | DataStoreEngine;
     /**
      * A dictionary of functions that can be used to migrate data from older versions to newer ones.  
      * The keys of the dictionary should be the format version that the functions can migrate to, from the previous whole integer value.  
@@ -111,8 +111,12 @@ export type DataStoreOptions<TData extends DataStoreData> = Prettify<
   )
 >;
 
-/** Generic type that represents the serializable data structure saved in a {@linkcode DataStore} instance. */
-export type DataStoreData<TData extends SerializableVal = SerializableVal> = Record<string, SerializableVal | TData>;
+/**
+ * Generic type that represents the serializable data structure saved in a {@linkcode DataStore} instance.  
+ * - ⚠️ Uses `object` instead of an index signature so that interfaces without an explicit index signature can be used as `TData`.  
+ *   Make sure to only use JSON-serializable types here, otherwise unexpected behavior may occur!
+ */
+export type DataStoreData = object;
 
 //#region class
 
@@ -141,7 +145,7 @@ export class DataStore<TData extends DataStoreData> {
   public readonly decodeData: DataStoreOptions<TData>["decodeData"];
   public readonly compressionFormat: Exclude<DataStoreOptions<TData>["compressionFormat"], undefined> = "deflate-raw";
   public readonly memoryCache: boolean = true;
-  public readonly engine: DataStoreEngine<TData>;
+  public readonly engine: DataStoreEngine;
   public options: DataStoreOptions<TData>;
 
   /**
@@ -284,7 +288,7 @@ export class DataStore<TData extends DataStoreData> {
       }
 
       // deserialize the data if needed
-      let parsed = await this.engine.deserializeData(storedData, isEncoded);
+      let parsed = await this.engine.deserializeData(storedData, isEncoded) as TData;
 
       // run migrations if needed
       if(storedFmtVer < this.formatVersion && this.migrations)
@@ -444,7 +448,7 @@ export class DataStore<TData extends DataStoreData> {
       if(data === undefined || isNaN(fmtVer))
         return;
 
-      const parsed = await this.engine.deserializeData(data, isEncoded);
+      const parsed = await this.engine.deserializeData(data, isEncoded) as TData;
       await Promise.allSettled([
         this.engine.setValue(`__ds-${this.id}-dat`, await this.engine.serializeData(parsed)),
         this.engine.setValue(`__ds-${this.id}-ver`, fmtVer),

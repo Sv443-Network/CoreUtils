@@ -349,4 +349,35 @@ describe("DataStore", () => {
       store.getData();
     }).toThrow();
   });
+
+  it("No type error when using interface without index signature", async () => {
+    interface MyData {
+      a: number;
+      b: number;
+    }
+
+    const defaultData: MyData = { a: 1, b: 2 };
+
+    const store = new DataStore({
+      id: "test-interface-without-index-signature",
+      defaultData,
+      formatVersion: 1,
+      engine: new BrowserStorageEngine({ type: "localStorage" }),
+    });
+
+    await store.loadData();
+
+    expect(store.getData().a).toBe(1);
+    expect(store.getData().b).toBe(2);
+
+    await store.setData({ ...store.getData(), a: 42 });
+
+    await store.loadData();
+
+    expect(store.getData().a).toBe(42);
+    expect(store.getData().b).toBe(2);
+
+    // restore initial state:
+    await store.deleteData();
+  });
 });
