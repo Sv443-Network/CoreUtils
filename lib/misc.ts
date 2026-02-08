@@ -56,10 +56,8 @@ export type FetchAdvancedOpts = Prettify<
 
 /** Calls the fetch API with special options like a timeout */
 export async function fetchAdvanced(input: string | RequestInfo | URL, options: FetchAdvancedOpts = {}): Promise<Response> {
-  const { timeout = 10000 } = options;
+  const { timeout = 10000, signal, ...restOpts } = options;
   const ctl = new AbortController();
-
-  const { signal, ...restOpts } = options;
 
   signal?.addEventListener("abort", () => ctl.abort());
 
