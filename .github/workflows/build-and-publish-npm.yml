@@ -17,7 +17,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [24.x]
+        node-version: [22.x]
 
     permissions:
       contents: write # For pushing Git tags and creating releases
@@ -81,4 +81,3 @@ jobs:
           title: ${{ env.PR_TITLE }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
