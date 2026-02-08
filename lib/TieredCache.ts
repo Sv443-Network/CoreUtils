@@ -107,7 +107,7 @@ export class TieredCache<TData extends DataStoreData> extends NanoEmitter<Tiered
         id: `__tc-${this.options.id}-${i}`,
         // TODO:
         formatVersion: 1,
-        defaultData: {},
+        defaultData: {} as TData,
         engine: typeof tierOpts.engine === "function" ? tierOpts.engine() : tierOpts.engine,
         ...(typeof tierOpts.compressionFormat === "string" ? {
           encodeData: (data: string) => compress(data, tierOpts.compressionFormat!, "string"),
