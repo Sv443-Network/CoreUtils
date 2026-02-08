@@ -89,5 +89,8 @@
     "/README.md",
     "/CHANGELOG.md",
     "/LICENSE.txt"
-  ]
+  ],
+  "publishConfig": {
+    "provenance": true
+  }
 }
