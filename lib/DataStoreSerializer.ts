@@ -105,7 +105,7 @@ export class DataStoreSerializer {
     const filteredStores = this.stores.filter(s => typeof stores === "function" ? stores(s.id) : stores.includes(s.id));
     for(const storeInst of filteredStores) {
       const encoded = Boolean(useEncoding && storeInst.encodingEnabled() && storeInst.encodeData?.[1]);
-      const rawData = storeInst.memoryCache ? storeInst.getData() : await storeInst.loadData();
+      const rawData = storeInst.memoryCache ? (storeInst as DataStore<{}, true>).getData() : await storeInst.loadData();
       const data = encoded
         ? await storeInst.encodeData![1](JSON.stringify(rawData))
         : JSON.stringify(rawData);
