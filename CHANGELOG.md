@@ -1,5 +1,11 @@
 # @sv443-network/coreutils
 
+## 3.0.5
+
+### Patch Changes
+
+- bb69014: Made `DataStore.getData()` unavailable at the type level when `memoryCache` is set to `false`.
+
 ## 3.0.4
 
 ### Patch Changes
