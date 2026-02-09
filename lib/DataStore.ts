@@ -22,7 +22,7 @@ export type EncodeTuple = [format: LooseUnion<CompressionFormat> | null, encode:
 export type DecodeTuple = [format: LooseUnion<CompressionFormat> | null, decode: (data: string) => string | Promise<string>];
 
 /** Options for the DataStore instance */
-export type DataStoreOptions<TData extends DataStoreData> = Prettify<
+export type DataStoreOptions<TData extends DataStoreData, TMemCache extends boolean = true> = Prettify<
   & {
     /**
      * A unique internal ID for this data store.  
@@ -69,10 +69,10 @@ export type DataStoreOptions<TData extends DataStoreData> = Prettify<
     /**
      * Whether to keep a copy of the data in memory for synchronous read access. Defaults to `true`.  
      *   
-     * - ⚠️ If turned off, {@linkcode DataStore.getData()} will throw an error and only {@linkcode DataStore.loadData()} can be used to access the data.  
+     * - ⚠️ If turned off, {@linkcode DataStore.getData()} will be unavailable at the type level and only {@linkcode DataStore.loadData()} can be used to access the data.  
      *   This may be useful if multiple sources are modifying the data, or the data is very large and you want to save memory, but it will make accessing the data slower, especially when combined with compression.
      */
-    memoryCache?: boolean;
+    memoryCache?: TMemCache;
   }
   & (
     // make sure that encodeData and decodeData are *both* either defined or undefined
@@ -137,16 +137,16 @@ const dsFmtVer = 1;
  * @template TData The type of the data that is saved in persistent storage for the currently set format version  
  * (TODO:FIXME: will be automatically inferred from `defaultData` if not provided)
  */
-export class DataStore<TData extends DataStoreData> {
+export class DataStore<TData extends DataStoreData, TMemCache extends boolean = true> {
   public readonly id: string;
   public readonly formatVersion: number;
   public readonly defaultData: TData;
   public readonly encodeData: DataStoreOptions<TData>["encodeData"];
   public readonly decodeData: DataStoreOptions<TData>["decodeData"];
   public readonly compressionFormat: Exclude<DataStoreOptions<TData>["compressionFormat"], undefined> = "deflate-raw";
-  public readonly memoryCache: boolean = true;
+  public readonly memoryCache: TMemCache;
   public readonly engine: DataStoreEngine;
-  public options: DataStoreOptions<TData>;
+  public options: DataStoreOptions<TData, TMemCache>;
 
   /**
    * Whether all first-init checks should be done.  
@@ -171,11 +171,11 @@ export class DataStore<TData extends DataStoreData> {
    * @template TData The type of the data that is saved in persistent storage for the currently set format version (will be automatically inferred from `defaultData` if not provided) - **This has to be a JSON-compatible object!** (no undefined, circular references, etc.)
    * @param opts The options for this DataStore instance
    */
-  constructor(opts: DataStoreOptions<TData>) {
+  constructor(opts: DataStoreOptions<TData, TMemCache>) {
     this.id = opts.id;
     this.formatVersion = opts.formatVersion;
     this.defaultData = opts.defaultData;
-    this.memoryCache = Boolean(opts.memoryCache ?? true);
+    this.memoryCache = (opts.memoryCache ?? true) as TMemCache;
     this.cachedData = this.memoryCache ? opts.defaultData : {} as TData;
     this.migrations = opts.migrations;
     if(opts.migrateIds)
@@ -314,9 +314,9 @@ export class DataStore<TData extends DataStoreData> {
   /**
    * Returns a copy of the data from the in-memory cache.  
    * Use {@linkcode loadData()} to get fresh data from persistent storage (usually not necessary since the cache should always exactly reflect persistent storage).  
-   * ⚠️ If `memoryCache` was set to `false` in the constructor options, this method will throw an error.
+   * ⚠️ Only available when `memoryCache` is `true` (default). When set to `false`, this produces a type and runtime error - use {@linkcode loadData()} instead.
    */
-  public getData(): TData {
+  public getData(this: DataStore<TData, true>): TData {
     if(!this.memoryCache)
       throw new DatedError("In-memory cache is disabled for this DataStore instance, so getData() can't be used. Please use loadData() instead.");
 
@@ -409,7 +409,7 @@ export class DataStore<TData extends DataStoreData> {
             throw new MigrationError(`Error while running migration function for format version '${fmtVer}'`, { cause: err });
 
           await this.saveDefaultData();
-          return this.getData();
+          return this.engine.deepCopy(this.defaultData);
         }
       }
     }

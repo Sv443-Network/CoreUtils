@@ -344,8 +344,9 @@ describe("DataStore", () => {
     // should default to {} if memoryCache is disabled:
     expect(Object.keys(store.direct_getMemData()).length).toBe(0);
 
-    // should throw:
+    // should throw (and is a type error when memoryCache is false):
     expect(() => {
+      // @ts-expect-error - getData() is unavailable when memoryCache is false
       store.getData();
     }).toThrow();
   });

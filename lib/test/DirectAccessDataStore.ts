@@ -4,7 +4,7 @@ import type { SerializableVal } from "../types.ts";
 /**
  * A DataStore wrapper subclass that exposes internal methods for testing via the `direct_` prefixed methods.
  */
-export class DirectAccessDataStore<TData extends DataStoreData> extends DataStore<TData> {
+export class DirectAccessDataStore<TData extends DataStoreData, TMemCache extends boolean = true> extends DataStore<TData, TMemCache> {
   public async direct_getValue<TValue extends SerializableVal = string>(name: string, defaultValue: TValue): Promise<string | TValue> {
     return await this.engine.getValue(name, defaultValue);
   }

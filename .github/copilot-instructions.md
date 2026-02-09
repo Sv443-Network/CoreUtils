@@ -11,6 +11,7 @@ It is built with tsup, released with GitHub Actions and Changesets, tested with 
 
 - Write code that is a tad on the denser side, but still readable and self-explanatory. Avoid excessive verbosity.
 - Use modern (<=ES2024) features where appropriate, but avoid features that aren't in the browser baseline yet.
+- Depending on the type of change (major, minor, patch), a changeset file needs to be created.
 - Don't add comments for the sake of comments. Code should be self-explanatory and comments reserved for explaining the WHY.
 - Don't give up on a problem and suggest adding a `// TODO: fix` comment. Realize dead ends and think about solutions or alternatives.
 - Respect the existing code style and the linter rules at `eslint.config.mjs` and `tsconfig.json`.

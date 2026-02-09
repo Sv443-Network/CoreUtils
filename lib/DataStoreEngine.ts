@@ -11,7 +11,7 @@ import type { Prettify, SerializableVal } from "./types.ts";
 //#region >> DataStoreEngine
 
 /** Contains the only properties of {@linkcode DataStoreOptions} that are relevant to the {@linkcode DataStoreEngine} class. */
-export type DataStoreEngineDSOptions<TData extends DataStoreData = DataStoreData> = Prettify<Pick<DataStoreOptions<TData>, "decodeData" | "encodeData" | "id">>;
+export type DataStoreEngineDSOptions<TData extends DataStoreData = DataStoreData> = Prettify<Pick<DataStoreOptions<TData, boolean>, "decodeData" | "encodeData" | "id">>;
 
 export interface DataStoreEngine<TData extends DataStoreData = DataStoreData> { // eslint-disable-line @typescript-eslint/no-unused-vars
   /** Deletes all data in persistent storage, including the data container itself (e.g. a file or a database) */

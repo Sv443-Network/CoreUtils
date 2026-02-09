@@ -406,7 +406,7 @@ Signature:
 function abtoa(buf: Uint8Array): string;
 ```
   
-Converts an ArrayBuffer (Uint8Array) to a base64-encoded (ASCII) string.  
+Converts an [ArrayBuffer](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer) ([Uint8Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array)) to a base64-encoded (ASCII) string.  
 Used to encode a value to be later decoded with the [`atoab()` function](#function-atoab).  
   
 <details><summary>Example - click to view</summary>
@@ -430,7 +430,7 @@ Signature:
 function atoab(str: string): Uint8Array;
 ```
   
-Converts a base64-encoded (ASCII) string to an ArrayBuffer (Uint8Array).  
+Converts a base64-encoded (ASCII) string to an [ArrayBuffer](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer) ([Uint8Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array)).  
 Used to decode a value previously encoded with the [`abtoa()` function](#function-abtoa).  
   
 <details><summary>Example - click to view</summary>
@@ -452,10 +452,10 @@ Signature:
 function compress(input: Stringifiable | Uint8Array, compressionFormat: CompressionFormat, outputType: "string" | "arrayBuffer" = "string"): Promise<Uint8Array | string>;
 ```
   
-Compresses the given string or ArrayBuffer (Uint8Array) using the given algorithm and encoding.  
-The `input` argument can be a [`Stringifiable`](#type-stringifiable) object or an ArrayBuffer (Uint8Array).  
+[Compresses](https://en.wikipedia.org/wiki/Data_compression) the given string or [ArrayBuffer](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer) ([Uint8Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array)) using the given algorithm and encoding.  
+The `input` argument can be a [`Stringifiable`](#type-stringifiable) object or an [ArrayBuffer](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer) ([Uint8Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array)).  
 The `compressionFormat` argument can usually be either `gzip`, `deflate` or `deflate-raw`.  
-The `outputType` argument determines if the returned value should be a base64-encoded string or an ArrayBuffer (Uint8Array).  
+The `outputType` argument determines if the returned value should be a base64-encoded string or an [ArrayBuffer](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer) (Uint8Array).  
   
 <details><summary>Example - click to view</summary>
 
@@ -479,10 +479,10 @@ Signature:
 function decompress(input: Stringifiable | Uint8Array, compressionFormat: CompressionFormat, outputType: "string" | "arrayBuffer" = "string"): Promise<Uint8Array | string>;
 ```
   
-Decompresses the previously compressed string or ArrayBuffer (Uint8Array) using the given algorithm and encoding.  
-The `input` argument can be a [`Stringifiable`](#type-stringifiable) object or an ArrayBuffer (Uint8Array).  
+[Decompresses](https://en.wikipedia.org/wiki/Data_compression) the previously compressed string or [ArrayBuffer](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer) ([Uint8Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array)) using the given algorithm and encoding.  
+The `input` argument can be a [`Stringifiable`](#type-stringifiable) object or an [ArrayBuffer](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer) ([Uint8Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array)).  
 The `compressionFormat` argument can usually be either `gzip`, `deflate` or `deflate-raw`.  
-The `outputType` argument determines if the returned value should be a base64-encoded string or an ArrayBuffer (Uint8Array).  
+The `outputType` argument determines if the returned value should be a base64-encoded string or an [ArrayBuffer](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer) ([Uint8Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array)).  
   
 <details><summary>Example - click to view</summary>
 
@@ -506,7 +506,7 @@ Signature:
 function computeHash(input: string | Uint8Array, algorithm = "SHA-256"): Promise<string>;
 ```
   
-Creates a hash / checksum of the given string or ArrayBuffer (Uint8Array) using the specified algorithm ("SHA-256" by default).  
+Creates a hash / checksum of the given string or [ArrayBuffer](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer) ([Uint8Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array)) using the specified algorithm ("SHA-256" by default).  
   
 - ⚠️ Uses the SubtleCrypto API so in a DOM environment this needs to run in a secure context (HTTPS).
 - ⚠️ If you use this for cryptography, make sure to use a secure algorithm (under no circumstances use SHA-1) and to [salt your input.](https://en.wikipedia.org/wiki/Salt_(cryptography))
@@ -688,7 +688,7 @@ export const manager = new DataStore({
   migrateIds: ["my-data", "config"],
   /**
    * Set this to false to disable the in-memory cache, in case of large amounts of less frequently accessed data.
-   * This will also make `getData()` always throw an error. Use `loadData()` instead, which will always fetch the data from persistent storage.
+   * This will also make `getData()` unavailable at the type level and throw an error when called. Use `loadData()` instead, which will always fetch the data from persistent storage.
    */
   memoryCache: true,
 
@@ -748,11 +748,12 @@ Then, if the `formatVersion` of the saved data is lower than the current one and
 ### `DataStore.getData()`
 Signature:
 ```ts
-getData(): TData;
+getData(this: DataStore<TData, true>): TData;
 ```
   
 Synchronously returns the current data that is stored in the internal cache.  
-If no data was loaded from persistent storage yet using `loadData()`, the value of `options.defaultData` will be returned.
+If no data was loaded from persistent storage yet using `loadData()`, the value of `options.defaultData` will be returned.  
+⚠️ Only available when `memoryCache` is `true` (the default). When `memoryCache` is set to `false`, calling this method throws an error — use `loadData()` instead.
 
 <br>
 
@@ -834,8 +835,8 @@ It has the following properties:
 | `engine` | [`DataStoreEngine \| () => DataStoreEngine`](#storage-engines) | Either a storage engine instance or a function that creates and returns a new storage engine instance. The engine implements the API used to persist all key-value pairs. See the [Storage Engines section.](#storage-engines) |
 | `migrations?` | [`DataMigrationsDict`](#type-datamigrationsdict) | (Optional) A dictionary of functions that can be used to migrate data from older versions of the data to newer ones. The keys of the dictionary should be the format version number that the function migrates to, from the previous whole integer value. The values should be functions that take the data in the old format and return the data in the new format. The functions will be run in order from the oldest to the newest version. If the current format version is not in the dictionary, no migrations will be run. |
 | `migrateIds?` | `string \| string[]` | (Optional) A string or array of strings that migrate from one or more old IDs to the ID set in the constructor. If no data exist for the old ID(s), nothing will be done, but some time may still pass trying to fetch the non-existent data. The ID migration will be done once per session in the call to [`loadData()`](#datastoreloaddata). |
-| `memoryCache?` | `boolean` | (Optional, default: `true`) If set to `false`, the in-memory cache will be disabled. This means that `getData()` will always throw an error and the data needs to be loaded from persistent storage using `loadData()`. This may be useful if the data is very large and you want to save memory, but it will make accessing the data slower, especially when combined with compression. |
-| `compressionFormat?` | [`CompressionFormat`](https://developer.mozilla.org/en-US/docs/Web/API/CompressionStream/CompressionStream#format) \| `null` | (Optional, disallowed when `encodeData` and `decodeData` are set) The compression format to use when saving the data. If set, the data will be compressed before saving and decompressed after loading. The default is `"deflate-raw"`. Explicitly set to `null` to disable compression. |
+| `memoryCache?` | `boolean` | (Optional, default: `true`) If set to `false`, the in-memory cache will be disabled and `getData()` will produce a type and runtime error. The data then needs to be loaded from persistent storage using `loadData()` instead. This may be useful if the dataset is very large and you want to save memory, but it will also make accessing the data asynchronous and a bit slower (especially when combined with compression). |
+| `compressionFormat?` | [`CompressionFormat`](https://developer.mozilla.org/en-US/docs/Web/API/CompressionStream/CompressionStream#format) \| `null` | (Optional, disallowed when `encodeData` and `decodeData` are set) The compression format to use when saving the data. If set, the data will be [compressed](#function-compress) before saving and [decompressed](#function-decompress) after loading. The default is `"deflate-raw"`. Explicitly set to `null` to disable compression. |
 | `encodeData?` | `[format: string, encode: (data: string) => string \| Promise<string>]` | (Optional, but required when `decodeData` is also set and disallowed when `compressionFormat` is set) Tuple of format identifier and function that encodes the data before saving - you can use [`compress()`](#function-compress) here to save space at the cost of a little bit of performance |
 | `decodeData?` | `[format: string, decode: (data: string) => string \| Promise<string>]` | (Optional, but required when `encodeData` is also set and disallowed when `compressionFormat` is set) Tuple of format identifier and function that decodes the data when loading - you can use [`decompress()`](#function-decompress) here to decode the data that was previously compressed with [compress()](#function-compress) |
 
