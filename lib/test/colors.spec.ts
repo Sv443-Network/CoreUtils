@@ -62,6 +62,9 @@ describe("colors/lightenColor", () => {
   it("Handles edge cases", () => {
     expect(() => lightenColor("z", 50)).toThrowError(TypeError);
     expect(() => lightenColor("rgbz", 50)).toThrowError(TypeError);
+    // @ts-expect-error
+    expect(() => lightenColor(undefined, 20)).toThrowError(TypeError);
+    expect(() => lightenColor(String(Infinity), 20)).toThrowError(TypeError);
   });
 });
 

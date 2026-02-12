@@ -97,13 +97,29 @@ describe("misc/pureObj", () => {
     const obj = { a: 1, b: 2 };
     const pure = pureObj(obj);
 
-    // @ts-expect-error
+    // @ts-expect-error sanity check
     expect(obj.__proto__).toBeDefined();
-    // @ts-expect-error
+    // @ts-expect-error the pure object should have no prototype
     expect(pure.__proto__).toBeUndefined();
 
     expect(pure.a).toBe(1);
     expect(pure.b).toBe(2);
+  });
+
+  it("Prevents prototype pollution", () => {
+    const obj = {
+      __proto__: { isPolluted: true },
+    };
+
+    // @ts-expect-error ensure there's no side effects
+    expect({}.isPolluted).toBeUndefined();
+
+    const impure = Object.create(obj);
+    expect(impure.isPolluted).toBe(true);
+
+    const pure = pureObj(obj);
+    // @ts-expect-error ensure the prototype chain is removed
+    expect(pure.isPolluted).toBeUndefined();
   });
 });
 
