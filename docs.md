@@ -163,7 +163,7 @@ Signature:
 randomItem<TItem = unknown>(array: TItem[]): TItem | undefined;
 ```
   
-Returns a random item from the given array.  
+Returns a random item from the given array. Does not mutate the original array.  
 If the array is empty, `undefined` will be returned.  
   
 <details><summary>Example - click to view</summary>
@@ -188,7 +188,7 @@ Signature:
 randomItemIndex<TItem = unknown>(array: TItem[]): [item?: TItem, index?: number];
 ```
   
-Returns a random item and its index as a tuple from the given array.  
+Returns a random item and its index as a tuple from the given array. Does not mutate the original array.  
 If the array is empty, `undefined` will be returned for both values.  
   
 <details><summary>Example - click to view</summary>
@@ -214,7 +214,7 @@ Signature:
 randomizeArray<TItem = unknown>(array: TItem[]): TItem[]
 ```
   
-Returns a new array with the items in random order.  
+Returns a copy of the given array with the items in random order.  
 Doesn't mutate the original array.  
   
 <details><summary>Example - click to view</summary>
@@ -224,8 +224,9 @@ import { randomizeArray } from "@sv443-network/coreutils";
 
 const arr = ["foo", "bar", "baz"];
 
-const randomized = randomizeArray(arr);
-console.log(randomized); // ["baz", "foo", "bar"]
+console.log(randomizeArray(arr)); // ["baz", "foo", "bar"]
+console.log(randomizeArray(arr)); // ["bar", "baz", "foo"]
+// ...
 ```
 </details>
 
@@ -237,7 +238,7 @@ Signature:
 takeRandomItem<TItem = unknown>(arr: TItem[]): TItem | undefined;
 ```
   
-Returns a random item from the given array and mutates the original array to remove it.  
+Returns a random item from the given array and **mutates the original array** to remove it.  
 If the array is empty, `undefined` will be returned.  
   
 <details><summary>Example - click to view</summary>
@@ -269,7 +270,7 @@ Signature:
 takeRandomItemIndex<TItem = unknown>(arr: TItem[]): [item?: TItem, index?: number];
 ```
   
-Returns a random item and its original index as a tuple from the given array and mutates the original array to remove it.  
+Returns a random item and its original index as a tuple from the given array and **mutates the original array** to remove it.  
 If the array is empty, `undefined` will be returned for both values.  
   
 <details><summary>Example - click to view</summary>
@@ -279,15 +280,27 @@ import { takeRandomItemIndex } from "@sv443-network/coreutils";
 
 const arr = ["foo", "bar", "baz"];
 
-while([itm, idx] = takeRandomItemIndex(arr), itm !== undefined) {
-  console.log(idx, itm, arr);
+// iterate over all items and indexes in random order and mutate the array to remove them:
+while(
+  // assign values...
+  [itm, idx] = takeRandomItemIndex(arr),
+  // ...until array is empty
+  itm !== undefined
+) {
+  // log values
+  console.log(`#${idx}: ${itm} - ${JSON.stringify(arr)}`);
 }
 
 // Logs:
-// 1 "bar" ["foo", "baz"]
-// 1 "baz" ["foo"]
-// 0 "foo" []
+// 1: "bar" - ["foo", "baz"]
+// 1: "baz" - ["foo"]
+// 0: "foo" - []
 
+// note how the indexes aren't unique, because as the array is mutated and
+// items are removed, the rest get shifted to the left
+
+
+// only returns undefined when the array is empty:
 console.log(takeRandomItemIndex(arr)); // [undefined, undefined]
 console.log(arr); // []
 ```
@@ -318,16 +331,18 @@ Throws if the color format is invalid or not supported.
 ```ts
 import { darkenColor } from "@sv443-network/coreutils";
 
-darkenColor("#1affe3", 20);                   // #15ccb6
-darkenColor("#1affe3", 20, true);             // #15CCB6
+darkenColor("#1affe3", 20);                 // #15ccb6
+darkenColor("#1affe3", 20, true);           // #15CCB6
 darkenColor("1affe369", 20);                  // 15ccb669
 darkenColor("rgb(26, 255, 227)", 20);       // rgb(20.8, 204, 181.6)
 darkenColor("rgba(26, 255, 227, 0.2)", 20); // rgba(20.8, 204, 181.6, 0.2)
 
-// invalid:
-darkenColor("#1affe3");    // #nannannan
-// @ts-expect-error
-darkenColor("rgba()", 20); // TypeError: Invalid RGB/RGBA color format
+// @ts-expect-error non-numbers and invalid numbers throw:
+darkenColor(undefined, 20);        // TypeError: Unsupported color format
+darkenColor(String(Infinity), 20); // TypeError: Unsupported color format
+
+// @ts-expect-error invalid formats throw:
+darkenColor("rgba()", 20);         // TypeError: Invalid RGB/RGBA color format
 ```
 </details>
 
@@ -348,9 +363,9 @@ R, G and B will be an integer in the range `0-255` and alpha is a float in the r
 import { hexToRgb } from "@sv443-network/coreutils";
 
 console.log(hexToRgb("#1affe3"));   // [ 26, 255, 227, undefined ]
-console.log(hexToRgb("1234"));      // [ 17, 34, 51, 0.26666666666666666 ]
+console.log(hexToRgb("1234"));        // [ 17,  34,  51, 0.26666666666666666 ]
 console.log(hexToRgb("#1affe369")); // [ 26, 255, 227, 0.4117647058823529 ]
-console.log(hexToRgb(""));          // [ 0, 0, 0, undefined ]
+console.log(hexToRgb(""));            // [  0,   0,   0, undefined ]
 ```
 </details>
 
@@ -414,9 +429,14 @@ Used to encode a value to be later decoded with the [`atoab()` function](#functi
 ```ts
 import { abtoa } from "@sv443-network/coreutils";
 
+// create ArrayBuffer and Uint8Array view:
 const buffer = new ArrayBuffer(8);
 const view = new Uint8Array(buffer);
+
+// fill with some data:
 view.set([1, 2, 3, 4, 5, 6, 7, 8]);
+
+// convert to base64 string:
 const base64 = abtoa(view);
 console.log(base64); // AQIDBAUGBwg=
 ```
@@ -2619,34 +2639,48 @@ pureObj<TObj extends object>(obj?: TObj): TObj
 ```
   
 Turns the passed object into a "pure" object without a prototype chain, meaning it won't have any default properties like `toString`, `__proto__`, `__defineGetter__`, etc.  
-This could be useful to prevent prototype pollution attacks or to clean up object literals, at the cost of being harder to work with in some cases.  
-Returns an empty, pure object if no object is passed.  
-It also effectively transforms a [`Stringifiable`](#type-stringifiable) value into one that will throw a TypeError when stringified instead of defaulting to `[object Object]`  
+Returns a pure object without any properties if no object is passed.  
+This could be useful to prevent prototype pollution attacks or to clean up object literals, at the cost of being a tad harder to work with in some cases.  
+It also effectively transforms a [`Stringifiable`](#type-stringifiable) value into one that will throw a runtime error when stringified instead of defaulting to `[object Object]`  
   
 <details><summary><b>Example - click to view</b></summary>
 
 ```ts
 import { pureObj } from "@sv443-network/coreutils";
 
-const impureObj = { foo: "bar" };
-
-console.log(impureObj.toString);         // [Function: toString]
-console.log(impureObj.__proto__);        // { ... }
-console.log(impureObj.__defineGetter__); // [Function: __defineGetter__]
-console.log(`${impureObj}`);             // "[object Object]"
-
-const pureObj = pureObj(impureObj);
-
-console.log(pureObj.toString);         // undefined
-console.log(pureObj.__proto__);        // undefined
-console.log(pureObj.__defineGetter__); // undefined
-// @ts-expect-error
-console.log(`${pureObj}`);             // TypeError: Cannot convert object to string
-
+// creates a fully empty object when called without arguments:
 const emptyObj = pureObj();
 
 console.log(emptyObj);          // {}
 console.log(emptyObj.toString); // undefined
+
+// ...but you can also pass an impure object to clean it up:
+const impureObj = { foo: "bar" };
+
+// regularly defined objects have a prototype chain with default properties:
+console.log(impureObj.__proto__);        // { ... }
+console.log(impureObj.__defineGetter__); // [Function: __defineGetter__]
+
+// this is also what allows for implicit stringification:
+console.log(impureObj.toString); // [Function: toString]
+console.log(`${impureObj}`);     // "[object Object]"
+
+// but after passing it through pureObj(), it becomes a pure object without a prototype chain:
+const pureObj = pureObj(impureObj);
+
+console.log(pureObj.__proto__);        // undefined
+console.log(pureObj.__defineGetter__); // undefined
+console.log(pureObj.toString);         // undefined
+
+// @ts-expect-error pure objects are also not implicitly stringifiable:
+console.log(`${pureObj}`); // TypeError: Cannot convert object to string
+
+// ...until the toString() method is manually implemented:
+pureObj.toString = function() {
+  // (use an ES5 function for `this` context)
+  return `[foo: ${this.foo}]`;
+}
+console.log(`${pureObj}`); // "[foo: bar]"
 ```
 </details>
 
