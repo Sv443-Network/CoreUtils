@@ -268,7 +268,7 @@ export class DataStore<TData extends DataStoreData, TMemCache extends boolean = 
       let storedFmtVer = Number(await this.engine.getValue(`__ds-${this.id}-ver`, NaN));
 
       // save default if no data is found
-      if(typeof storedDataRaw !== "string") {
+      if((typeof storedDataRaw !== "string" && typeof storedDataRaw !== "object") || storedDataRaw === null || isNaN(storedFmtVer)) {
         await this.saveDefaultData();
         return this.engine.deepCopy(this.defaultData);
       }
