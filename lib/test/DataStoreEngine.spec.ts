@@ -52,6 +52,48 @@ describe("FileStorageEngine", () => {
     catch {}
   });
 
+  //#region object format
+
+  it("Stores JSON objects directly in file and reads legacy string format", async () => {
+    const { readFile: fsRead, writeFile: fsWrite } = await import("node:fs/promises");
+    const filePath = "./.test-data-obj-format";
+
+    const engine = new FileStorageEngine({
+      filePath,
+      dataStoreOptions: { id: "test-obj-fmt" },
+    });
+
+    await engine.setValue("myData", '{"x":1,"y":2}');
+    await engine.setValue("plainStr", "hello");
+    await engine.setValue("num", 42);
+
+    // verify raw file stores objects directly, not double-serialized as strings
+    const raw = JSON.parse(await fsRead(filePath, "utf-8"));
+    expect(typeof raw.myData).toBe("object");
+    expect(raw.myData).toEqual({ x: 1, y: 2 });
+    expect(raw.plainStr).toBe("hello");
+    expect(raw.num).toBe(42);
+
+    // getValue should re-serialize objects back to strings for callers
+    expect(await engine.getValue("myData", "default")).toBe('{"x":1,"y":2}');
+    expect(await engine.getValue("plainStr", "default")).toBe("hello");
+    expect(await engine.getValue("num", "default")).toBe(42);
+
+    // backward compat: manually write file in legacy format (data as string)
+    await fsWrite(filePath, JSON.stringify({
+      myData: '{"x":1,"y":2}',
+      plainStr: "hello",
+      num: 42,
+    }), "utf-8");
+
+    // should still read correctly from the legacy format
+    expect(await engine.getValue("myData", "default")).toBe('{"x":1,"y":2}');
+    expect(await engine.getValue("plainStr", "default")).toBe("hello");
+    expect(await engine.getValue("num", "default")).toBe(42);
+
+    await engine.deleteStorage();
+  });
+
   //#region w/o structuredClone
 
   it("Use JSON reserialize when structuredClone is not available", async () => {

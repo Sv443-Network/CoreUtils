@@ -252,5 +252,5 @@ describe("NanoEmitter onMulti", () => {
 
     evts.emit("val1", 1);
     expect(cbVal).toBe(-1);
-  })
+  });
 });

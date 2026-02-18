@@ -264,6 +264,9 @@ export class FileStorageEngine<TData extends DataStoreData = DataStoreData> exte
     const value = data?.[name as keyof TData];
     if(typeof value === "undefined")
       return defaultValue;
+    // re-serialize stored objects back to JSON strings for backward compat with callers expecting strings
+    if(typeof value === "object" && value !== null)
+      return JSON.stringify(value);
     if(typeof value === "string")
       return value;
     return value as unknown as TValue;
@@ -276,7 +279,17 @@ export class FileStorageEngine<TData extends DataStoreData = DataStoreData> exte
       let data = await this.readFile() as TData | undefined;
       if(!data)
         data = {} as TData;
-      data[name as keyof TData] = value as unknown as TData[keyof TData];
+      // store JSON-parseable objects/arrays directly for human-readable files
+      let storeVal: unknown = value;
+      if(typeof value === "string") {
+        try {
+          const parsed = JSON.parse(value);
+          if(typeof parsed === "object" && parsed !== null)
+            storeVal = parsed;
+        }
+        catch { void 0; }
+      }
+      data[name as keyof TData] = storeVal as TData[keyof TData];
       await this.writeFile(data);
     }).catch((err) => {
       console.error("Error in setValue:", err);
