@@ -1,5 +1,11 @@
 # @sv443-network/coreutils
 
+## 3.0.7
+
+### Patch Changes
+
+- d40d50b: Fix DataStore defaultData initialization when data is in unexpected format.
+
 ## 3.0.6
 
 ### Patch Changes
