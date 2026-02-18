@@ -1567,6 +1567,7 @@ Storage engine for the [`DataStore` class](#class-datastore) that uses a file to
   
 - ⚠️ Requires Node.js or Deno with Node compatibility (v1.31+)  
 - ⚠️ Don't reuse engines across multiple [`DataStore`](#class-datastore) instances  
+- ⚠️ As of version 3.0.6, this engine saves unencoded data as a JSON object, allowing for easier readability and modification of the stored data. Previously saved stringified data can still be loaded fine and will be automatically migrated to the new format when `DataStore.setData()` is called.
   
 <details><summary>Example - click to view</summary>
 

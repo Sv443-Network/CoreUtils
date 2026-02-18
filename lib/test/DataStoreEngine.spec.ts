@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { access } from "node:fs/promises";
+import { access, readFile, writeFile } from "node:fs/promises";
 import { FileStorageEngine } from "../DataStoreEngine.ts";
 import { DatedError } from "../Errors.ts";
 import { DataStore } from "../DataStore.ts";
@@ -55,7 +55,6 @@ describe("FileStorageEngine", () => {
   //#region object format
 
   it("Stores JSON objects directly in file and reads legacy string format", async () => {
-    const { readFile: fsRead, writeFile: fsWrite } = await import("node:fs/promises");
     const filePath = "./.test-data-obj-format";
 
     const engine = new FileStorageEngine({
@@ -63,35 +62,42 @@ describe("FileStorageEngine", () => {
       dataStoreOptions: { id: "test-obj-fmt" },
     });
 
-    await engine.setValue("myData", '{"x":1,"y":2}');
-    await engine.setValue("plainStr", "hello");
-    await engine.setValue("num", 42);
+    try {
+      await engine.setValue("myData", '{"x":1,"y":2}');
+      await engine.setValue("plainStr", "hello");
+      await engine.setValue("num", 42);
 
-    // verify raw file stores objects directly, not double-serialized as strings
-    const raw = JSON.parse(await fsRead(filePath, "utf-8"));
-    expect(typeof raw.myData).toBe("object");
-    expect(raw.myData).toEqual({ x: 1, y: 2 });
-    expect(raw.plainStr).toBe("hello");
-    expect(raw.num).toBe(42);
+      // verify raw file stores objects directly, not double-serialized as strings
+      const raw = JSON.parse(await readFile(filePath, "utf-8"));
+      expect(typeof raw.myData).toBe("object");
+      expect(raw.myData).toEqual({ x: 1, y: 2 });
+      expect(raw.plainStr).toBe("hello");
+      expect(raw.num).toBe(42);
 
-    // getValue should re-serialize objects back to strings for callers
-    expect(await engine.getValue("myData", "default")).toBe('{"x":1,"y":2}');
-    expect(await engine.getValue("plainStr", "default")).toBe("hello");
-    expect(await engine.getValue("num", "default")).toBe(42);
+      // getValue should re-serialize objects back to strings for callers
+      expect(await engine.getValue("myData", "default")).toBe('{"x":1,"y":2}');
+      expect(await engine.getValue("plainStr", "default")).toBe("hello");
+      expect(await engine.getValue("num", NaN)).toBe(42);
 
-    // backward compat: manually write file in legacy format (data as string)
-    await fsWrite(filePath, JSON.stringify({
-      myData: '{"x":1,"y":2}',
-      plainStr: "hello",
-      num: 42,
-    }), "utf-8");
+      // backward compat: manually write file in legacy format (data as string)
+      await writeFile(filePath, JSON.stringify({
+        myData: '{"x":1,"y":2}',
+        plainStr: "hello",
+        num: 42,
+      }), "utf-8");
 
-    // should still read correctly from the legacy format
-    expect(await engine.getValue("myData", "default")).toBe('{"x":1,"y":2}');
-    expect(await engine.getValue("plainStr", "default")).toBe("hello");
-    expect(await engine.getValue("num", "default")).toBe(42);
-
-    await engine.deleteStorage();
+      // should still read correctly from the legacy format
+      expect(await engine.getValue("myData", "default")).toBe('{"x":1,"y":2}');
+      expect(await engine.getValue("plainStr", "default")).toBe("hello");
+      expect(await engine.getValue("num", NaN)).toBe(42);
+    }
+    catch(e) {
+      console.error("Test failed with error:", e);
+      throw e;
+    }
+    finally {
+      await engine.deleteStorage();
+    }
   });
 
   //#region w/o structuredClone
@@ -140,10 +146,10 @@ describe("Full DataStore integration test", () => {
     // __ds-integration-test-uncompressed-enf = null
     // __ds-integration-test-uncompressed-dat = {"a":1,"b":2}
 
-    expect(await storeUncomp.engine.getValue(`__ds_fmt_ver`, "error")).toBe(1);
-    expect(await storeUncomp.engine.getValue(`__ds-${id}-ver`, "error")).toBe(1);
-    expect(await storeUncomp.engine.getValue(`__ds-${id}-enf`, "error")).toBe(null);
-    expect(await storeUncomp.engine.getValue(`__ds-${id}-dat`, "error")).toBe(JSON.stringify(defaultData));
+    expect(await storeUncomp.engine.getValue(`__ds_fmt_ver`,   NaN)).toBe(1);
+    expect(await storeUncomp.engine.getValue(`__ds-${id}-ver`, NaN)).toBe(1);
+    expect(await storeUncomp.engine.getValue(`__ds-${id}-enf`, NaN)).toBe(null);
+    expect(await storeUncomp.engine.getValue(`__ds-${id}-dat`, NaN)).toEqual(defaultData);
 
     const newData = { a: 3, b: 4 };
 

@@ -264,11 +264,27 @@ export class FileStorageEngine<TData extends DataStoreData = DataStoreData> exte
     const value = data?.[name as keyof TData];
     if(typeof value === "undefined")
       return defaultValue;
-    // re-serialize stored objects back to JSON strings for backward compat with callers expecting strings
-    if(typeof value === "object" && value !== null)
-      return JSON.stringify(value);
-    if(typeof value === "string")
-      return value;
+
+    if(typeof defaultValue === "string") {
+      // backward compat: callers expecting strings should get JSON strings for stored objects/arrays
+      if(typeof value === "object" && value !== null)
+        return JSON.stringify(value);
+      if(typeof value === "string")
+        return value;
+      return String(value);
+    }
+
+    if(typeof value === "string") {
+      // legacy compat: try to revive JSON-encoded values when caller expects non-strings
+      try {
+        const parsed = JSON.parse(value);
+        return parsed as TValue;
+      }
+      catch {
+        return defaultValue;
+      }
+    }
+
     return value as unknown as TValue;
   }
 
@@ -283,9 +299,11 @@ export class FileStorageEngine<TData extends DataStoreData = DataStoreData> exte
       let storeVal: unknown = value;
       if(typeof value === "string") {
         try {
-          const parsed = JSON.parse(value);
-          if(typeof parsed === "object" && parsed !== null)
-            storeVal = parsed;
+          if(value.startsWith("{") || value.startsWith("[")) {
+            const parsed = JSON.parse(value);
+            if(typeof parsed === "object" && parsed !== null)
+              storeVal = parsed;
+          }
         }
         catch { void 0; }
       }
