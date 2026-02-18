@@ -1,5 +1,11 @@
 # @sv443-network/coreutils
 
+## 3.0.8
+
+### Patch Changes
+
+- 3a57c81: Fixed initial DataStore deserialization from object.
+
 ## 3.0.7
 
 ### Patch Changes
