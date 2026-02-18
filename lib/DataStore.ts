@@ -287,7 +287,9 @@ export class DataStore<TData extends DataStoreData, TMemCache extends boolean = 
       }
 
       // deserialize the data if needed
-      let parsed = await this.engine.deserializeData(storedData, isEncoded) as TData;
+      let parsed = typeof storedData === "string"
+        ? await this.engine.deserializeData(storedData, isEncoded) as TData
+        : storedData;
 
       // run migrations if needed
       if(storedFmtVer < this.formatVersion && this.migrations)
