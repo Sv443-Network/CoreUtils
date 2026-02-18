@@ -1,5 +1,12 @@
 # @sv443-network/coreutils
 
+## 3.0.6
+
+### Patch Changes
+
+- d17ec25: The `FileStorageEngine` for `DataStore`s now saves unencoded data as a plain object for easier editing.
+  Previously saved stringified data will be loaded fine, but will be saved in the new format on the next save.
+
 ## 3.0.5
 
 ### Patch Changes
