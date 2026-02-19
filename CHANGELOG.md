@@ -1,5 +1,11 @@
 # @sv443-network/coreutils
 
+## 3.1.0
+
+### Minor Changes
+
+- b305ae8: A second parameter of type `DataStoreEngineDSOptions` is now also passed to the `filePath` function property in `FileStorageEngineOptions`, which allows for setting the file path based on encoding options.
+
 ## 3.0.8
 
 ### Patch Changes
