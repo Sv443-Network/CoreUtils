@@ -1,37 +1,65 @@
 import { describe, expect, it } from "vitest";
 import { access, readFile, writeFile } from "node:fs/promises";
-import { FileStorageEngine } from "../DataStoreEngine.ts";
+import { FileStorageEngine, type FileStorageEngineOptions } from "../DataStoreEngine.ts";
 import { DatedError } from "../Errors.ts";
 import { DataStore } from "../DataStore.ts";
+import { compress, decompress } from "../crypto.ts";
 
 describe("FileStorageEngine", () => {
   //#region storage API
 
   it("Storage API works as expected", async () => {
+    const defaultEngineOpts = {
+      filePath: (_id, options) => `./test-data-${options?.id}.${options.encodeData && options.decodeData ? "dat" : "json"}`,
+    } satisfies FileStorageEngineOptions;
+
     const engine = new FileStorageEngine({
-      filePath: "./test-data",
+      ...defaultEngineOpts,
       dataStoreOptions: {
         id: "test",
       },
     });
 
-    await engine.setValue("key", "val");
-
-    expect(await engine.getValue("key", "default")).toBe("val");
-    expect(await engine.getValue("nonexistent", "default")).toBe("default");
-
-    const foo = { bar: 1 };
-    expect(engine.deepCopy(foo)).toEqual(foo);
-    expect(engine.deepCopy(foo) === foo).toBe(false);
-
-    await engine.deleteStorage();
+    const engine2 = new FileStorageEngine({
+      ...defaultEngineOpts,
+      dataStoreOptions: {
+        id: "test2",
+        encodeData: ["deflate-raw", (data) => compress(data, "deflate-raw", "string")],
+        decodeData: ["deflate-raw", (data) => decompress(data, "deflate-raw", "string")],
+      },
+    });
 
     try {
-      await access("./test-data");
-      throw new Error("File should not exist");
+      await engine.setValue("key", "val");
+      await engine2.setValue("key", "val");
+
+      expect(async () => await readFile("./test-data-test.json", "utf-8")).not.toThrow();
+      expect(async () => await readFile("./test-data-test2.dat", "utf-8")).not.toThrow();
+
+      expect(await engine.getValue("key", "default")).toBe("val");
+      expect(await engine.getValue("nonexistent", "default")).toBe("default");
+
+      const foo = { bar: 1 };
+      expect(engine.deepCopy(foo)).toEqual(foo);
+      expect(engine.deepCopy(foo) === foo).toBe(false);
+
+      await engine.deleteStorage();
+
+      try {
+        await access("./test-data");
+        throw new Error("File should not exist");
+      }
+      catch(e) {
+        expect((e as NodeJS.ErrnoException)?.code).toBe("ENOENT");
+      }
     }
     catch(e) {
-      expect((e as NodeJS.ErrnoException)?.code).toBe("ENOENT");
+      console.error("Test failed with error:", e);
+      throw e;
+    }
+    finally {
+      await engine.deleteStorage?.();
+      await engine2.deleteStorage?.();
     }
   });
 

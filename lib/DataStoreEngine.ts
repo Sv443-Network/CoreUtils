@@ -174,7 +174,7 @@ let fs: typeof import("node:fs/promises") | undefined;
 /** Options for the {@linkcode FileStorageEngine} class */
 export type FileStorageEngineOptions = {
   /** Function that returns a string or a plain string that is the data file path, including name and extension. Defaults to `.ds-${dataStoreID}` */
-  filePath?: ((dataStoreID: string) => string) | string;
+  filePath?: ((dataStoreID: string, dataStoreOptions: DataStoreEngineDSOptions<DataStoreData>) => string) | string;
   /**
    * Specifies the necessary options for storing data.  
    * - ⚠️ Only specify this if you are using this instance standalone! The parent DataStore will set this automatically.
@@ -220,7 +220,7 @@ export class FileStorageEngine<TData extends DataStoreData = DataStoreData> exte
 
       const path = typeof this.options.filePath === "string"
         ? this.options.filePath
-        : this.options.filePath(this.dataStoreOptions.id);
+        : this.options.filePath(this.dataStoreOptions.id, this.dataStoreOptions);
       const data = await fs.readFile(path, "utf-8");
 
       return data
@@ -244,7 +244,7 @@ export class FileStorageEngine<TData extends DataStoreData = DataStoreData> exte
 
       const path = typeof this.options.filePath === "string"
         ? this.options.filePath
-        : this.options.filePath(this.dataStoreOptions.id);
+        : this.options.filePath(this.dataStoreOptions.id, this.dataStoreOptions);
 
       await fs.mkdir(path.slice(0, path.lastIndexOf(path.includes("/") ? "/" : "\\")), { recursive: true });
       await fs.writeFile(path, await this.dataStoreOptions?.encodeData?.[1]?.(JSON.stringify(data)) ?? JSON.stringify(data, undefined, 2), "utf-8");
@@ -344,7 +344,7 @@ export class FileStorageEngine<TData extends DataStoreData = DataStoreData> exte
 
       const path = typeof this.options.filePath === "string"
         ? this.options.filePath
-        : this.options.filePath(this.dataStoreOptions.id);
+        : this.options.filePath(this.dataStoreOptions.id, this.dataStoreOptions);
 
       return await fs.unlink(path);
     }
