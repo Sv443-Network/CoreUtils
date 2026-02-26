@@ -623,11 +623,12 @@ Supports automatic migration of outdated data formats via configured migration f
 You may create as many instances as you like as long as they have different IDs.  
 The class' internal methods are all declared as protected, so you can extend this class and override them if you need to add your own functionality.  
   
-For info on the options object, see the [`DataStoreOptions` type.](#type-datastoreoptions)  
+**For info on the options object, see the [`DataStoreOptions` type.](#type-datastoreoptions)**  
   
 Each DataStore instance needs an engine, which is responsible for the actual data storage.  
 To see a list of available engines, see the [Storage Engines section.](#storage-engines)  
 To make your own engine, refer to the [`DataStoreEngine` class.](#class-datastoreengine)  
+The JSON string data stored by the engine is compressed using `deflate-raw` by default, but the algorithm can be changed or compression disabled via the options.  
   
 If you have multiple DataStore instances and you want to be able to easily and safely export and import their data, take a look at the [DataStoreSerializer class.](#class-datastoreserializer)  
 It combines the data of multiple DataStore instances into a single object that can be exported and imported as a whole, including partial imports and exports.  
@@ -856,9 +857,10 @@ It has the following properties:
 | `migrations?` | [`DataMigrationsDict`](#type-datamigrationsdict) | (Optional) A dictionary of functions that can be used to migrate data from older versions of the data to newer ones. The keys of the dictionary should be the format version number that the function migrates to, from the previous whole integer value. The values should be functions that take the data in the old format and return the data in the new format. The functions will be run in order from the oldest to the newest version. If the current format version is not in the dictionary, no migrations will be run. |
 | `migrateIds?` | `string \| string[]` | (Optional) A string or array of strings that migrate from one or more old IDs to the ID set in the constructor. If no data exist for the old ID(s), nothing will be done, but some time may still pass trying to fetch the non-existent data. The ID migration will be done once per session in the call to [`loadData()`](#datastoreloaddata). |
 | `memoryCache?` | `boolean` | (Optional, default: `true`) If set to `false`, the in-memory cache will be disabled and `getData()` will produce a type and runtime error. The data then needs to be loaded from persistent storage using `loadData()` instead. This may be useful if the dataset is very large and you want to save memory, but it will also make accessing the data asynchronous and a bit slower (especially when combined with compression). |
-| `compressionFormat?` | [`CompressionFormat`](https://developer.mozilla.org/en-US/docs/Web/API/CompressionStream/CompressionStream#format) \| `null` | (Optional, disallowed when `encodeData` and `decodeData` are set) The compression format to use when saving the data. If set, the data will be [compressed](#function-compress) before saving and [decompressed](#function-decompress) after loading. The default is `"deflate-raw"`. Explicitly set to `null` to disable compression. |
+| `compressionFormat?` | [`CompressionFormat`](https://developer.mozilla.org/en-US/docs/Web/API/CompressionStream/CompressionStream#format) \| `null` | (Optional, disallowed when `encodeData` and `decodeData` are set) The compression format to use when saving the data. If set, the data will be [compressed](#function-compress) before saving and [decompressed](#function-decompress) after loading. **The default is `"deflate-raw"`. Explicitly set to `null` to disable compression.** |
 | `encodeData?` | `[format: string, encode: (data: string) => string \| Promise<string>]` | (Optional, but required when `decodeData` is also set and disallowed when `compressionFormat` is set) Tuple of format identifier and function that encodes the data before saving - you can use [`compress()`](#function-compress) here to save space at the cost of a little bit of performance |
 | `decodeData?` | `[format: string, decode: (data: string) => string \| Promise<string>]` | (Optional, but required when `encodeData` is also set and disallowed when `compressionFormat` is set) Tuple of format identifier and function that decodes the data when loading - you can use [`decompress()`](#function-decompress) here to decode the data that was previously compressed with [compress()](#function-compress) |
+| `keyPrefix?` | `string` | (Optional) A string that is prefixed to all keys when saving to or loading from persistent storage. By default, it is `__ds-` but it can also be set to an empty string for disabling the prefix. Note that this will make data previously saved with a different prefix inaccessible, so it should probably only be set once when the data store is first created and then never changed, unless the data is volatile enough to be lost without problems. |
 
 <br>
 

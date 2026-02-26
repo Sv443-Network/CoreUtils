@@ -73,6 +73,11 @@ export type DataStoreOptions<TData extends DataStoreData, TMemCache extends bool
      *   This may be useful if multiple sources are modifying the data, or the data is very large and you want to save memory, but it will make accessing the data slower, especially when combined with compression.
      */
     memoryCache?: TMemCache;
+    /**
+     * Allows overriding the default prefix (`__ds-`) that is prepended to all keys used for persistent storage.  
+     * Note: this will break backwards compatibility with any previously saved data, so only change this if you know what you're doing and ideally before any non-volatile data is saved by the end user.
+     */
+    keyPrefix?: string;
   }
   & (
     // make sure that encodeData and decodeData are *both* either defined or undefined
@@ -146,6 +151,7 @@ export class DataStore<TData extends DataStoreData, TMemCache extends boolean = 
   public readonly compressionFormat: Exclude<DataStoreOptions<TData>["compressionFormat"], undefined> = "deflate-raw";
   public readonly memoryCache: TMemCache;
   public readonly engine: DataStoreEngine;
+  public readonly keyPrefix: string;
   public options: DataStoreOptions<TData, TMemCache>;
 
   /**
@@ -181,6 +187,7 @@ export class DataStore<TData extends DataStoreData, TMemCache extends boolean = 
     if(opts.migrateIds)
       this.migrateIds = Array.isArray(opts.migrateIds) ? opts.migrateIds : [opts.migrateIds];
     this.engine = typeof opts.engine === "function" ? opts.engine() : opts.engine;
+    this.keyPrefix = opts.keyPrefix ?? "__ds-";
 
     this.options = opts;
 
@@ -235,15 +242,15 @@ export class DataStore<TData extends DataStoreData, TMemCache extends boolean = 
             promises.push(this.engine.deleteValue(oldKey));
           };
 
-          migrateFmt(`_uucfg-${this.id}`, `__ds-${this.id}-dat`, oldData);
+          migrateFmt(`_uucfg-${this.id}`, `${this.keyPrefix}${this.id}-dat`, oldData);
 
           if(!isNaN(oldVer))
-            migrateFmt(`_uucfgver-${this.id}`, `__ds-${this.id}-ver`, oldVer);
+            migrateFmt(`_uucfgver-${this.id}`, `${this.keyPrefix}${this.id}-ver`, oldVer);
 
           if(typeof oldEnc === "boolean" || oldEnc === "true" || oldEnc === "false" || typeof oldEnc === "number" || oldEnc === "0" || oldEnc === "1")
-            migrateFmt(`_uucfgenc-${this.id}`, `__ds-${this.id}-enf`, [0, "0", true, "true"].includes(oldEnc) ? this.compressionFormat ?? null : null);
+            migrateFmt(`_uucfgenc-${this.id}`, `${this.keyPrefix}${this.id}-enf`, [0, "0", true, "true"].includes(oldEnc) ? this.compressionFormat ?? null : null);
           else {
-            promises.push(this.engine.setValue(`__ds-${this.id}-enf`, this.compressionFormat));
+            promises.push(this.engine.setValue(`${this.keyPrefix}${this.id}-enf`, this.compressionFormat));
             promises.push(this.engine.deleteValue(`_uucfgenc-${this.id}`));
           }
 
@@ -264,8 +271,8 @@ export class DataStore<TData extends DataStoreData, TMemCache extends boolean = 
       }
 
       // load data
-      const storedDataRaw = await this.engine.getValue(`__ds-${this.id}-dat`, null);
-      let storedFmtVer = Number(await this.engine.getValue(`__ds-${this.id}-ver`, NaN));
+      const storedDataRaw = await this.engine.getValue(`${this.keyPrefix}${this.id}-dat`, null);
+      let storedFmtVer = Number(await this.engine.getValue(`${this.keyPrefix}${this.id}-ver`, NaN));
 
       // save default if no data is found
       if((typeof storedDataRaw !== "string" && typeof storedDataRaw !== "object") || storedDataRaw === null || isNaN(storedFmtVer)) {
@@ -276,13 +283,13 @@ export class DataStore<TData extends DataStoreData, TMemCache extends boolean = 
       const storedData = storedDataRaw ?? JSON.stringify(this.defaultData);
 
       // check if the data is encoded
-      const encodingFmt = String(await this.engine.getValue(`__ds-${this.id}-enf`, null));
+      const encodingFmt = String(await this.engine.getValue(`${this.keyPrefix}${this.id}-enf`, null));
       const isEncoded = encodingFmt !== "null" && encodingFmt !== "false" && encodingFmt !== "0" && encodingFmt !== "" && encodingFmt !== null;
 
       // if no format version is found, save the current one
       let saveData = false;
       if(isNaN(storedFmtVer)) {
-        await this.engine.setValue(`__ds-${this.id}-ver`, storedFmtVer = this.formatVersion);
+        await this.engine.setValue(`${this.keyPrefix}${this.id}-ver`, storedFmtVer = this.formatVersion);
         saveData = true;
       }
 
@@ -334,9 +341,9 @@ export class DataStore<TData extends DataStoreData, TMemCache extends boolean = 
 
     return new Promise<void>(async (resolve) => {
       await Promise.allSettled([
-        this.engine.setValue(`__ds-${this.id}-dat`, await this.engine.serializeData(data, this.encodingEnabled())),
-        this.engine.setValue(`__ds-${this.id}-ver`, this.formatVersion),
-        this.engine.setValue(`__ds-${this.id}-enf`, this.compressionFormat),
+        this.engine.setValue(`${this.keyPrefix}${this.id}-dat`, await this.engine.serializeData(data, this.encodingEnabled())),
+        this.engine.setValue(`${this.keyPrefix}${this.id}-ver`, this.formatVersion),
+        this.engine.setValue(`${this.keyPrefix}${this.id}-enf`, this.compressionFormat),
       ]);
       resolve();
     });
@@ -350,9 +357,9 @@ export class DataStore<TData extends DataStoreData, TMemCache extends boolean = 
       this.cachedData = this.defaultData;
 
     await Promise.allSettled([
-      this.engine.setValue(`__ds-${this.id}-dat`, await this.engine.serializeData(this.defaultData, this.encodingEnabled())),
-      this.engine.setValue(`__ds-${this.id}-ver`, this.formatVersion),
-      this.engine.setValue(`__ds-${this.id}-enf`, this.compressionFormat),
+      this.engine.setValue(`${this.keyPrefix}${this.id}-dat`, await this.engine.serializeData(this.defaultData, this.encodingEnabled())),
+      this.engine.setValue(`${this.keyPrefix}${this.id}-ver`, this.formatVersion),
+      this.engine.setValue(`${this.keyPrefix}${this.id}-enf`, this.compressionFormat),
     ]);
   }
 
@@ -365,9 +372,9 @@ export class DataStore<TData extends DataStoreData, TMemCache extends boolean = 
    */
   public async deleteData(): Promise<void> {
     await Promise.allSettled([
-      this.engine.deleteValue(`__ds-${this.id}-dat`),
-      this.engine.deleteValue(`__ds-${this.id}-ver`),
-      this.engine.deleteValue(`__ds-${this.id}-enf`),
+      this.engine.deleteValue(`${this.keyPrefix}${this.id}-dat`),
+      this.engine.deleteValue(`${this.keyPrefix}${this.id}-ver`),
+      this.engine.deleteValue(`${this.keyPrefix}${this.id}-enf`),
     ]);
     await this.engine.deleteStorage?.();
   }
@@ -417,9 +424,9 @@ export class DataStore<TData extends DataStoreData, TMemCache extends boolean = 
     }
 
     await Promise.allSettled([
-      this.engine.setValue(`__ds-${this.id}-dat`, await this.engine.serializeData(newData as TData, this.encodingEnabled())),
-      this.engine.setValue(`__ds-${this.id}-ver`, lastFmtVer),
-      this.engine.setValue(`__ds-${this.id}-enf`, this.compressionFormat),
+      this.engine.setValue(`${this.keyPrefix}${this.id}-dat`, await this.engine.serializeData(newData as TData, this.encodingEnabled())),
+      this.engine.setValue(`${this.keyPrefix}${this.id}-ver`, lastFmtVer),
+      this.engine.setValue(`${this.keyPrefix}${this.id}-enf`, this.compressionFormat),
     ]);
 
     if(this.memoryCache)
@@ -439,9 +446,9 @@ export class DataStore<TData extends DataStoreData, TMemCache extends boolean = 
     await Promise.all(ids.map(async id => {
       const [data, fmtVer, isEncoded] = await (async () => {
         const [d, f, e] = await Promise.all([
-          this.engine.getValue(`__ds-${id}-dat`, JSON.stringify(this.defaultData)),
-          this.engine.getValue(`__ds-${id}-ver`, NaN),
-          this.engine.getValue(`__ds-${id}-enf`, null),
+          this.engine.getValue(`${this.keyPrefix}${id}-dat`, JSON.stringify(this.defaultData)),
+          this.engine.getValue(`${this.keyPrefix}${id}-ver`, NaN),
+          this.engine.getValue(`${this.keyPrefix}${id}-enf`, null),
         ]);
         return [d, Number(f), Boolean(e) && String(e) !== "null"] as const;
       })();
@@ -451,12 +458,12 @@ export class DataStore<TData extends DataStoreData, TMemCache extends boolean = 
 
       const parsed = await this.engine.deserializeData(data, isEncoded) as TData;
       await Promise.allSettled([
-        this.engine.setValue(`__ds-${this.id}-dat`, await this.engine.serializeData(parsed, this.encodingEnabled())),
-        this.engine.setValue(`__ds-${this.id}-ver`, fmtVer),
-        this.engine.setValue(`__ds-${this.id}-enf`, this.compressionFormat),
-        this.engine.deleteValue(`__ds-${id}-dat`),
-        this.engine.deleteValue(`__ds-${id}-ver`),
-        this.engine.deleteValue(`__ds-${id}-enf`),
+        this.engine.setValue(`${this.keyPrefix}${this.id}-dat`, await this.engine.serializeData(parsed, this.encodingEnabled())),
+        this.engine.setValue(`${this.keyPrefix}${this.id}-ver`, fmtVer),
+        this.engine.setValue(`${this.keyPrefix}${this.id}-enf`, this.compressionFormat),
+        this.engine.deleteValue(`${this.keyPrefix}${id}-dat`),
+        this.engine.deleteValue(`${this.keyPrefix}${id}-ver`),
+        this.engine.deleteValue(`${this.keyPrefix}${id}-enf`),
       ]);
     }));
   }
