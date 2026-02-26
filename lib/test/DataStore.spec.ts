@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { DataStore } from "../DataStore.ts";
 import { BrowserStorageEngine } from "../DataStoreEngine.ts";
 import { DirectAccessDataStore } from "./DirectAccessDataStore.ts";
+import { randomId } from "../crypto.ts";
 
 //#region >> tests
 
@@ -330,8 +331,7 @@ describe("DataStore", () => {
     delete window.GM;
   });
 
-  //#region no in-mem cache
-
+  //#region without memcache
   it("Works as expected with no in-mem cache", async () => {
     const store = new DirectAccessDataStore({
       id: "test-no-in-mem-cache",
@@ -380,5 +380,38 @@ describe("DataStore", () => {
 
     // restore initial state:
     await store.deleteData();
+  });
+
+  //#region custom key prefix
+  it("Supports custom key prefix", async () => {
+    const randId = randomId(8, 36);
+    const store1 = new DataStore({
+      id: "test-custom-key-prefix-1",
+      defaultData: { a: 1, b: 2 },
+      formatVersion: 1,
+      engine: new BrowserStorageEngine({ type: "localStorage" }),
+      keyPrefix: `${randId}-`,
+    });
+    const store2 = new DataStore({
+      id: "test-custom-key-prefix-2",
+      defaultData: { a: 1, b: 2 },
+      formatVersion: 1,
+      engine: new BrowserStorageEngine({ type: "localStorage" }),
+      keyPrefix: "",
+    });
+
+    await store1.loadData();
+    await store1.setData({ ...store1.getData(), a: 2 });
+
+    expect(await store1.engine.getValue(`${randId}-test-custom-key-prefix-1-dat`, null)).not.toBeNull();
+
+    await store2.loadData();
+    await store2.setData({ ...store2.getData(), a: 2 });
+
+    expect(await store2.engine.getValue(`test-custom-key-prefix-2-dat`, null)).not.toBeNull();
+
+    // restore initial state:
+    await store1.deleteData();
+    await store2.deleteData();
   });
 });
