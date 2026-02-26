@@ -1,5 +1,11 @@
 # @sv443-network/coreutils
 
+## 3.2.0
+
+### Minor Changes
+
+- 65dccf4: Added DataStore options property `keyPrefix` to modify the default storage engine key prefix (`__ds-`) or to remove it.
+
 ## 3.1.0
 
 ### Minor Changes
