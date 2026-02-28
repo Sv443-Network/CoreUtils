@@ -623,20 +623,18 @@ Supports automatic migration of outdated data formats via configured migration f
 You may create as many instances as you like as long as they have different IDs.  
 The class' internal methods are all declared as protected, so you can extend this class and override them if you need to add your own functionality.  
   
-**For info on the options object, see the [`DataStoreOptions` type.](#type-datastoreoptions)**  
+**For info on the options object, please [refer to the `DataStoreOptions` type.](#type-datastoreoptions)**  
   
 Each DataStore instance needs an engine, which is responsible for the actual data storage.  
 To see a list of available engines, see the [Storage Engines section.](#storage-engines)  
 To make your own engine, refer to the [`DataStoreEngine` class.](#class-datastoreengine)  
 The JSON string data stored by the engine is compressed using `deflate-raw` by default, but the algorithm can be changed or compression disabled via the options.  
   
-If you have multiple DataStore instances and you want to be able to easily and safely export and import their data, take a look at the [DataStoreSerializer class.](#class-datastoreserializer)  
-It combines the data of multiple DataStore instances into a single object that can be exported and imported as a whole, including partial imports and exports.  
+If you have multiple DataStore instances and you want to be able to easily and safely export and import their data, take a look at the [DataStoreSerializer class.](#class-datastoreserializer) It combines the data of multiple DataStore instances into a single object that can be exported and imported as a whole, including filter-based partial imports and exports.  
   
-Note: If you were using the `DataStore` class from the `@sv443-network/userutils` package before, all your data should be migrated automatically on the first call to `loadData()`. Just ensure that there aren't any leftover `DataStore` instances from both packages with the same ID being used at the same time.  
-  
-- ⚠️ The data is cloned using [`structuredClone()`](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm) and serialized with [`JSON.stringify()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify) prior to encoding. So make sure to only use data that can be cloned / serialized properly. Circular structures and complex objects (containing functions, symbols, etc.) will either not be cloned properly, throw an error on load and save, or cause otherwise unexpected behavior. Properties with a value of `undefined` will be removed from the data prior to saving it, so use `null` instead if you need to preserve the key.
-- ⚠️ Though it is not recommended, you can use multiple DataStore instances with the same ID, as long as `memoryCache` is set to false. However, this can still lead to data loss through race conditions, so you'd have to implement your own locking mechanism to prevent that.
+- ⚠️ **The data is cloned using [`structuredClone()`](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm) and serialized with [`JSON.stringify()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify)** prior to encoding. So make sure to only use data that can be cloned and serialized as JSON properly. This means circular structures and complex objects (containing functions, self-references, etc.) will either not be cloned fully, throw an error on load and save, or cause otherwise unexpected behavior. Properties with a value of `undefined` will be removed from the data prior to saving it, so use `null` if you need to preserve the key.
+- ⚠️ **In environments where the same script is running multiple times in parallel** (multiple open tabs of the same website, workers, etc.), leaving `memoryCache` enabled may cause data inconsistency between the different instances, so consider either disabling it in those cases or to use some sort of inter-instance communication to trigger a data load.
+- **If you were using the `DataStore` class from the `@sv443-network/userutils` package before**, all your data should be migrated automatically on the first call to `loadData()`. Just ensure that there aren't any leftover `DataStore` instances from both packages with the same ID being used at the same time.
   
 <details><summary><b>Example - click to view</b></summary>
 
@@ -708,19 +706,27 @@ export const manager = new DataStore({
    */
   migrateIds: ["my-data", "config"],
   /**
-   * Set this to false to disable the in-memory cache, in case of large amounts of less frequently accessed data.
-   * This will also make `getData()` unavailable at the type level and throw an error when called. Use `loadData()` instead, which will always fetch the data from persistent storage.
+   * Set this to false to disable the in-memory cache, in case of large amounts of less frequently accessed data.  
+   * This will also make `getData()` unavailable at the type level and throw an error when called.  
+   * In that case use `loadData()` instead, which will always fetch the data from persistent storage.
    */
   memoryCache: true,
 
   // Compression example:
   // Adding the following will save space at the cost of a little bit of performance (only for the initial loading and every time new data is saved)
   // Feel free to use your own functions here, as long as they take in the stringified JSON and return another string, either synchronously or asynchronously
-  // Either both of these properties or none of them should be set
 
-  /** Compresses the data using the "deflate-raw" algorithm before storing */
+  /** Encodes the stringified JSON data before saving it to persistent storage. The first item in the tuple is the identifier of the encoding/compression used. */
+  // encodeData: ["deflate-raw", (data) => compress(data, "deflate-raw")],
+  /** Decodes the data loaded from persistent storage before parsing it. The first item in the tuple is the identifier of the encoding/compression used, which should be the same as the one used in encodeData. */
+  // decodeData: ["deflate-raw", (data) => decompress(data, "deflate-raw")],
+  //   - either both of these properties or none of them should be set.
+  //   - when compressionFormat is set, both of these cannot be set too.
+
+  /** Compresses the data using the "deflate-raw" algorithm before storing. */
   compressionFormat: "deflate-raw",
-  // ensure the algorithm always stays the same!
+  //   - the above line is a shorthand for setting both encodeData and decodeData, but those props can still be useful for custom encoding, data enrichment, encryption, etc.
+  //   - ensure the algorithm always stays the same!
 });
 
 /** Entrypoint of the script */
@@ -743,6 +749,7 @@ async function init() {
 
   // the internal cache is updated synchronously, so the updated data can be accessed before the Promise resolves:
   console.log(manager.getData().foo); // "world"
+  // note that this will throw an error if memoryCache is set to false, in which case loadData() will need to be used for fetching the data.
 }
 
 init();
@@ -1254,9 +1261,13 @@ class MyStorageEngine<TData extends DataStoreData> extends DataStoreEngine<TData
 }
 ```
   
-Base class for storage engines used by the [`DataStore` class.](#class-datastore)  
-This architecture allows different engines to be used in different environments, like the frontend or backend.  
-While this library offers some premade engines [in the Storage Engines section,](#storage-engines) you can also create your own engine by extending this class and implementing at least the required (abstract) methods (see the example).  
+Base class for storage engines used by a "parent" [`DataStore` class](#class-datastore), or to be instantiated and used standalone or as part of another data management system.  
+Dividing the storage API into its own class like this makes it easy to pick and choose engines based on the environment's supported features, like synchronous vs asynchronous storage, support for compression, frontend vs backend APIs, etc.  
+  
+While this library offers some premade engines [in the Storage Engines section](#storage-engines), you can also create your own engine by extending this class and implementing at least the required (abstract) methods (see the example).  
+  
+- The property `dataStoreOptions` is not strictly required, it only allows easier standalone use of the engine without a parent DataStore instance. If your engine is only going to be used in conjunction with a parent DataStore instance, you can safely ignore it and only supply your own options properties.
+- If the engine is only used as part of a DataStore instance, the DataStore will call the method `setDataStoreOptions()` internally to set the necessary options for the engine to work before the DataStore can call any other storage API method.
   
 <details><summary>Example - click to view</summary>
 
@@ -1272,7 +1283,7 @@ class MyStorageEngine<TData extends DataStoreData> extends DataStoreEngine<TData
   protected options: MyStorageEngineOptions<TData>;
 
   constructor(options: MyStorageEngineOptions<TData>) {
-    // if this engine is used standalone, this is how it needs to be initialized, to ensure the "id" and "encodeData" & "decodeData" or "compressionFormat" properties are set:
+    // if this engine is used standalone, this is how it needs to be initialized, to ensure the "id" and "encodeData" & "decodeData" or "compressionFormat" properties are set internally:
     super(options?.dataStoreOptions);
     this.options = options;
   }
@@ -1300,24 +1311,14 @@ class MyStorageEngine<TData extends DataStoreData> extends DataStoreEngine<TData
     await deleteMyValue(`${this.dataStoreOptions.id}-${name}`);
   }
 
-  /** Optional - deletes the entire storage container, e.g. a file or database */
+  /**
+   * Optional - deletes the entire storage container, e.g. a file or database.  
+   * Note: this should only affect the storage of the engine with the given ID, not delete any other data that might be stored with the same method but a different ID.
+   */
   async deleteStorage(): Promise<void> {
     // this method is optional, so you can remove it if it doesn't apply to your storage logic
 
     await deleteMyStorageContainer(this.dataStoreOptions.id);
-  }
-
-  // implementing new behavior and use the default implementation as a fallback:
-
-  public deepCopy<T>(obj: T): T {
-    try {
-      // use your own deep copy logic here
-      return myCustomDeepCopy(obj);
-    }
-    catch {
-      // if the custom deep copy fails, fall back to the default implementation:
-      return super.deepCopy(obj);
-    }
   }
 
   // other methods that can be overridden (or used as-is):
@@ -1326,20 +1327,23 @@ class MyStorageEngine<TData extends DataStoreData> extends DataStoreEngine<TData
   // public async deserializeData(data: string, useEncoding?: boolean): Promise<TData>;
   // protected ensureDataStoreOptions(): void;
   // public setDataStoreOptions(dataStoreOptions: DataStoreEngineDSOptions<TData>): void;
+  // public deepCopy<T>(obj: T): T;
+
+  // refer to the source code of the DataStoreEngine class for the default implementations.
 }
 
 
 // using the engine standalone:
 
 const engine = new MyStorageEngine({
-  // since there's no DataStore instance to initialize the engine, the dataStoreOptions need to be passed here
-  // if they aren't passed, most methods will throw an error
+  // since there's no DataStore instance to initialize the engine, the dataStoreOptions need to be passed here.
+  // if they aren't passed, most methods will throw an error.
   dataStoreOptions: {
     id: "my-engine",
     encodeData: ["gzip", (data) => compress(data, "gzip", "string")],
     decodeData: ["gzip", (data) => decompress(data, "gzip", "string")],
     // ensure the algorithm always stays consistent!
-    // for the first tuple item you may use `null`, `"identity"` or any custom string to indicate encoding without compression
+    // for the first tuple item you may use `null` to indicate encoding without compression, or use an arbitrary string to indicate a custom encoding method
   },
 });
 
@@ -1482,6 +1486,10 @@ It contains only the properties necessary for storage engines to function proper
 
 <!-- #region DataStoreEngines -->
 ### Storage Engines
+DataStores use storage engines (classes that extend the [`DataStoreEngine` base class](#class-datastoreengine)) to save their data persistently.  
+CoreUtils comes with some premade ones out of the box that aim to cover the most common execution environments:
+- [`BrowserStorageEngine`](#class-browserstorageengine) can be used when [`localStorage`](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage) or [`sessionStorage`](https://developer.mozilla.org/en-US/docs/Web/API/Window/sessionStorage) are available on the [`globalThis` object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/globalThis), which is usually the case in frontend environments.
+- [`FileStorageEngine`](#class-filestorageengine) can be used in Node.js (or Deno with Node compatibility) to save the data as a (potentially encoded) JSON file.
 
 <br>
 
