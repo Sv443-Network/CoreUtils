@@ -21,7 +21,7 @@ jobs:
       CI: "true"
       STORE_PATH: ""
       PNPM_VERSION: 10
-      RETENTION_DAYS: 2
+      COVERAGE_RETENTION_DAYS: 1
 
     steps:
       - name: Checkout code
@@ -65,7 +65,7 @@ jobs:
         with:
           name: coverage
           path: coverage/lcov-report/
-          retention-days: ${{ env.RETENTION_DAYS }}
+          retention-days: ${{ env.COVERAGE_RETENTION_DAYS }}
 
       - name: Upload coverage to Coveralls
         uses: coverallsapp/github-action@v2
