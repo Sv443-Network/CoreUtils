@@ -53,6 +53,7 @@ For submitting bug reports or feature requests, please use the [GitHub issue tra
       - 🔷 [`type DataStoreOptions`](#type-datastoreoptions) - Options for the data store
       - 🔷 [`type DataMigrationsDict`](#type-datamigrationsdict) - Dictionary of data migration functions
       - 🔷 [`type DataStoreData`](#type-datastoredata) - The type of the serializable data
+      - 🔷 [`type DataStoreEventMap`](#type-datastoreeventmap) - Map of DataStore events
     - 🟧 [`class DataStoreSerializer`](#class-datastoreserializer) - Serializes and deserializes data for multiple DataStore instances
       - 🔷 [`type DataStoreSerializerOptions`](#type-datastoreserializeroptions) - Options for the DataStoreSerializer
       - 🔷 [`type LoadStoresDataResult`](#type-loadstoresdataresult) - Result of calling [`loadStoresData()`](#datastoreserializer-loadstoresdata)
@@ -611,6 +612,7 @@ benchmark(true, true);   // Generated 10k in 1054ms
 Signature:
 ```ts
 class DataStore<TData extends DataStoreData>;
+  extends NanoEmitter<DataStoreEventMap<TData>>;
 ```
   
 Usage:
@@ -629,6 +631,9 @@ Each DataStore instance needs an engine, which is responsible for the actual dat
 To see a list of available engines, see the [Storage Engines section.](#storage-engines)  
 To make your own engine, refer to the [`DataStoreEngine` class.](#class-datastoreengine)  
 The JSON string data stored by the engine is compressed using `deflate-raw` by default, but the algorithm can be changed or compression disabled via the options.  
+  
+DataStore extends from the [`NanoEmitter` class](#class-nanoemitter) so it also exposes all of its event handling methods.  
+For a list of all events, please refer to the events section below the code example or the [`DataStoreEventMap` type.](#type-datastoreeventmap)  
   
 If you have multiple DataStore instances and you want to be able to easily and safely export and import their data, take a look at the [DataStoreSerializer class.](#class-datastoreserializer) It combines the data of multiple DataStore instances into a single object that can be exported and imported as a whole, including filter-based partial imports and exports.  
   
@@ -729,7 +734,25 @@ export const manager = new DataStore({
   //   - ensure the algorithm always stays the same!
 });
 
-/** Entrypoint of the script */
+// registering event listeners:
+
+manager.on("error", (err) => {
+  console.error("An error occurred in the DataStore:", err);
+  // handle the error, maybe by showing a notification to the user or something
+});
+
+manager.on("migrationError", (migratingTo, err) => {
+  console.error(`An error occurred while migrating to format version ${migratingTo}:`, err);
+  // handle the migration error, maybe by showing a notification to the user or something
+});
+
+manager.on("updateData", (newData) => {
+  console.log("Data was updated to:", newData);
+  // do something with the new data, maybe update the UI or something
+});
+
+// script entrypoint:
+
 async function init() {
   // wait for the data to be loaded from persistent storage
   // if no data was saved in persistent storage before or getData() is called before loadData(), the value of options.defaultData will be returned
@@ -755,6 +778,22 @@ async function init() {
 init();
 ```
 </details>
+
+<br>
+
+### Events
+The DataStore class inherits from [`NanoEmitter`](#class-nanoemitter), so you can use all of its inherited methods to listen to the following events:
+| Event | Arguments | Description |
+| :-- | :-- | :-- |
+| `loadData` | `data: TData` | Emitted whenever the data is loaded from persistent storage with [`loadData()`](#datastoreloaddata). |
+| `updateData` | `newData: TData` | Emitted when the data is updated with [`setData()`](#datastoresetdata) or [`runMigrations()`](#datastorerunmigrations). |
+| `updateDataSync` | `newData: TData` | Emitted when the memory cache was updated with [`setData()`](#datastoresetdata), before the data is saved to persistent storage. Not emitted if `memoryCache` is set to `false`. |
+| `migrateData` | `migratedTo: number, migratedData: unknown, isFinalMigration: boolean` | Emitted for every called migration function with the resulting data. |
+| `migrateId` | `oldId: string, newId: string` | Emitted for every successfully migrated old ID. Gets passed the old and new ID. |
+| `setDefaultData` | `defaultData: TData` | Emitted whenever the data is reset to the default value with [`saveDefaultData()`](#datastoresavedefaultdata) (will not be called on the initial population of persistent storage with the default data in [`loadData()`](#datastoreloaddata)). |
+| `deleteData` |  | Emitted after the data was deleted from persistent storage with [`deleteData()`](#datastoredeletedata). |
+| `error` | `error: Error` | Emitted when an error occurs at any point. |
+| `migrationError` | `migratingTo: number, error: MigrationError` | Emitted only when an error occurs during a migration function. |
 
 <br>
 
@@ -890,6 +929,34 @@ type DataStoreData = object;
 A type that represents the data stored in a DataStore instance.  
 It uses `object` instead of an index signature so that interfaces without an explicit index signature can also be used as `TData`.  
 Make sure to only use JSON-serializable types here, otherwise unexpected behavior may occur.
+
+<br>
+
+### `type DataStoreEventMap`
+```ts
+type DataStoreEventMap<TData> = {
+  /** Emitted whenever the data is loaded from persistent storage with {@linkcode DataStore.loadData()}. */
+  loadData: (data: TData) => void;
+  /** Emitted when the data is updated with {@linkcode DataStore.setData()} or {@linkcode DataStore.runMigrations()} */
+  updateData: (newData: TData) => void;
+  /** Emitted when the memory cache was updated with {@linkcode DataStore.setData()}, before the data is saved to persistent storage. Not emitted if `memoryCache` is set to `false`. */
+  updateDataSync: (newData: TData) => void;
+  /** Emitted for every called migration function with the resulting data. */
+  migrateData: (migratedTo: number, migratedData: unknown, isFinalMigration: boolean) => void;
+  /** Emitted for every successfully migrated old ID. Gets passed the old and new ID. */
+  migrateId: (oldId: string, newId: string) => void;
+  /** Emitted whenever the data is reset to the default value with {@linkcode DataStore.saveDefaultData()} (will not be called on the initial population of persistent storage with the default data in {@linkcode DataStore.loadData()}). */
+  setDefaultData: (defaultData: TData) => void;
+  /** Emitted after the data was deleted from persistent storage with {@linkcode DataStore.deleteData()}. */
+  deleteData: () => void;
+  /** Emitted when an error occurs at any point. */
+  error: (error: Error) => void;
+  /** Emitted only when an error occurs during a migration function. */
+  migrationError: (migratingTo: number, error: MigrationError) => void;
+};
+```
+  
+This is the event map for the [`DataStore` class.](#class-datastore)
 
 <br><br>
 
@@ -1266,6 +1333,7 @@ Dividing the storage API into its own class like this makes it easy to pick and 
   
 While this library offers some premade engines [in the Storage Engines section](#storage-engines), you can also create your own engine by extending this class and implementing at least the required (abstract) methods (see the example).  
   
+- ⚠️ The async storage methods will be called in parallel (`Promise.all()` / `Promise.allSettled()`). Make sure to handle this properly in your implementation, for example by using a queue or mutex if the storage method you use doesn't support parallel calls (like the file system or IndexedDB).
 - The property `dataStoreOptions` is not strictly required, it only allows easier standalone use of the engine without a parent DataStore instance. If your engine is only going to be used in conjunction with a parent DataStore instance, you can safely ignore it and only supply your own options properties.
 - If the engine is only used as part of a DataStore instance, the DataStore will call the method `setDataStoreOptions()` internally to set the necessary options for the engine to work before the DataStore can call any other storage API method.
   
@@ -3103,7 +3171,8 @@ Signature:
 NanoEmitter.emit<K extends keyof TEventMap>(event: K, ...args: Parameters<TEventMap[K]>): boolean
 ```
   
-Emits an event with the given arguments from outside the class instance if `publicEmit` is set to `true`.  
+Emits an event with the given arguments from outside the class instance, if enabled in the constructor options.  
+  
 If `publicEmit` is set to `true`, this method will return `true` if the event was emitted.  
 If it is set to `false`, it will always return `false` and you will need to use `this.events.emit()` from inside the class instead.
 
