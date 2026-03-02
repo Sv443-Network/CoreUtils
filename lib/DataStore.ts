@@ -299,7 +299,7 @@ export class DataStore<TData extends DataStoreData, TMemCache extends boolean = 
 
       // load data
       const storedDataRaw = await this.engine.getValue(`${this.keyPrefix}${this.id}-dat`, null);
-      let storedFmtVer = Number(await this.engine.getValue(`${this.keyPrefix}${this.id}-ver`, NaN));
+      const storedFmtVer = Number(await this.engine.getValue(`${this.keyPrefix}${this.id}-ver`, NaN));
 
       // save default if no data is found
       if((typeof storedDataRaw !== "string" && typeof storedDataRaw !== "object") || storedDataRaw === null || isNaN(storedFmtVer)) {
@@ -315,13 +315,6 @@ export class DataStore<TData extends DataStoreData, TMemCache extends boolean = 
       const encodingFmt = String(await this.engine.getValue(`${this.keyPrefix}${this.id}-enf`, null));
       const isEncoded = encodingFmt !== "null" && encodingFmt !== "false" && encodingFmt !== "0" && encodingFmt !== "" && encodingFmt !== null;
 
-      // if no format version is found, save the current one
-      let saveData = false;
-      if(isNaN(storedFmtVer)) {
-        await this.engine.setValue(`${this.keyPrefix}${this.id}-ver`, storedFmtVer = this.formatVersion);
-        saveData = true;
-      }
-
       // deserialize the data if needed
       let parsed = typeof storedData === "string"
         ? await this.engine.deserializeData(storedData, isEncoded) as TData
@@ -330,10 +323,6 @@ export class DataStore<TData extends DataStoreData, TMemCache extends boolean = 
       // run migrations if needed
       if(storedFmtVer < this.formatVersion && this.migrations)
         parsed = await this.runMigrations(parsed, storedFmtVer); // setting saveData = true not needed since runMigrations() already saves the data
-
-      // save the data if it was changed
-      if(saveData)
-        await this.setData(parsed);
 
       const result = this.memoryCache
         ? (this.cachedData = this.engine.deepCopy(parsed))
@@ -368,18 +357,28 @@ export class DataStore<TData extends DataStoreData, TMemCache extends boolean = 
 
   /** Saves the data synchronously to the in-memory cache and asynchronously to the persistent storage */
   public setData(data: TData): Promise<void> {
+    const dataCopy = this.engine.deepCopy(data);
     if(this.memoryCache) {
       this.cachedData = data;
-      this.events.emit("updateDataSync", data);
+      this.events.emit("updateDataSync", dataCopy);
     }
 
+    // resolve asynchronously
     return new Promise<void>(async (resolve) => {
-      await Promise.allSettled([
+      const results = await Promise.allSettled([
         this.engine.setValue(`${this.keyPrefix}${this.id}-dat`, await this.engine.serializeData(data, this.encodingEnabled())),
         this.engine.setValue(`${this.keyPrefix}${this.id}-ver`, this.formatVersion),
         this.engine.setValue(`${this.keyPrefix}${this.id}-enf`, this.compressionFormat),
       ]);
-      this.events.emit("updateData", data);
+
+      if(results.every(r => r.status === "fulfilled"))
+        this.events.emit("updateData", dataCopy);
+      else {
+        const error = new Error("Error while saving data to persistent storage: " + results.map(r => r.status === "rejected" ? r.reason : null).filter(Boolean).join("; "));
+        console.error(error);
+        this.events.emit("error", error);
+      }
+
       resolve();
     });
   }
@@ -394,14 +393,19 @@ export class DataStore<TData extends DataStoreData, TMemCache extends boolean = 
     if(this.memoryCache)
       this.cachedData = this.defaultData;
 
-    await Promise.allSettled([
+    const results = await Promise.allSettled([
       this.engine.setValue(`${this.keyPrefix}${this.id}-dat`, await this.engine.serializeData(this.defaultData, this.encodingEnabled())),
       this.engine.setValue(`${this.keyPrefix}${this.id}-ver`, this.formatVersion),
       this.engine.setValue(`${this.keyPrefix}${this.id}-enf`, this.compressionFormat),
     ]);
 
-    if(emitEvent)
-      this.events.emit("setDefaultData", this.defaultData);
+    if(results.every(r => r.status === "fulfilled"))
+      emitEvent && this.events.emit("setDefaultData", this.defaultData);
+    else {
+      const error = new Error("Error while saving default data to persistent storage: " + results.map(r => r.status === "rejected" ? r.reason : null).filter(Boolean).join("; "));
+      console.error(error);
+      this.events.emit("error", error);
+    }
   }
 
   //#region deleteData
