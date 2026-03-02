@@ -1,8 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { DataStore } from "../DataStore.ts";
 import { BrowserStorageEngine } from "../DataStoreEngine.ts";
 import { DirectAccessDataStore } from "./DirectAccessDataStore.ts";
 import { randomId } from "../crypto.ts";
+import { MigrationError } from "../Errors.ts";
 
 //#region >> tests
 
@@ -413,5 +414,266 @@ describe("DataStore", () => {
     // restore initial state:
     await store1.deleteData();
     await store2.deleteData();
+  });
+
+  //#region events
+
+  it("Emits loadData event on successful load", async () => {
+    const store = new DataStore({
+      id: "test-evt-loadData",
+      defaultData: { a: 1 },
+      formatVersion: 1,
+      engine: new BrowserStorageEngine({ type: "sessionStorage" }),
+      compressionFormat: null,
+    });
+
+    const cb = vi.fn();
+    store.on("loadData", cb);
+
+    await store.loadData();
+
+    expect(cb).toHaveBeenCalledOnce();
+    expect(cb).toHaveBeenCalledWith({ a: 1 });
+
+    await store.setData({ a: 2 });
+    await store.loadData();
+
+    expect(cb).toHaveBeenCalledTimes(2);
+    expect(cb).toHaveBeenLastCalledWith({ a: 2 });
+
+    await store.deleteData();
+  });
+
+  it("Emits updateData and updateDataSync events on setData", async () => {
+    const store = new DataStore({
+      id: "test-evt-updateData",
+      defaultData: { a: 1 },
+      formatVersion: 1,
+      engine: new BrowserStorageEngine({ type: "sessionStorage" }),
+      compressionFormat: null,
+    });
+
+    await store.loadData();
+
+    const syncCb = vi.fn();
+    const asyncCb = vi.fn();
+    store.on("updateDataSync", syncCb);
+    store.on("updateData", asyncCb);
+
+    await store.setData({ a: 42 });
+
+    expect(syncCb).toHaveBeenCalledOnce();
+    expect(syncCb).toHaveBeenCalledWith({ a: 42 });
+    expect(asyncCb).toHaveBeenCalledOnce();
+    expect(asyncCb).toHaveBeenCalledWith({ a: 42 });
+
+    await store.deleteData();
+  });
+
+  it("Does not emit updateDataSync when memoryCache is disabled", async () => {
+    const store = new DataStore({
+      id: "test-evt-no-sync",
+      defaultData: { a: 1 },
+      formatVersion: 1,
+      engine: new BrowserStorageEngine({ type: "sessionStorage" }),
+      compressionFormat: null,
+      memoryCache: false,
+    });
+
+    await store.loadData();
+
+    const syncCb = vi.fn();
+    const asyncCb = vi.fn();
+    store.on("updateDataSync", syncCb);
+    store.on("updateData", asyncCb);
+
+    await store.setData({ a: 42 });
+
+    expect(syncCb).not.toHaveBeenCalled();
+    expect(asyncCb).toHaveBeenCalledOnce();
+
+    await store.deleteData();
+  });
+
+  it("Emits setDefaultData on saveDefaultData but not on initial population", async () => {
+    const store = new DataStore({
+      id: "test-evt-setDefault",
+      defaultData: { a: 1 },
+      formatVersion: 1,
+      engine: new BrowserStorageEngine({ type: "sessionStorage" }),
+      compressionFormat: null,
+    });
+
+    const cb = vi.fn();
+    store.on("setDefaultData", cb);
+
+    // initial population should NOT emit setDefaultData:
+    await store.loadData();
+    expect(cb).not.toHaveBeenCalled();
+
+    // explicit call should emit:
+    await store.saveDefaultData();
+    expect(cb).toHaveBeenCalledOnce();
+    expect(cb).toHaveBeenCalledWith({ a: 1 });
+
+    await store.deleteData();
+  });
+
+  it("Emits deleteData event", async () => {
+    const store = new DataStore({
+      id: "test-evt-delete",
+      defaultData: { a: 1 },
+      formatVersion: 1,
+      engine: new BrowserStorageEngine({ type: "sessionStorage" }),
+      compressionFormat: null,
+    });
+
+    await store.loadData();
+
+    const cb = vi.fn();
+    store.on("deleteData", cb);
+
+    await store.deleteData();
+
+    expect(cb).toHaveBeenCalledOnce();
+  });
+
+  it("Emits migrateData and updateData events during migrations", async () => {
+    const store1 = new DataStore({
+      id: "test-evt-migrate",
+      defaultData: { a: 1 },
+      formatVersion: 1,
+      engine: new BrowserStorageEngine({ type: "sessionStorage" }),
+      compressionFormat: null,
+    });
+    await store1.loadData();
+
+    const store2 = new DataStore({
+      id: "test-evt-migrate",
+      defaultData: { a: 1, b: 2, c: 3 },
+      formatVersion: 3,
+      engine: new BrowserStorageEngine({ type: "sessionStorage" }),
+      compressionFormat: null,
+      migrations: {
+        2: (old: Record<string, unknown>) => ({ ...old, b: 2 }),
+        3: (old: Record<string, unknown>) => ({ ...old, c: 3 }),
+      },
+    });
+
+    const migCb = vi.fn();
+    const updateCb = vi.fn();
+    store2.on("migrateData", migCb);
+    store2.on("updateData", updateCb);
+
+    await store2.loadData();
+
+    expect(migCb).toHaveBeenCalledTimes(2);
+    expect(migCb).toHaveBeenNthCalledWith(1, 2, { a: 1, b: 2 }, false);
+    expect(migCb).toHaveBeenNthCalledWith(2, 3, { a: 1, b: 2, c: 3 }, true);
+    // updateData emitted once after all migrations are saved:
+    expect(updateCb).toHaveBeenCalled();
+
+    await store2.deleteData();
+  });
+
+  it("Emits migrationError and error events on migration failure", async () => {
+    const store1 = new DataStore({
+      id: "test-evt-migErr",
+      defaultData: { a: 1 },
+      formatVersion: 1,
+      engine: new BrowserStorageEngine({ type: "sessionStorage" }),
+      compressionFormat: null,
+    });
+    await store1.loadData();
+
+    const store2 = new DataStore({
+      id: "test-evt-migErr",
+      defaultData: { a: 5 },
+      formatVersion: 2,
+      engine: new BrowserStorageEngine({ type: "sessionStorage" }),
+      compressionFormat: null,
+      migrations: {
+        2: () => { throw new Error("boom"); },
+      },
+    });
+
+    const migErrCb = vi.fn();
+    const errCb = vi.fn();
+    const setDefaultCb = vi.fn();
+    store2.on("migrationError", migErrCb);
+    store2.on("error", errCb);
+    store2.on("setDefaultData", setDefaultCb);
+
+    await store2.loadData();
+
+    expect(migErrCb).toHaveBeenCalledOnce();
+    expect(migErrCb.mock.calls[0]![0]).toBe(2);
+    expect(migErrCb.mock.calls[0]![1]).toBeInstanceOf(MigrationError);
+
+    expect(errCb).toHaveBeenCalledOnce();
+    expect(errCb.mock.calls[0]![0]).toBeInstanceOf(MigrationError);
+
+    // saveDefaultData is called on migration error reset, so setDefaultData should emit:
+    expect(setDefaultCb).toHaveBeenCalledOnce();
+
+    await store2.deleteData();
+  });
+
+  it("Emits error event when loadData encounters invalid data", async () => {
+    const store = new DirectAccessDataStore({
+      id: "test-evt-loadErr",
+      defaultData: { a: 1 },
+      formatVersion: 1,
+      engine: new BrowserStorageEngine({ type: "sessionStorage" }),
+      compressionFormat: null,
+    });
+
+    await store.loadData();
+    await store.direct_setValue(`__ds-${store.id}-dat`, "invalid_json");
+
+    const errCb = vi.fn();
+    const setDefaultCb = vi.fn();
+    store.on("error", errCb);
+    store.on("setDefaultData", setDefaultCb);
+
+    await store.loadData();
+
+    expect(errCb).toHaveBeenCalledOnce();
+    expect(errCb.mock.calls[0]![0]).toBeInstanceOf(Error);
+
+    expect(setDefaultCb).toHaveBeenCalledOnce();
+
+    await store.deleteData();
+  });
+
+  it("Emits migrateId event on ID migration", async () => {
+    const oldStore = new DataStore({
+      id: "test-evt-oldId",
+      defaultData: { a: 1 },
+      formatVersion: 1,
+      engine: new BrowserStorageEngine({ type: "sessionStorage" }),
+      compressionFormat: null,
+    });
+    await oldStore.loadData();
+    await oldStore.setData({ a: 99 });
+
+    const newStore = new DataStore({
+      id: "test-evt-newId",
+      defaultData: { a: 1 },
+      formatVersion: 1,
+      engine: new BrowserStorageEngine({ type: "sessionStorage" }),
+      compressionFormat: null,
+      migrateIds: ["test-evt-oldId"],
+    });
+
+    const cb = vi.fn();
+    newStore.on("migrateId", cb);
+
+    await newStore.loadData();
+
+    expect(cb).toHaveBeenCalledOnce();
+    expect(cb).toHaveBeenCalledWith("test-evt-oldId", "test-evt-newId");
+
+    await newStore.deleteData();
   });
 });

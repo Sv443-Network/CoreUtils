@@ -7,6 +7,7 @@ import { DatedError, MigrationError } from "./Errors.ts";
 import type { DataStoreEngine, DataStoreEngineDSOptions } from "./DataStoreEngine.ts";
 import type { LooseUnion, Prettify, SerializableVal } from "./types.ts";
 import { compress, decompress } from "./crypto.ts";
+import { NanoEmitter, type NanoEmitterOptions } from "./NanoEmitter.ts";
 
 //#region types
 
@@ -55,7 +56,7 @@ export type DataStoreOptions<TData extends DataStoreData, TMemCache extends bool
      * A dictionary of functions that can be used to migrate data from older versions to newer ones.  
      * The keys of the dictionary should be the format version that the functions can migrate to, from the previous whole integer value.  
      * The values should be functions that take the data in the old format and return the data in the new format.  
-     * The functions will be run in order from the oldest to the newest version.  
+     * The functions will be run in order from the oldest (smallest number) to the newest (biggest number) version.  
      * If the current format version is not in the dictionary, no migrations will be run.
      */
     migrations?: DataMigrationsDict;
@@ -78,6 +79,8 @@ export type DataStoreOptions<TData extends DataStoreData, TMemCache extends bool
      * Note: this will break backwards compatibility with any previously saved data, so only change this if you know what you're doing and ideally before any non-volatile data is saved by the end user.
      */
     keyPrefix?: string;
+    /** Options for the internal NanoEmitter instance. */
+    nanoEmitterOptions?: NanoEmitterOptions;
   }
   & (
     // make sure that encodeData and decodeData are *both* either defined or undefined
@@ -123,6 +126,28 @@ export type DataStoreOptions<TData extends DataStoreData, TMemCache extends bool
  */
 export type DataStoreData = object;
 
+/** Map of event names and their corresponding listener function signatures for the {@linkcode DataStore} class. */
+export type DataStoreEventMap<TData> = {
+  /** Emitted whenever the data is loaded from persistent storage with {@linkcode DataStore.loadData()}. */
+  loadData: (data: TData) => void;
+  /** Emitted when the data is updated with {@linkcode DataStore.setData()} or {@linkcode DataStore.runMigrations()} */
+  updateData: (newData: TData) => void;
+  /** Emitted when the memory cache was updated with {@linkcode DataStore.setData()}, before the data is saved to persistent storage. Not emitted if `memoryCache` is set to `false`. */
+  updateDataSync: (newData: TData) => void;
+  /** Emitted for every called migration function with the resulting data. */
+  migrateData: (migratedTo: number, migratedData: unknown, isFinalMigration: boolean) => void;
+  /** Emitted for every successfully migrated old ID. Gets passed the old and new ID. */
+  migrateId: (oldId: string, newId: string) => void;
+  /** Emitted whenever the data is reset to the default value with {@linkcode DataStore.saveDefaultData()} (will not be called on the initial population of persistent storage with the default data in {@linkcode DataStore.loadData()}). */
+  setDefaultData: (defaultData: TData) => void;
+  /** Emitted after the data was deleted from persistent storage with {@linkcode DataStore.deleteData()}. */
+  deleteData: () => void;
+  /** Emitted when an error occurs at any point. */
+  error: (error: Error) => void;
+  /** Emitted only when an error occurs during a migration function. */
+  migrationError: (migratingTo: number, error: MigrationError) => void;
+};
+
 //#region class
 
 /** Current version of the overarching DataStore format */
@@ -142,7 +167,7 @@ const dsFmtVer = 1;
  * @template TData The type of the data that is saved in persistent storage for the currently set format version  
  * (TODO:FIXME: will be automatically inferred from `defaultData` if not provided)
  */
-export class DataStore<TData extends DataStoreData, TMemCache extends boolean = true> {
+export class DataStore<TData extends DataStoreData, TMemCache extends boolean = true> extends NanoEmitter<DataStoreEventMap<TData>> {
   public readonly id: string;
   public readonly formatVersion: number;
   public readonly defaultData: TData;
@@ -178,6 +203,8 @@ export class DataStore<TData extends DataStoreData, TMemCache extends boolean = 
    * @param opts The options for this DataStore instance
    */
   constructor(opts: DataStoreOptions<TData, TMemCache>) {
+    super(opts.nanoEmitterOptions);
+
     this.id = opts.id;
     this.formatVersion = opts.formatVersion;
     this.defaultData = opts.defaultData;
@@ -276,8 +303,10 @@ export class DataStore<TData extends DataStoreData, TMemCache extends boolean = 
 
       // save default if no data is found
       if((typeof storedDataRaw !== "string" && typeof storedDataRaw !== "object") || storedDataRaw === null || isNaN(storedFmtVer)) {
-        await this.saveDefaultData();
-        return this.engine.deepCopy(this.defaultData);
+        await this.saveDefaultData(false);
+        const data = this.engine.deepCopy(this.defaultData);
+        this.events.emit("loadData", data);
+        return data;
       }
 
       const storedData = storedDataRaw ?? JSON.stringify(this.defaultData);
@@ -306,13 +335,16 @@ export class DataStore<TData extends DataStoreData, TMemCache extends boolean = 
       if(saveData)
         await this.setData(parsed);
 
-      if(this.memoryCache)
-        return this.cachedData = this.engine.deepCopy(parsed);
-      else
-        return this.engine.deepCopy(parsed);
+      const result = this.memoryCache
+        ? (this.cachedData = this.engine.deepCopy(parsed))
+        : this.engine.deepCopy(parsed);
+      this.events.emit("loadData", result);
+      return result;
     }
     catch(err) {
+      const error = err instanceof Error ? err : new Error(String(err));
       console.warn("Error while parsing JSON data, resetting it to the default value.", err);
+      this.events.emit("error", error);
       await this.saveDefaultData();
       return this.defaultData;
     }
@@ -336,8 +368,10 @@ export class DataStore<TData extends DataStoreData, TMemCache extends boolean = 
 
   /** Saves the data synchronously to the in-memory cache and asynchronously to the persistent storage */
   public setData(data: TData): Promise<void> {
-    if(this.memoryCache)
+    if(this.memoryCache) {
       this.cachedData = data;
+      this.events.emit("updateDataSync", data);
+    }
 
     return new Promise<void>(async (resolve) => {
       await Promise.allSettled([
@@ -345,14 +379,18 @@ export class DataStore<TData extends DataStoreData, TMemCache extends boolean = 
         this.engine.setValue(`${this.keyPrefix}${this.id}-ver`, this.formatVersion),
         this.engine.setValue(`${this.keyPrefix}${this.id}-enf`, this.compressionFormat),
       ]);
+      this.events.emit("updateData", data);
       resolve();
     });
   }
 
   //#region saveDefaultData
 
-  /** Saves the default data passed in the constructor synchronously to the in-memory cache and asynchronously to persistent storage */
-  public async saveDefaultData(): Promise<void> {
+  /**
+   * Saves the default data passed in the constructor synchronously to the in-memory cache and asynchronously to persistent storage.
+   * @param emitEvent Whether to emit the `setDefaultData` event - set to `false` to prevent event emission (used internally during initial population in {@linkcode loadData()})
+   */
+  public async saveDefaultData(emitEvent = true): Promise<void> {
     if(this.memoryCache)
       this.cachedData = this.defaultData;
 
@@ -361,6 +399,9 @@ export class DataStore<TData extends DataStoreData, TMemCache extends boolean = 
       this.engine.setValue(`${this.keyPrefix}${this.id}-ver`, this.formatVersion),
       this.engine.setValue(`${this.keyPrefix}${this.id}-enf`, this.compressionFormat),
     ]);
+
+    if(emitEvent)
+      this.events.emit("setDefaultData", this.defaultData);
   }
 
   //#region deleteData
@@ -377,6 +418,7 @@ export class DataStore<TData extends DataStoreData, TMemCache extends boolean = 
       this.engine.deleteValue(`${this.keyPrefix}${this.id}-enf`),
     ]);
     await this.engine.deleteStorage?.();
+    this.events.emit("deleteData");
   }
 
   //#region encodingEnabled
@@ -405,17 +447,24 @@ export class DataStore<TData extends DataStoreData, TMemCache extends boolean = 
 
     let lastFmtVer = oldFmtVer;
 
-    for(const [fmtVer, migrationFunc] of sortedMigrations) {
+    for(let i = 0; i < sortedMigrations.length; i++) {
+      const [fmtVer, migrationFunc] = sortedMigrations[i]!;
       const ver = Number(fmtVer);
       if(oldFmtVer < this.formatVersion && oldFmtVer < ver) {
         try {
           const migRes = migrationFunc(newData);
           newData = migRes instanceof Promise ? await migRes : migRes;
           lastFmtVer = oldFmtVer = ver;
+          const isFinal = ver >= this.formatVersion || i === sortedMigrations.length - 1;
+          this.events.emit("migrateData", ver, newData, isFinal);
         }
         catch(err) {
+          const migError = new MigrationError(`Error while running migration function for format version '${fmtVer}'`, { cause: err });
+          this.events.emit("migrationError", ver, migError);
+          this.events.emit("error", migError);
+
           if(!resetOnError)
-            throw new MigrationError(`Error while running migration function for format version '${fmtVer}'`, { cause: err });
+            throw migError;
 
           await this.saveDefaultData();
           return this.engine.deepCopy(this.defaultData);
@@ -429,10 +478,11 @@ export class DataStore<TData extends DataStoreData, TMemCache extends boolean = 
       this.engine.setValue(`${this.keyPrefix}${this.id}-enf`, this.compressionFormat),
     ]);
 
-    if(this.memoryCache)
-      return this.cachedData = this.engine.deepCopy(newData as TData);
-    else
-      return this.engine.deepCopy(newData as TData);
+    const result = this.memoryCache
+      ? (this.cachedData = this.engine.deepCopy(newData as TData))
+      : this.engine.deepCopy(newData as TData);
+    this.events.emit("updateData", result);
+    return result;
   }
 
   //#region migrateId
@@ -465,6 +515,7 @@ export class DataStore<TData extends DataStoreData, TMemCache extends boolean = 
         this.engine.deleteValue(`${this.keyPrefix}${id}-ver`),
         this.engine.deleteValue(`${this.keyPrefix}${id}-enf`),
       ]);
+      this.events.emit("migrateId", id, this.id);
     }));
   }
 }
