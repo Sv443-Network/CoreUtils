@@ -35,6 +35,7 @@ Intended to be used in conjunction with [`@sv443-network/userutils`](https://git
     - 🔷 [`type DataStoreOptions`](./docs.md#type-datastoreoptions) - Options for the data store
     - 🔷 [`type DataMigrationsDict`](./docs.md#type-datamigrationsdict) - Dictionary of data migration functions
     - 🔷 [`type DataStoreData`](./docs.md#type-datastoredata) - The type of the serializable data
+    - 🔷 [`type DataStoreEventMap`](./docs.md#type-datastoreeventmap) - Map of DataStore events
   - 🟧 [`class DataStoreSerializer`](./docs.md#class-datastoreserializer) - Serializes and deserializes data for multiple DataStore instances
     - 🔷 [`type DataStoreSerializerOptions`](./docs.md#type-datastoreserializeroptions) - Options for the DataStoreSerializer
     - 🔷 [`type LoadStoresDataResult`](./docs.md#type-loadstoresdataresult) - Result of calling [`loadStoresData()`](./docs.md#datastoreserializer-loadstoresdata)
