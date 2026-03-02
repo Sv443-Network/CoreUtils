@@ -611,7 +611,7 @@ benchmark(true, true);   // Generated 10k in 1054ms
 ### `class DataStore`
 Signature:
 ```ts
-class DataStore<TData extends DataStoreData>;
+class DataStore<TData extends DataStoreData>
   extends NanoEmitter<DataStoreEventMap<TData>>;
 ```
   
@@ -791,7 +791,7 @@ The DataStore class inherits from [`NanoEmitter`](#class-nanoemitter), so you ca
 | `migrateData` | `migratedTo: number, migratedData: unknown, isFinalMigration: boolean` | Emitted for every called migration function with the resulting data. |
 | `migrateId` | `oldId: string, newId: string` | Emitted for every successfully migrated old ID. Gets passed the old and new ID. |
 | `setDefaultData` | `defaultData: TData` | Emitted whenever the data is reset to the default value with [`saveDefaultData()`](#datastoresavedefaultdata) (will not be called on the initial population of persistent storage with the default data in [`loadData()`](#datastoreloaddata)). |
-| `deleteData` |  | Emitted after the data was deleted from persistent storage with [`deleteData()`](#datastoredeletedata). |
+| `deleteData` | `void` | Emitted after the data was deleted from persistent storage with [`deleteData()`](#datastoredeletedata). |
 | `error` | `error: Error` | Emitted when an error occurs at any point. |
 | `migrationError` | `migratingTo: number, error: MigrationError` | Emitted only when an error occurs during a migration function. |
 
