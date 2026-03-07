@@ -122,7 +122,8 @@ export type DataStoreOptions<TData extends DataStoreData, TMemCache extends bool
 /**
  * Generic type that represents the serializable data structure saved in a {@linkcode DataStore} instance.  
  * - ⚠️ Uses `object` instead of an index signature so that interfaces without an explicit index signature can be used as `TData`.  
- *   Make sure to only use JSON-serializable types here, otherwise unexpected behavior may occur!
+ *   However, this also means that the type system won't prevent you from using non-serializable data structures like functions or symbols in the data, which will cause errors at runtime.  
+ *   Make sure to only use types that are compatible with `JSON.stringify()`, and use `null` instead of `undefined` when you need to preserve the key of an empty value.
  */
 export type DataStoreData = object;
 
@@ -164,8 +165,7 @@ const dsFmtVer = 1;
  * - ⚠️ The data is stored as a JSON string, so only data compatible with [`JSON.stringify()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify) can be used. Circular structures and complex objects (containing functions, symbols, etc.) will either throw an error on load and save or cause otherwise unexpected behavior. Properties with a value of `undefined` will be removed from the data prior to saving it, so use `null` instead.  
  * - ⚠️ Make sure to call {@linkcode loadData()} at least once after creating an instance, or the returned data will be the same as `options.defaultData`  
  * 
- * @template TData The type of the data that is saved in persistent storage for the currently set format version  
- * (TODO:FIXME: will be automatically inferred from `defaultData` if not provided)
+ * @template TData The type of the data that is saved in persistent storage for the currently set format version
  */
 export class DataStore<TData extends DataStoreData, TMemCache extends boolean = true> extends NanoEmitter<DataStoreEventMap<TData>> {
   public readonly id: string;
