@@ -5,7 +5,7 @@
 
 import { computeHash } from "./crypto.ts";
 import { ChecksumMismatchError, DatedError, ScriptContextError } from "./Errors.ts";
-import type { DataStore, DataStoreData } from "./DataStore.ts";
+import type { DataStore } from "./DataStore.ts";
 
 /** Options for the DataStoreSerializer class */
 export type DataStoreSerializerOptions = {
@@ -52,10 +52,10 @@ export type StoreFilter = string[] | ((id: string) => boolean);
  * - ⚠️ Needs to run in a secure context (HTTPS) due to the use of the SubtleCrypto API if checksumming is enabled.  
  */
 export class DataStoreSerializer {
-  protected stores: DataStore<DataStoreData, boolean>[];
+  protected stores: DataStore<any, boolean>[]; // eslint-disable-line @typescript-eslint/no-explicit-any
   protected options: Required<DataStoreSerializerOptions>;
 
-  constructor(stores: DataStore<DataStoreData, boolean>[], options: DataStoreSerializerOptions = {}) {
+  constructor(stores: DataStore<any, boolean>[], options: DataStoreSerializerOptions = {}) { // eslint-disable-line @typescript-eslint/no-explicit-any
     if(!crypto || !crypto.subtle)
       throw new ScriptContextError("DataStoreSerializer has to run in a secure context (HTTPS) or in another environment that implements the subtleCrypto API!");
 
@@ -249,7 +249,7 @@ export class DataStoreSerializer {
   }
 
   /** Returns the DataStore instances whose IDs match the provided array or function */
-  protected getStoresFiltered(stores?: StoreFilter): DataStore<DataStoreData, boolean>[] {
+  protected getStoresFiltered(stores?: StoreFilter): DataStore<any, boolean>[] { // eslint-disable-line @typescript-eslint/no-explicit-any
     return this.stores.filter(s => typeof stores === "undefined" ? true : Array.isArray(stores) ? stores.includes(s.id) : stores(s.id));
   }
 }
