@@ -43,7 +43,8 @@ export type LoadStoresDataResult = {
 export type StoreFilter = string[] | ((id: string) => boolean);
 
 /**
- * Allows for easy serialization and deserialization of multiple DataStore instances.  
+ * Allows for easy serialization and deserialization of multiple {@linkcode DataStore} instances.  
+ * Offers methods to only serialize or deserialize a subset of the stores, and to ensure the integrity of the data by adding checksums.  
  *   
  * All methods are at least `protected`, so you can easily extend this class and overwrite them to use a different storage method or to add additional functionality.  
  * Remember that you can call `super.methodName()` in the subclass to access the original method.  
@@ -67,7 +68,10 @@ export class DataStoreSerializer {
     };
   }
 
-  /** Calculates the checksum of a string */
+  /**
+   * Calculates the checksum of a string. Uses {@linkcode computeHash()} with SHA-256 and digests as a hex string by default.  
+   * Override this in a subclass if a custom checksum method is needed.
+   */
   protected async calcChecksum(input: string): Promise<string> {
     return computeHash(input, "SHA-256");
   }

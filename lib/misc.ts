@@ -210,7 +210,7 @@ export function getCallStack<TAsArray extends boolean = true>(asArray?: TAsArray
     throw new TypeError("lines parameter must be a non-negative number");
 
   try {
-    throw new Error("This is to capture a stack trace with CoreUtils.getCallStack(). (If you see this somewhere, you can safely ignore it.)");
+    throw new CustomError("GetCallStack", "Capturing a stack trace with CoreUtils.getCallStack(). If you see this anywhere, you can safely ignore it.");
   }
   catch(err) {
     const stack = ((err as Error).stack ?? "")
