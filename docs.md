@@ -1714,7 +1714,7 @@ class Debouncer<TFunc extends (...args: any) => any>
   
 Usage:
 ```ts
-const debouncer = new Debouncer(timeout = 200, type: DebouncerType = "immediate");
+const debouncer = new Debouncer(timeout = 200, type: DebouncerType = "immediate", nanoEmitterOptions?: NanoEmitterOptions);
 ```
   
 Creates a new Debouncer instance.  
@@ -1726,9 +1726,9 @@ It works similarly to other debounce implementations like `_.debounce()` from Lo
   
 If `timeout` is not provided, it will default to 200 milliseconds.  
 If `type` isn't provided, it will default to `"immediate"`.  
+Use `nanoEmitterOptions` to customize the behavior of the inherited NanoEmitter methods. Refer to the [type `NanoEmitterOptions`](#type-nanoemitteroptions) for more information.  
   
 The `type` parameter can be set to `"immediate"` (default and recommended) to let the first call through immediately and then queue the following calls until the timeout is over.  
-  
 If set to `"idle"`, the debouncer will wait until there is a pause of the given timeout length before executing the queued call.  
 Note that this might make the calls be queued up for all eternity if there isn't a long enough gap between them.  
 
@@ -1912,6 +1912,7 @@ debounce<
   fn: TFunc,
   timeout?: number,
   type?: "immediate" | "idle",
+  nanoEmitterOptions?: NanoEmitterOptions,
 ): TFunc & { debouncer: Debouncer }
 ```
   
@@ -1924,9 +1925,9 @@ Still, you will have access to the created Debouncer instance via the `debouncer
   
 If `timeout` is not provided, it will default to 200 milliseconds.  
 If `type` isn't provided, it will default to `"immediate"`.  
+Use `nanoEmitterOptions` to customize the behavior of the inherited NanoEmitter methods. Refer to the [type `NanoEmitterOptions`](#type-nanoemitteroptions) for more information.  
   
 The `type` parameter can be set to `"immediate"` (default and recommended) to let the first call through immediately and then queue the following calls until the timeout is over.  
-  
 If set to `"idle"`, the debouncer will wait until there is a pause of the given timeout length before executing the queued call.  
 Note that this might make the calls be queued up for all eternity if there isn't a long enough gap between them.  
 
@@ -2056,7 +2057,7 @@ Signature:
 new DatedError(message: string, options?: { cause?: Error });
 ```
   
-Base class for all custom error classes of this library.  
+Base class for all custom error classes of this library that extends the built-in [`Error` class.](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error)  
 Adds a `date` prop set to the time when the error was created.  
   
 <details><summary>Example - click to view</summary>
@@ -2064,13 +2065,13 @@ Adds a `date` prop set to the time when the error was created.
 ```ts
 import { DatedError } from "@sv443-network/coreutils";
 
+// instantiate the DatedError class directly:
 const datedErr = new DatedError("This is a dated error!");
 
-// or create your own error classes:
-
+// or create your own error classes with a custom name:
 class MyError extends DatedError {
-  constructor(message: string) {
-    super(message);
+  constructor(message: string, options?: ErrorOptions) {
+    super(message, options);
     this.name = "MyError";
   }
 }
@@ -2084,7 +2085,7 @@ catch(err) {
   // Caused by: DatedError: This is a dated error!
 
   if(err instanceof DatedError)
-    console.error("Error created at", err.date);
+    console.error("Error created at:", err.date.toLocaleString());
 }
 ```
 </details>
@@ -2123,7 +2124,7 @@ new CustomError(name: string, message: string, options?: { cause?: Error });
 ```
 
 Custom error class that has an extra `name` property.  
-This is useful for one-off custom errors where creating a whole class is too much overhead.
+This is useful for one-off custom errors where creating a whole class for a custom name would be too much overhead.
 
 <br>
 
@@ -3193,7 +3194,7 @@ The options object for the [`NanoEmitter` class.](#class-nanoemitter)
 It can have the following properties:
 | Property | Type | Description |
 | :-- | :-- | :-- |
-| `publicEmit?` | `boolean` | If set to true, the public method `emit()` will be callable. False by default. |
+| `publicEmit?` | `boolean` | If set to true, the public method `emit()` will be callable. False by default, meaning only the protected member `this.events` can be used to emit events from within the class body. |
 
 <br><br>
 
