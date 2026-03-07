@@ -1,5 +1,16 @@
 # @sv443-network/coreutils
 
+## 3.4.0
+
+### Minor Changes
+
+- 7e5c0b6: `Debouncer` and `debounce` now have an extra parameter of type `NanoEmitterOptions` to customize the underlying `NanoEmitter` instance.
+- 2a04a7d: Added function `createRecurringTask()` as a "batteries included" alternative to `setImmediateTimeoutLoop()` and `setImmediateInterval()`, with more ways to control task execution and aborting.
+
+### Patch Changes
+
+- 328c460: Fix internal event emission problems in `Debouncer`
+
 ## 3.3.0
 
 ### Minor Changes
