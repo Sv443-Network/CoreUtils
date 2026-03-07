@@ -191,8 +191,8 @@ export function scheduleExit(code: number = 0, timeout = 0): void {
 
   let exit: (() => void) | undefined;
   if(typeof process !== "undefined" && "exit" in process && typeof process.exit === "function")
-    exit = () => process.exit(code);
-  else if(typeof Deno !== "undefined" && "exit" in Deno && typeof Deno.exit === "function")
+    exit = () => process.exit(code); // @ts-ignore Deno can't be loaded due to namespace conflicts
+  else if(typeof Deno !== "undefined" && "exit" in Deno && typeof Deno.exit === "function") // @ts-ignore see above
     exit = () => Deno.exit(code);
   else
     throw new ScriptContextError("Cannot exit the process, no exit method available");
@@ -220,4 +220,80 @@ export function getCallStack<TAsArray extends boolean = true>(asArray?: TAsArray
     // @ts-expect-error
     return asArray !== false ? stack : stack.join("\n");
   }
+}
+
+/** Options object for {@linkcode createRecurringTask()} */
+export type RecurringTaskOptions<TVal extends void | unknown> = {
+  /** Timeout between running the task, in milliseconds. For async tasks and conditions, the timeout will be added onto the execution time of the Promises. */
+  timeout: number;
+  /**
+   * The task to run. Can return a value or a promise that resolves to a value of any type, which will be passed to the optional callback once the task is finished.  
+   * Gets passed the current iteration (starting at 0) as an argument. If no `condition` is given, the task will run indefinitely, or until aborted via the `signal`, `abortOnError` or `maxIterations` options.
+   */
+  task: (iteration: number) => TVal | Promise<TVal>;
+  /**
+   * Condition that needs to return true in order to run the task. If not given, the task will run indefinitely with the given timeout.  
+   * Gets passed the current iteration (starting at 0) as an argument. A failing condition will still increment the iterations.
+   */
+  condition?: (iteration: number) => boolean | Promise<boolean>;
+  /** Gets called with the task's return value and iteration number every time it's finished. Can be an async function if asynchronous operations are needed in the callback. */
+  onSuccess?: (value: TVal, iteration: number) => void | Promise<void>;
+  /** Gets called with the error if the condition or task functions throw an error or return a rejected promise. Can be an async function if asynchronous operations are needed in the callback. */
+  onError?: (error: unknown, iteration: number) => void | Promise<void>;
+  /**
+   * If true, the recurring task will stop if the condition or task functions throw an error or return a rejected promise. Defaults to false.
+   * - ⚠️ If neither `onError` nor `abortOnError` are set, errors will be re-thrown, which could potentially crash the process if not handled by the caller.
+   */
+  abortOnError?: boolean;
+  /** Max number of times to run the task. If not given, will run indefinitely as long as the condition is true. */
+  maxIterations?: number;
+  /** Optional AbortSignal to cancel the task. */
+  signal?: AbortSignal;
+  /** Whether to run the task immediately on the first call or wait for the first timeout to pass. Defaults to true. */
+  immediate?: boolean;
+};
+
+/**
+ * Schedules a task to run immediately and repeatedly at the given timeout as long as the given condition returns true.  
+ * Ensures no overlapping task executions and multiple ways to cleanly stop the repeated execution.  
+ * @returns A promise that resolves once the task is stopped, either by the condition returning false, reaching the max iterations, or the signal being aborted.
+ */
+export function createRecurringTask<TVal extends void | unknown>(options: RecurringTaskOptions<TVal>): Promise<void> {
+  let iterations = 0;
+  let aborted = false;
+
+  options.signal?.addEventListener("abort", () => {
+    aborted = true;
+  }, { once: true });
+
+  const runRecurringTask = async (initial = false): Promise<void> => {
+    if(aborted)
+      return;
+
+    try {
+      // don't execute task if immediate = false on the first run
+      if((options.immediate ?? true) || !initial) {
+        iterations++;
+        if(await options.condition?.(iterations - 1) ?? true) {
+          const val = await options.task(iterations - 1);
+          if(options.onSuccess)
+            await options.onSuccess(val, iterations - 1);
+        }
+      }
+    }
+    catch(err) {
+      if(options.onError)
+        await options.onError(err, iterations - 1);
+      if(options.abortOnError)
+        aborted = true;
+      if(!options.onError && !options.abortOnError)
+        throw err;
+    }
+
+    // evaluate if task should run again
+    if(!aborted && (typeof options.maxIterations !== "number" || iterations < options.maxIterations))
+      setTimeout(runRecurringTask, options.timeout);
+  };
+
+  return runRecurringTask(true);
 }

@@ -1,7 +1,6 @@
-import { describe, expect, it } from "vitest";
-import { consumeGen, consumeStringGen, getCallStack, fetchAdvanced, getListLength, pauseFor, pureObj, scheduleExit, setImmediateInterval, setImmediateTimeoutLoop } from "../misc.ts";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { consumeGen, consumeStringGen, getCallStack, createRecurringTask, fetchAdvanced, getListLength, pauseFor, pureObj, scheduleExit, setImmediateInterval, setImmediateTimeoutLoop } from "../misc.ts";
 import { softExpect } from "./softExpect.ts";
-import { vi } from "vitest";
 
 //#region pauseFor
 describe("misc/pauseFor", () => {
@@ -188,14 +187,14 @@ describe("misc/scheduleExit", () => {
     exitSpy.mockRestore();
   });
 
-  it("Schedules an exit (Deno)", async () => {
+  it("Schedules an exit (Deno mock)", async () => {
     const originalExit = globalThis.process.exit;
     // @ts-ignore
     delete globalThis.process.exit;
 
-    const originalDeno = globalThis.Deno;
+    // @ts-ignore Deno can't be loaded due to namespace conflicts
+    const originalDeno = globalThis.Deno; // @ts-ignore see above
     globalThis.Deno = {
-      // @ts-expect-error
       exit: (code: number) => void code,
     };
 
@@ -285,5 +284,309 @@ describe("misc/getCallStack", () => {
     expect(limitedStack.length).toBe(2);
     expect(limitedStack[0]).toMatch(/at third/);
     expect(limitedStack[1]).toMatch(/at second/);
+  });
+});
+
+//#region createRecurringTask
+describe("misc/createRecurringTask", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("Runs task immediately and calls onSuccess with return val", async () => {
+    vi.useFakeTimers();
+    const taskFn = vi.fn(() => 42);
+    const onSuccess = vi.fn();
+
+    createRecurringTask({
+      timeout: 100,
+      task: taskFn,
+      onSuccess,
+      maxIterations: 1,
+    });
+
+    await vi.advanceTimersByTimeAsync(0);
+    expect(taskFn).toHaveBeenCalledTimes(1);
+    expect(onSuccess).toHaveBeenCalledWith(42, 0);
+  });
+
+  it("Skips first execution when immediate is false", async () => {
+    vi.useFakeTimers();
+    const taskFn = vi.fn(() => 42);
+
+    createRecurringTask({
+      timeout: 100,
+      task: taskFn,
+      immediate: false,
+      maxIterations: 1,
+    });
+
+    await vi.advanceTimersByTimeAsync(0);
+    expect(taskFn).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(100);
+    expect(taskFn).toHaveBeenCalledTimes(1);
+  });
+
+  it("Runs task until maxIterations reached", async () => {
+    vi.useFakeTimers();
+    const taskFn = vi.fn(() => 42);
+
+    createRecurringTask({
+      timeout: 50,
+      task: taskFn,
+      maxIterations: 3,
+    });
+
+    await vi.advanceTimersByTimeAsync(0);
+    expect(taskFn).toHaveBeenCalledTimes(1);
+
+    await vi.advanceTimersByTimeAsync(50);
+    expect(taskFn).toHaveBeenCalledTimes(2);
+
+    await vi.advanceTimersByTimeAsync(50);
+    expect(taskFn).toHaveBeenCalledTimes(3);
+
+    // should stop after maxIterations
+    await vi.advanceTimersByTimeAsync(50);
+    expect(taskFn).toHaveBeenCalledTimes(3);
+  });
+
+  it("Calls async onSuccess callback", async () => {
+    vi.useFakeTimers();
+    let received: unknown;
+
+    createRecurringTask({
+      timeout: 50,
+      task: () => 123,
+      onSuccess: async (val) => { received = val; },
+      maxIterations: 1,
+    });
+
+    await vi.advanceTimersByTimeAsync(0);
+    expect(received).toBe(123);
+  });
+
+  it("Respects the condition function", async () => {
+    vi.useFakeTimers();
+    let condVal = true;
+    const taskFn = vi.fn();
+
+    createRecurringTask({
+      timeout: 50,
+      task: taskFn,
+      condition: () => condVal,
+      maxIterations: 3,
+    });
+
+    await vi.advanceTimersByTimeAsync(0);
+    expect(taskFn).toHaveBeenCalledTimes(1);
+
+    condVal = false;
+    await vi.advanceTimersByTimeAsync(50);
+    expect(taskFn).toHaveBeenCalledTimes(1); // skipped
+
+    condVal = true;
+    await vi.advanceTimersByTimeAsync(50);
+    expect(taskFn).toHaveBeenCalledTimes(2);
+  });
+
+  it("Condition returning false counts toward maxIterations", async () => {
+    vi.useFakeTimers();
+    const taskFn = vi.fn();
+
+    createRecurringTask({
+      timeout: 50,
+      task: taskFn,
+      condition: () => false,
+      maxIterations: 2,
+    });
+
+    // iteration 1: condition false, task skipped, but iteration counted
+    await vi.advanceTimersByTimeAsync(0);
+    expect(taskFn).not.toHaveBeenCalled();
+
+    // iteration 2: condition still false, maxIterations reached
+    await vi.advanceTimersByTimeAsync(50);
+    expect(taskFn).not.toHaveBeenCalled();
+
+    // should not schedule any further runs
+    await vi.advanceTimersByTimeAsync(50);
+    expect(taskFn).not.toHaveBeenCalled();
+  });
+
+  it("Supports async conditions", async () => {
+    vi.useFakeTimers();
+    const taskFn = vi.fn();
+
+    createRecurringTask({
+      timeout: 50,
+      task: taskFn,
+      condition: () => new Promise((r) => setTimeout(() => r(true), 2)),
+      maxIterations: 1,
+    });
+
+    await vi.advanceTimersByTimeAsync(5);
+    expect(taskFn).toHaveBeenCalledTimes(1);
+  });
+
+  it("Calls onError when task throws and continues by default", async () => {
+    vi.useFakeTimers();
+    const onError = vi.fn();
+    const err = new Error("task error");
+    let shouldThrow = true;
+
+    createRecurringTask({
+      timeout: 50,
+      task: () => { if(shouldThrow) throw err; },
+      onError,
+      maxIterations: 2,
+    });
+
+    await vi.advanceTimersByTimeAsync(0);
+    expect(onError).toHaveBeenCalledWith(err, 0);
+
+    shouldThrow = false;
+    await vi.advanceTimersByTimeAsync(50);
+    expect(onError).toHaveBeenCalledTimes(1);
+  });
+
+  it("Calls onError when condition throws", async () => {
+    vi.useFakeTimers();
+    const onError = vi.fn();
+    const err = new Error("condition error");
+
+    createRecurringTask({
+      timeout: 50,
+      task: () => {},
+      condition: () => { throw err; },
+      onError,
+      abortOnError: true,
+    });
+
+    await vi.advanceTimersByTimeAsync(0);
+    expect(onError).toHaveBeenCalledWith(err, 0);
+  });
+
+  it("Calls async onError callback", async () => {
+    vi.useFakeTimers();
+    let receivedErr: unknown;
+    const err = new Error("async error");
+
+    createRecurringTask({
+      timeout: 50,
+      task: () => { throw err; },
+      onError: async (e) => { receivedErr = e; },
+      abortOnError: true,
+    });
+
+    await vi.advanceTimersByTimeAsync(0);
+    expect(receivedErr).toBe(err);
+  });
+
+  it("Re-throws errors when no onError or abortOnError is provided", async () => {
+    vi.useFakeTimers();
+
+    const promise = createRecurringTask({
+      timeout: 50,
+      task: () => { throw new Error("unhandled"); },
+      maxIterations: 1,
+    });
+
+    await expect(promise).rejects.toThrow("unhandled");
+  });
+
+  it("Stops when abortOnError is true", async () => {
+    vi.useFakeTimers();
+    const taskFn = vi.fn(() => { throw new Error("fail"); });
+
+    createRecurringTask({
+      timeout: 50,
+      task: taskFn,
+      onError: () => {},
+      abortOnError: true,
+    });
+
+    await vi.advanceTimersByTimeAsync(0);
+    expect(taskFn).toHaveBeenCalledTimes(1);
+
+    await vi.advanceTimersByTimeAsync(50);
+    expect(taskFn).toHaveBeenCalledTimes(1); // stopped
+  });
+
+  it("Stops when signal is aborted", async () => {
+    vi.useFakeTimers();
+    const ac = new AbortController();
+    const taskFn = vi.fn();
+
+    createRecurringTask({
+      timeout: 50,
+      task: taskFn,
+      signal: ac.signal,
+    });
+
+    await vi.advanceTimersByTimeAsync(0);
+    expect(taskFn).toHaveBeenCalledTimes(1);
+
+    ac.abort();
+
+    await vi.advanceTimersByTimeAsync(50);
+    expect(taskFn).toHaveBeenCalledTimes(1); // stopped
+  });
+
+  it("Handles async tasks", async () => {
+    vi.useFakeTimers();
+    const onSuccess = vi.fn();
+
+    createRecurringTask({
+      timeout: 50,
+      task: async () => {
+        await Promise.resolve();
+        return "async-result";
+      },
+      onSuccess,
+      maxIterations: 1,
+    });
+
+    await vi.advanceTimersByTimeAsync(0);
+    expect(onSuccess).toHaveBeenCalledWith("async-result", 0);
+  });
+
+  it("Runs indefinitely without maxIterations until aborted", async () => {
+    vi.useFakeTimers();
+    const ac = new AbortController();
+    const taskFn = vi.fn();
+
+    createRecurringTask({
+      timeout: 50,
+      task: taskFn,
+      signal: ac.signal,
+    });
+
+    await vi.advanceTimersByTimeAsync(0);
+    for(let i = 0; i < 9; i++)
+      await vi.advanceTimersByTimeAsync(50);
+
+    expect(taskFn).toHaveBeenCalledTimes(10);
+
+    ac.abort();
+    await vi.advanceTimersByTimeAsync(50);
+    expect(taskFn).toHaveBeenCalledTimes(10);
+  });
+
+  it("Handles async task rejection in onError", async () => {
+    vi.useFakeTimers();
+    const onError = vi.fn();
+
+    createRecurringTask({
+      timeout: 50,
+      task: async () => { throw new Error("async fail"); },
+      onError,
+      maxIterations: 1,
+    });
+
+    await vi.advanceTimersByTimeAsync(0);
+    expect(onError).toHaveBeenCalledTimes(1);
+    expect((onError.mock.calls[0][0] as Error).message).toBe("async fail");
   });
 });
