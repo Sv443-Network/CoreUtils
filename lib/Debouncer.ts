@@ -5,7 +5,7 @@
  * This module contains the Debouncer class and debounce function that allow you to reduce the amount of calls in rapidly firing event listeners and such - [see the documentation for more info](https://github.com/Sv443-Network/UserUtils/blob/main/docs.md#debouncer)
  */
 
-import { NanoEmitter } from "./NanoEmitter.ts";
+import { NanoEmitter, type NanoEmitterOptions } from "./NanoEmitter.ts";
 
 //#region types
 
@@ -64,8 +64,8 @@ export class Debouncer<TFunc extends AnyFn> extends NanoEmitter<DebouncerEventMa
    * @param timeout Timeout in milliseconds between letting through calls - defaults to 200
    * @param type The edge type to use for the debouncer - see {@linkcode DebouncerType} for details or [the documentation for an explanation and diagram](https://github.com/Sv443-Network/UserUtils/blob/main/docs.md#debouncer) - defaults to "immediate"
    */
-  constructor(protected timeout = 200, protected type: DebouncerType = "immediate") {
-    super();
+  constructor(protected timeout = 200, protected type: DebouncerType = "immediate", nanoEmitterOptions?: NanoEmitterOptions) {
+    super(nanoEmitterOptions);
   }
 
   //#region listeners
@@ -181,9 +181,10 @@ export class Debouncer<TFunc extends AnyFn> extends NanoEmitter<DebouncerEventMa
 export function debounce<TFunc extends (...args: any[]) => any>(
   fn: TFunc,
   timeout = 200,
-  type: DebouncerType = "immediate"
+  type: DebouncerType = "immediate",
+  nanoEmitterOptions?: NanoEmitterOptions,
 ): DebouncedFunction<TFunc> {
-  const debouncer = new Debouncer<TFunc>(timeout, type);
+  const debouncer = new Debouncer<TFunc>(timeout, type, nanoEmitterOptions);
   debouncer.addListener(fn);
 
   const func = (((...args: Parameters<TFunc>) => debouncer.call(...args))) as DebouncedFunction<TFunc>;
