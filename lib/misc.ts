@@ -227,7 +227,7 @@ export type RecurringTaskOptions<TVal extends void | unknown> = {
   /** Timeout between running the task, in milliseconds. For async tasks and conditions, the timeout will be added onto the execution time of the Promises. */
   timeout: number;
   /**
-   * The task to run. Can return a value or a promise that resolves to a value of any type, which will be passed to the optional callback once the task is finished.  
+   * The task to run. Can return a value or a Promise that resolves to a value of any type, which will be passed to the optional callback once the task is finished.  
    * Gets passed the current iteration (starting at 0) as an argument. If no `condition` is given, the task will run indefinitely, or until aborted via the `signal`, `abortOnError` or `maxIterations` options.
    */
   task: (iteration: number) => TVal | Promise<TVal>;
@@ -238,10 +238,10 @@ export type RecurringTaskOptions<TVal extends void | unknown> = {
   condition?: (iteration: number) => boolean | Promise<boolean>;
   /** Gets called with the task's return value and iteration number every time it's finished. Can be an async function if asynchronous operations are needed in the callback. */
   onSuccess?: (value: TVal, iteration: number) => void | Promise<void>;
-  /** Gets called with the error if the condition or task functions throw an error or return a rejected promise. Can be an async function if asynchronous operations are needed in the callback. */
+  /** Gets called with the error if the `task`, `condition` or `onSuccess` functions throw an error or return a rejected Promise. Can be an async function if asynchronous operations are needed in the callback. */
   onError?: (error: unknown, iteration: number) => void | Promise<void>;
   /**
-   * If true, the recurring task will stop if the condition or task functions throw an error or return a rejected promise. Defaults to false.
+   * If true, the recurring task will stop if the condition or task functions throw an error or return a rejected Promise. Defaults to false.
    * - ⚠️ If neither `onError` nor `abortOnError` are set, errors will be re-thrown, which could potentially crash the process if not handled by the caller.
    */
   abortOnError?: boolean;
