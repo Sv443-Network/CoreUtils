@@ -96,8 +96,7 @@ describe("Debouncer", () => {
   });
 
   //#region all methods
-  // TODO:FIXME:
-  it.skip("All methods", async () => {
+  it("All methods", async () => {
     const deb = new Debouncer<(v?: number) => void>(200);
 
     let callAmt = 0, evtCallAmt = 0;
@@ -116,6 +115,9 @@ describe("Debouncer", () => {
 
     deb.setTimeout(10);
     expect(deb.getTimeout()).toBe(10);
+
+    // wait for the initial 200ms timeout from deb.call() above to expire
+    await pauseFor(250);
 
     const callPaused = (v?: number): Promise<void> => {
       deb.call(v);
@@ -141,7 +143,7 @@ describe("Debouncer", () => {
 
     deb.removeAllListeners();
     await callPaused();
-    expect(callAmt).toEqual(evtCallAmt + 1); // evtCallAmt is always behind by 1
+    expect(callAmt).toEqual(evtCallAmt); // after removeAllListeners, only evtCallAmt increments so they equalize
   });
 
   //#region errors
