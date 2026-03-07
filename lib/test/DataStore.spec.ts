@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { DataStore } from "../DataStore.ts";
-import { BrowserStorageEngine } from "../DataStoreEngine.ts";
+import { BrowserStorageEngine, DataStoreEngine } from "../DataStoreEngine.ts";
+import type { SerializableVal } from "../types.ts";
 import { DirectAccessDataStore } from "./DirectAccessDataStore.ts";
 import { randomId } from "../crypto.ts";
 import { MigrationError } from "../Errors.ts";
@@ -675,5 +676,69 @@ describe("DataStore", () => {
     expect(cb).toHaveBeenCalledWith("test-evt-oldId", "test-evt-newId");
 
     await newStore.deleteData();
+  });
+
+  //#region setData error
+
+  it("Emits error event when setData fails", async () => {
+    class FailingEngine extends DataStoreEngine {
+      public async getValue<TValue extends SerializableVal = string>(_name: string, defaultValue: TValue): Promise<string | TValue> {
+        return defaultValue;
+      }
+      public async setValue(_name: string, _value: SerializableVal): Promise<void> {
+        throw new Error("setValue failed");
+      }
+      public async deleteValue(_name: string): Promise<void> {}
+    }
+
+    const store = new DataStore({
+      id: "test-evt-setData-err",
+      defaultData: { a: 1 },
+      formatVersion: 1,
+      engine: new FailingEngine(),
+      compressionFormat: null,
+    });
+
+    const errCb = vi.fn();
+    const updateCb = vi.fn();
+    store.on("error", errCb);
+    store.on("updateData", updateCb);
+
+    await store.setData({ a: 2 });
+
+    expect(errCb).toHaveBeenCalledOnce();
+    expect(errCb.mock.calls[0]![0]).toBeInstanceOf(Error);
+    expect(updateCb).not.toHaveBeenCalled();
+  });
+
+  it("Emits error event when saveDefaultData IO fails", async () => {
+    class FailingEngine extends DataStoreEngine {
+      public async getValue<TValue extends SerializableVal = string>(_name: string, defaultValue: TValue): Promise<string | TValue> {
+        return defaultValue;
+      }
+      public async setValue(_name: string, _value: SerializableVal): Promise<void> {
+        throw new Error("setValue failed");
+      }
+      public async deleteValue(_name: string): Promise<void> {}
+    }
+
+    const store = new DataStore({
+      id: "test-evt-saveDefault-err",
+      defaultData: { a: 1 },
+      formatVersion: 1,
+      engine: new FailingEngine(),
+      compressionFormat: null,
+    });
+
+    const errCb = vi.fn();
+    const setDefaultCb = vi.fn();
+    store.on("error", errCb);
+    store.on("setDefaultData", setDefaultCb);
+
+    await store.saveDefaultData();
+
+    expect(errCb).toHaveBeenCalledOnce();
+    expect(errCb.mock.calls[0]![0]).toBeInstanceOf(Error);
+    expect(setDefaultCb).not.toHaveBeenCalled();
   });
 });
