@@ -101,6 +101,8 @@ For submitting bug reports or feature requests, please use the [GitHub issue tra
     - 🟣 [`function pureObj()`](#function-pureobj) - Applies an object's props to a null object (object without prototype chain) or just returns a new null object
     - 🟣 [`function setImmediateInterval()`](#function-setimmediateinterval) - Like `setInterval()`, but instantly calls the callback and supports passing an [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal)
     - 🟣 [`function setImmediateTimeoutLoop()`](#function-setimmediatetimeoutloop) - Like a recursive `setTimeout()` loop, but instantly calls the callback and supports passing an [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal)
+    - 🟣 [`function createRecurringTask()`](#function-createrecurringtask) - Similar to `setImmediateTimeoutLoop()`, but with many more ways of controlling execution.
+      - 🔷 [`type RecurringTaskOptions`](#type-recurringtaskoptions) - Options for the `createRecurringTask()` function.
     - 🟣 [`function scheduleExit()`](#function-scheduleexit) - Schedules a process exit after the next event loop tick, to allow operations like IO writes to finish.
     - 🟣 [`function getCallStack()`](#function-getcallstack) - Returns the current call stack, starting at the caller of this function.
   - [**NanoEmitter:**](#nanoemitter)
@@ -2830,6 +2832,102 @@ abortButton.addEventListener("click", () => {
 });
 ```
 </details>
+
+<br>
+
+### `function createRecurringTask()`
+Signature:
+```ts
+function createRecurringTask(options: RecurringTaskOptions): Promise<void>;
+```
+  
+Schedules a task to run immediately and repeatedly at the given timeout as long as the given condition returns true.  
+Ensures no overlapping task executions and multiple ways to cleanly stop the repeated execution.  
+Returns a promise that resolves once the task is stopped, either by the condition returning false, reaching the max iterations, or the signal being aborted.  
+  
+Refer to the [`RecurringTaskOptions` type](#type-recurringtaskoptions) for the options object.  
+  
+<details><summary><b>Example - click to view</b></summary>
+
+```ts
+import { createRecurringTask } from "@sv443-network/coreutils";
+
+// for manually aborting the task at any point:
+const { signal, abort } = new AbortController();
+
+createRecurringTask({
+  // execute task 4 times per second:
+  timeout: 250,
+  // only run the task while this condition is true:
+  condition: async () => globalThis.someConditionIsTrue,
+  // task can be sync or async, and can even return a value that gets passed to onSuccess:
+  async task(iteration: number) {
+    const result = await doSomeAsyncStuff();
+    return result;
+  },
+  // called every time the task is executed successfully:
+  onSuccess(result: unknown) {
+    console.log("Task executed successfully with result:", result);
+  },
+  // called when the task, condition or onSuccess functions threw an error:
+  onError(err: Error) {
+    console.error("Task execution error:", err);
+  },
+  // pass the signal to be able to abort the task:
+  signal,
+  // stop the task after 10 iterations even if the condition is still true:
+  maxIterations: 10,
+  // wait for the first timeout to pass before calling the task for the first time:
+  immediate: false,
+  // stop the recurring executions if there was an error:
+  abortOnError: true,
+}).then(() => {
+  // task was stopped via the condition returning false, reaching max iterations or the signal being aborted:
+  console.log("Task stopped.");
+});
+
+document.querySelector("#stopButton")?.addEventListener("click", () => {
+  // stop the task manually, either by aborting the signal...:
+  abort();
+  // ...or by making the condition return false:
+  globalThis.someConditionIsTrue = false;
+});
+```
+</details>
+
+<br>
+
+### `type RecurringTaskOptions`
+```ts
+type RecurringTaskOptions<TVal extends void | unknown> = {
+  timeout: number;
+  task: (iteration: number) => TVal | Promise<TVal>;
+  condition?: (iteration: number) => boolean | Promise<boolean>;
+  onSuccess?: (value: TVal, iteration: number) => void | Promise<void>;
+  onError?: (error: unknown, iteration: number) => void | Promise<void>;
+  abortOnError?: boolean;
+  maxIterations?: number;
+  signal?: AbortSignal;
+  immediate?: boolean;
+};
+```
+  
+The options object for the [`createRecurringTask()` function.](#function-createrecurringtask)  
+Refer to that function for more details and a code example.  
+  
+The object has the following properties:
+- `timeout` (required): The timeout between running the task, in milliseconds. For async tasks and conditions, the timeout will be added onto the execution time of the Promises.
+- `task` (required): The task to run. Can return a value or a promise that resolves to a value of any type, which will be passed to the optional callback once the task is finished. Gets passed the current iteration (starting at 0) as an argument.
+- `condition`: Condition that needs to return true in order to run the task. If not given, the task will run indefinitely with the given timeout.  
+  Gets passed the current iteration (starting at 0) as an argument. A failing condition will still increment the iterations.
+- `onSuccess`: Gets called with the task's return value and iteration number every time it's finished. Can be an async function if asynchronous operations are needed in the callback.
+- `onError`: Gets called with the error and iteration number if the condition or task functions threw an error or returned a rejected promise.  
+  Can be an async function if asynchronous operations are needed in the callback.
+- `abortOnError`: If true, the recurring task will stop if the condition or task functions throw an error or return a rejected promise. Defaults to false.  
+  ⚠️ If neither `onError` nor `abortOnError` are set, errors will be re-thrown, which could potentially crash the process if not handled by the caller.
+- `maxIterations`: Max number of times to run the task. If not given, will run indefinitely as long as the condition is true.
+- `signal`: Optional AbortSignal to cancel the task.
+- `immediate`: Whether to run the task immediately on the first call or wait for the first timeout to pass. Defaults to true.
 
 <br>
 
