@@ -2923,7 +2923,7 @@ The object has the following properties:
 - `onSuccess`: Gets called with the task's return value and iteration number every time it's finished. Can be an async function if asynchronous operations are needed in the callback.
 - `onError`: Gets called with the error and iteration number if the condition or task functions threw an error or returned a rejected promise.  
   Can be an async function if asynchronous operations are needed in the callback.
-- `abortOnError`: If true, the recurring task will stop if the condition or task functions throw an error or return a rejected promise. Defaults to false.  
+- `abortOnError`: If true, the recurring task will stop if the `task`, `condition` or `onSuccess` functions throw an error or return a rejected promise. Defaults to false.  
   ⚠️ If neither `onError` nor `abortOnError` are set, errors will be re-thrown, which could potentially crash the process if not handled by the caller.
 - `maxIterations`: Max number of times to run the task. If not given, will run indefinitely as long as the condition is true.
 - `signal`: Optional AbortSignal to cancel the task.
