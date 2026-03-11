@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { autoPlural, capitalize, createProgressBar, insertValues, joinArrayReadable, secsToTimeStr, truncStr } from "../text.ts";
+import { autoPlural, capitalize, createProgressBar, createTable, defaultTableLineCharset, insertValues, joinArrayReadable, secsToTimeStr, truncStr } from "../text.ts";
 
 //#region autoPlural
 describe("misc/autoPlural", () => {
@@ -128,5 +128,196 @@ describe("misc/truncStr", () => {
     expect(truncStr(12345, 4)).toBe("1...");
     expect(truncStr("Hello, world!", 1)).toBe(".");
     expect(truncStr("Hello, world!", 0)).toBe("");
+  });
+});
+
+//#region createTable
+describe("text/createTable", () => {
+  it("Creates a basic single-style table", () => {
+    expect(createTable([
+      ["Name", "Age"],
+      ["Alice", "30"],
+      ["Bob", "25"],
+    ])).toBe(
+      "┌───────┬─────┐\n" +
+      "│ Name  │ Age │\n" +
+      "├───────┼─────┤\n" +
+      "│ Alice │ 30  │\n" +
+      "├───────┼─────┤\n" +
+      "│ Bob   │ 25  │\n" +
+      "└───────┴─────┘"
+    );
+  });
+
+  it("Creates a double-style table", () => {
+    expect(createTable([
+      ["a", "b"],
+      ["c", "d"],
+    ], { lineStyle: "double" })).toBe(
+      "╔═══╦═══╗\n" +
+      "║ a ║ b ║\n" +
+      "╠═══╬═══╣\n" +
+      "║ c ║ d ║\n" +
+      "╚═══╩═══╝"
+    );
+  });
+
+  it("Creates a table with no border lines", () => {
+    const result = createTable([
+      ["a", "b"],
+      ["c", "d"],
+    ], { lineStyle: "none" });
+    const lines = result.split("\n");
+    // Only content rows, no border rows
+    expect(lines).toHaveLength(2);
+    // No border characters
+    expect(result).not.toMatch(/[┌┐└┘├┤┬┴┼─│]/);
+    // Content is present
+    expect(lines[0]).toContain("a");
+    expect(lines[0]).toContain("b");
+  });
+
+  it("Creates a single-row table (no middle border)", () => {
+    expect(createTable([["Hello", "World"]])).toBe(
+      "┌───────┬───────┐\n" +
+      "│ Hello │ World │\n" +
+      "└───────┴───────┘"
+    );
+  });
+
+  it("Applies right column alignment", () => {
+    expect(createTable([
+      ["a"],
+      ["bb"],
+      ["ccc"],
+    ], { columnAlign: ["right"] })).toBe(
+      "┌─────┐\n" +
+      "│   a │\n" +
+      "├─────┤\n" +
+      "│  bb │\n" +
+      "├─────┤\n" +
+      "│ ccc │\n" +
+      "└─────┘"
+    );
+  });
+
+  it("Applies centerLeft column alignment", () => {
+    expect(createTable([
+      ["a"],
+      ["bb"],
+      ["ccc"],
+    ], { columnAlign: ["centerLeft"] })).toBe(
+      "┌─────┐\n" +
+      "│  a  │\n" +
+      "├─────┤\n" +
+      "│ bb  │\n" +
+      "├─────┤\n" +
+      "│ ccc │\n" +
+      "└─────┘"
+    );
+  });
+
+  it("Applies centerRight column alignment", () => {
+    expect(createTable([
+      ["a"],
+      ["bb"],
+      ["ccc"],
+    ], { columnAlign: ["centerRight"] })).toBe(
+      "┌─────┐\n" +
+      "│  a  │\n" +
+      "├─────┤\n" +
+      "│  bb │\n" +
+      "├─────┤\n" +
+      "│ ccc │\n" +
+      "└─────┘"
+    );
+  });
+
+  it("Truncates cell content with truncateAbove", () => {
+    expect(createTable([
+      ["Hello World", "Hi"],
+    ], {
+      truncateAbove: 5,
+      truncEndStr: "---",
+    })).toBe(
+      "┌───────┬────┐\n" +
+      "│ He--- │ Hi │\n" +
+      "└───────┴────┘"
+    );
+  });
+
+  it("Ignores ANSI codes for width calculation", () => {
+    const red = "\x1b[31mRed\x1b[0m"; // visible length 3
+    const result = createTable([[red, "Normal"]]);
+    // The border for col 0 should be 5 dashes (colWidth=3 + 2*minPadding)
+    expect(result.split("\n")[0]).toBe("┌─────┬────────┐");
+    // The content includes the ANSI codes
+    expect(result).toContain(`\x1b[31mRed\x1b[0m`);
+  });
+
+  it("Applies applyCellStyle to each cell", () => {
+    const calls: [number, number][] = [];
+    const result = createTable([
+      ["a", "b"],
+      ["c", "d"],
+    ], {
+      applyCellStyle: (i, j) => {
+        calls.push([i, j]);
+        return ["[", "]"];
+      },
+    });
+    expect(calls).toEqual([[0, 0], [0, 1], [1, 0], [1, 1]]);
+    expect(result).toContain("[a]");
+    expect(result).toContain("[b]");
+    expect(result).toContain("[c]");
+    expect(result).toContain("[d]");
+  });
+
+  it("Applies applyLineStyle to each line character", () => {
+    const result = createTable([["x"]], {
+      applyLineStyle: () => ["<", ">"],
+    });
+    // Every border character is wrapped
+    expect(result).toContain("<┌>");
+    expect(result).toContain("<─>");
+    expect(result).toContain("<┐>");
+    expect(result).toContain("<└>");
+    expect(result).toContain("<┘>");
+    // Cell content is unaffected
+    expect(result).toContain("x");
+  });
+
+  it("Respects minPadding: 0", () => {
+    expect(createTable([["a", "b"]], { minPadding: 0 })).toBe(
+      "┌─┬─┐\n" +
+      "│a│b│\n" +
+      "└─┴─┘"
+    );
+  });
+
+  it("Returns empty string for empty input", () => {
+    expect(createTable([])).toBe("");
+  });
+
+  it("Handles numeric and mixed Stringifiable values", () => {
+    const result = createTable([[1, true, null as unknown as string]]);
+    expect(result).toContain("1");
+    expect(result).toContain("true");
+    expect(result).toContain("null");
+  });
+
+  it("Supports custom line characters", () => {
+    const result = createTable([["x"]], {
+      lineCharset: {
+        ...defaultTableLineCharset,
+        single: {
+          ...defaultTableLineCharset.single,
+          topLeft: "A",
+          horizontal: "B",
+        },
+      },
+    });
+    expect(result).toContain("A");
+    expect(result).toContain("B");
   });
 });

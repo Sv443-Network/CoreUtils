@@ -94,7 +94,7 @@ Intended to be used in conjunction with [`@sv443-network/userutils`](https://git
   - 🟣 [`function autoPlural()`](./docs.md#function-autoplural) - Turns the given term into its plural form, depending on the given number or list length
   - 🟣 [`function capitalize()`](./docs.md#function-capitalize) - Capitalizes the first letter of the given string
   - 🟣 [`function createProgressBar()`](./docs.md#function-createprogressbar) - Creates a progress bar string with the given percentage and length
-    - ⬜ [`const defaultPbChars`](./docs.md#const-defaultpbchars) - Default characters for the progress bar
+    - 🟩 [`const defaultPbChars`](./docs.md#const-defaultpbchars) - Default characters for the progress bar
     - 🔷 [`type ProgressBarChars`](./docs.md#type-progressbarchars) - Type for the progress bar characters object
   - 🟣 [`function joinArrayReadable()`](./docs.md#function-joinarrayreadable) - Joins the given array into a string, using the given separators and last separator
   - 🟣 [`function secsToTimeStr()`](./docs.md#function-secstotimestr) - Turns the given number of seconds into a string in the format `(hh:)mm:ss` with intelligent zero-padding
@@ -129,7 +129,7 @@ Intended to be used in conjunction with [`@sv443-network/userutils`](https://git
 > 🟣 = function  
 > 🟧 = class  
 > 🔷 = type  
-> ⬜ = const
+> 🟩 = const
 
 <br>
 
