@@ -284,9 +284,12 @@ export function createTable<TRow extends [...Stringifiable[]]>(
     ...(options ?? {}),
   };
 
+  const defRange = (val: number | undefined, min: number, max: number): number =>
+    clamp((typeof val !== "number" || isNaN(Number(val)) ? min : val), min, max);
+
   // normalize options:
-  opts.truncateAbove = clamp(opts.truncateAbove, 0, Infinity);
-  opts.minPadding = clamp(opts.minPadding, 0, Infinity);
+  opts.truncateAbove = defRange(opts.truncateAbove, 0, Infinity);
+  opts.minPadding = defRange(opts.minPadding, 0, Infinity);
 
   const lnCh = opts.lineCharset[opts.lineStyle];
   // eslint-disable-next-line no-control-regex

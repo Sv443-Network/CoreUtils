@@ -315,7 +315,7 @@ describe("text/createTable", () => {
   });
 
   it("Handles numeric and mixed Stringifiable values", () => {
-    const result = createTable([[1, true, null as unknown as string]]);
+    const result = createTable([[1, true, null]]);
     expect(result).toContain("1");
     expect(result).toContain("true");
     expect(result).toContain("null");

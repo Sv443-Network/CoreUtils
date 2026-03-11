@@ -59,7 +59,7 @@ For submitting bug reports or feature requests, please use the [GitHub issue tra
       - 🔷 [`type LoadStoresDataResult`](#type-loadstoresdataresult) - Result of calling [`loadStoresData()`](#datastoreserializer-loadstoresdata)
       - 🔷 [`type SerializedDataStore`](#type-serializeddatastore) - Meta object and serialized data of a DataStore instance
       - 🔷 [`type StoreFilter`](#type-storefilter) - Filter for selecting data stores
-    - 🟧 [`class DataStoreEngine`](#class-datastoreengine) - Base class for DataStore storage engines, which handle the data storage
+    - 🟧 [`class DataStoreEngine`](#class-datastoreengine) - Base class for abstracting data storage into multiple instances
       - 🔷 [`type DataStoreEngineDSOptions`](#type-datastoreenginedsoptions) - Reduced version of [`DataStoreOptions`](#type-datastoreoptions)
     - [Storage Engines:](#storage-engines)
       - 🟧 [`class BrowserStorageEngine`](#class-browserstorageengine) - Storage engine for browser environments (localStorage, sessionStorage)
