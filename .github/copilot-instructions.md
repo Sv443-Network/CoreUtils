@@ -17,7 +17,7 @@ It is built with tsup, released with GitHub Actions and Changesets, tested with 
 - Respect the existing code style and the linter rules at `eslint.config.mjs` and `tsconfig.json`.
 - Write JSDoc comments for all public classes, methods and functions, including parameter and return types and descriptions.
 - Always add a return type to functions, even if it could be inferred.
-- Also write unit tests for all new and changed functions, aiming for high code coverage, but not excessively so.
-- When adding or editing a feature, documentation needs to be added or adjusted in `docs.md`. Follow the existing style and structure.
+- Also write unit tests for all new and changed functions, aiming for high code coverage, but not excessively so. The test files are in `lib/test/*.spec.ts` and use vitest.
+- When adding or editing a feature, documentation needs to be added or adjusted in `docs.md`. Follow the existing style and structure and provide meaningful and easy to follow examples. Also adjust the table of contents in the main `README.md` if necessary.
 - Never use `@ts-ignore` - always use `@ts-expect-error`, but only if absolutely necessary.
 - Always use `.ts` extension for local imports.
