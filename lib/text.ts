@@ -180,7 +180,7 @@ export type TableOptions = {
   columnAlign?: TableColumnAlign | TableColumnAlign[];
   /** If set, cell content that exceeds this width will be truncated with the value of `truncEndStr` (defaults to `…`) so that the final cell content doesn't exceed this width. */
   truncateAbove?: number;
-  /** The string to append to truncated cell content if `maxColWidth` is set. Defaults to `…`. */
+  /** The string to append to truncated cell content if `truncateAbove` is set. Defaults to `…`. */
   truncEndStr?: string;
   /** Minimum padding to add to the left and right of cell content, regardless of alignment settings. Defaults to 1, set to 0 to disable. */
   minPadding?: number;
@@ -264,7 +264,7 @@ export const defaultTableLineCharset: TableLineCharset = {
 
 /**
  * Creates an ASCII table string from the given rows and options.  
- * Supports `\x1b` ANSI color codes in cell content, which are ignored for width calculation but included in the final output.
+ * Supports `\x1b` ANSI color codes in cell content: they are ignored for width calculation, included in the final output, and handled correctly during truncation (escape sequences are never split; any open color code is closed with a reset).
  * @param rows Array of tuples, where each tuple represents a row and its values. The first tuple is used to determine the column count.
  * @param options Object with options for customizing the table output, such as column alignment, truncation, padding and line styles.
  */
@@ -285,7 +285,7 @@ export function createTable<TRow extends [...Stringifiable[]]>(
   };
 
   // normalize options:
-  opts.truncateAbove = clamp(opts.truncateAbove, 1, Infinity);
+  opts.truncateAbove = clamp(opts.truncateAbove, 0, Infinity);
   opts.minPadding = clamp(opts.minPadding, 0, Infinity);
 
   const lnCh = opts.lineCharset[opts.lineStyle];
@@ -299,10 +299,47 @@ export function createTable<TRow extends [...Stringifiable[]]>(
     return "";
 
   if(isFinite(opts.truncateAbove)) {
+    // Truncate by visible width while keeping ANSI sequences whole.
+    // Walking char-by-char lets us skip over escape sequences without counting
+    // them, then close any open color codes with a reset to prevent bleed.
+    const truncAnsi = (str: string, maxVisible: number, endStr: string): string => {
+      const limit = maxVisible - endStr.length;
+      if(limit <= 0)
+        return endStr.slice(0, maxVisible);
+
+      let visible = 0;
+      let result = "";
+      let i = 0;
+      let hasAnsi = false;
+
+      while(i < str.length) {
+        if(str[i] === "\u001b" && str[i + 1] === "[") {
+          const seqEnd = str.indexOf("m", i + 2);
+          if(seqEnd !== -1) {
+            result += str.slice(i, seqEnd + 1);
+            hasAnsi = true;
+            i = seqEnd + 1;
+            continue;
+          }
+        }
+        if(visible === limit) {
+          result += endStr;
+          if(hasAnsi)
+            result += "\u001b[0m";
+          return result;
+        }
+        result += str[i];
+        visible++;
+        i++;
+      }
+
+      return result;
+    };
+
     for(const row of stringRows)
       for(let j = 0; j < row.length; j++)
         if(stripAnsi(row[j] ?? "").length > opts.truncateAbove)
-          row[j] = truncStr(row[j] ?? "", opts.truncateAbove, opts.truncEndStr);
+          row[j] = truncAnsi(row[j] ?? "", opts.truncateAbove, opts.truncEndStr);
   }
 
   const colWidths = Array.from({ length: colCount }, (_, j) =>

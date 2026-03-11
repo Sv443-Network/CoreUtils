@@ -255,6 +255,21 @@ describe("text/createTable", () => {
     expect(result).toContain(`\x1b[31mRed\x1b[0m`);
   });
 
+  it("Truncates ANSI-colored cells without splitting escape sequences", () => {
+    // visible content is "Hello World" (11 chars); truncate to 7 visible → "Hello " + endStr + reset
+    const colored = "\x1b[31mHello World\x1b[0m";
+    const result = createTable([[colored]], { truncateAbove: 7 });
+    const contentLine = result.split("\n")[1];
+    expect(contentLine).toContain("\x1b[31mHello \u2026\x1b[0m");
+
+    // ANSI code appearing mid-string should also be preserved
+    const midCode = "Hello\x1b[31m World\x1b[0m"; // visible: "Hello World" = 11
+    const result2 = createTable([[midCode]], { truncateAbove: 7 });
+    const contentLine2 = result2.split("\n")[1];
+    // 6 visible chars kept ("Hello "), then endStr + reset
+    expect(contentLine2).toContain("Hello\x1b[31m \u2026\x1b[0m");
+  });
+
   it("Applies applyCellStyle to each cell", () => {
     const calls: [number, number][] = [];
     const result = createTable([
