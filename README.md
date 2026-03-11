@@ -30,7 +30,7 @@ Intended to be used in conjunction with [`@sv443-network/userutils`](https://git
   - 🟣 [`function decompress()`](./docs.md#function-decompress) - Decompresses the given string using the given algorithm and encoding
   - 🟣 [`function computeHash()`](./docs.md#function-computehash) - Computes a string's hash using the given algorithm
   - 🟣 [`function randomId()`](./docs.md#function-randomid) - Generates a random ID of the given length
-- [**DataStore:**](./docs.md#datastore) - Cross-platform, general-purpose, sync/async hybrid, JSON-serializable database infrastructure:
+- [**DataStore:**](./docs.md#datastore) - Cross-platform, general-purpose, sync/async hybrid, JSON-serializable database:
   - 🟧 [`class DataStore`](./docs.md#class-datastore) - The main class for the data store
     - 🔷 [`type DataStoreOptions`](./docs.md#type-datastoreoptions) - Options for the data store
     - 🔷 [`type DataMigrationsDict`](./docs.md#type-datamigrationsdict) - Dictionary of data migration functions
@@ -41,7 +41,7 @@ Intended to be used in conjunction with [`@sv443-network/userutils`](https://git
     - 🔷 [`type LoadStoresDataResult`](./docs.md#type-loadstoresdataresult) - Result of calling [`loadStoresData()`](./docs.md#datastoreserializer-loadstoresdata)
     - 🔷 [`type SerializedDataStore`](./docs.md#type-serializeddatastore) - Meta object and serialized data of a DataStore instance
     - 🔷 [`type StoreFilter`](./docs.md#type-storefilter) - Filter for selecting data stores
-  - 🟧 [`class DataStoreEngine`](./docs.md#class-datastoreengine) - Base class for DataStore storage engines, which handle the data storage
+  - 🟧 [`class DataStoreEngine`](./docs.md#class-datastoreengine) - Base class for abstracting data storage into multiple instances
     - 🔷 [`type DataStoreEngineDSOptions`](./docs.md#type-datastoreenginedsoptions) - Reduced version of [`DataStoreOptions`](./docs.md#type-datastoreoptions)
   - [Storage Engines:](./docs.md#storage-engines)
     - 🟧 [`class BrowserStorageEngine`](./docs.md#class-browserstorageengine) - Storage engine for browser environments (localStorage, sessionStorage)
@@ -100,7 +100,7 @@ Intended to be used in conjunction with [`@sv443-network/userutils`](https://git
   - 🟣 [`function secsToTimeStr()`](./docs.md#function-secstotimestr) - Turns the given number of seconds into a string in the format `(hh:)mm:ss` with intelligent zero-padding
   - 🟣 [`function createTable()`](./docs.md#function-createtable) - Creates an ASCII table string from the given rows
     - 🟩 [`const defaultTableLineCharset`](./docs.md#const-defaulttablelinecharset) - Default line characters for the table
-    - 🔷 [`type TableOptions`](./docs.md#type-tableoptions) - Options for the [`createTable()`](#function-createtable) function
+    - 🔷 [`type TableOptions`](./docs.md#type-tableoptions) - Options for the [`createTable()`](./docs.md#function-createtable) function
     - 🔷 [`type TableLineStyle`](./docs.md#type-tablelinestyle) - The line style to use for the table border
     - 🔷 [`type TableColumnAlign`](./docs.md#type-tablecolumnalign) - The alignment mode for a column
     - 🔷 [`type TableLineCharset`](./docs.md#type-tablelinecharset) - The full charset used for table line characters
