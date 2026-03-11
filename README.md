@@ -98,6 +98,13 @@ Intended to be used in conjunction with [`@sv443-network/userutils`](https://git
     - 🔷 [`type ProgressBarChars`](./docs.md#type-progressbarchars) - Type for the progress bar characters object
   - 🟣 [`function joinArrayReadable()`](./docs.md#function-joinarrayreadable) - Joins the given array into a string, using the given separators and last separator
   - 🟣 [`function secsToTimeStr()`](./docs.md#function-secstotimestr) - Turns the given number of seconds into a string in the format `(hh:)mm:ss` with intelligent zero-padding
+  - 🟣 [`function createTable()`](./docs.md#function-createtable) - Creates an ASCII table string from the given rows
+    - 🟩 [`const defaultTableLineCharset`](./docs.md#const-defaulttablelinecharset) - Default line characters for the table
+    - 🔷 [`type TableOptions`](./docs.md#type-tableoptions) - Options for the [`createTable()`](#function-createtable) function
+    - 🔷 [`type TableLineStyle`](./docs.md#type-tablelinestyle) - The line style to use for the table border
+    - 🔷 [`type TableColumnAlign`](./docs.md#type-tablecolumnalign) - The alignment mode for a column
+    - 🔷 [`type TableLineCharset`](./docs.md#type-tablelinecharset) - The full charset used for table line characters
+    - 🔷 [`type TableLineStyleChars`](./docs.md#type-tablelinestylechars) - The characters for one line style variant
   - 🟣 [`function truncStr()`](./docs.md#function-truncstr) - Truncates the given string to the given length
 <!-- - *[**TieredCache:**](./docs.md#tieredcache)
   - 🟧 *[`class TieredCache`](./docs.md#class-tieredcache) - A multi-tier cache that uses multiple storage engines with different expiration times
