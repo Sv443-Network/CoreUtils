@@ -112,10 +112,17 @@ For submitting bug reports or feature requests, please use the [GitHub issue tra
     - 🟣 [`function autoPlural()`](#function-autoplural) - Turns the given term into its plural form, depending on the given number or list length
     - 🟣 [`function capitalize()`](#function-capitalize) - Capitalizes the first letter of the given string
     - 🟣 [`function createProgressBar()`](#function-createprogressbar) - Creates a progress bar string with the given percentage and length
-      - ⬜ [`const defaultPbChars`](#const-defaultpbchars) - Default characters for the progress bar
+      - 🟩 [`const defaultPbChars`](#const-defaultpbchars) - Default characters for the progress bar
       - 🔷 [`type ProgressBarChars`](#type-progressbarchars) - Type for the progress bar characters object
     - 🟣 [`function joinArrayReadable()`](#function-joinarrayreadable) - Joins the given array into a string, using the given separators and last separator
     - 🟣 [`function secsToTimeStr()`](#function-secstotimestr) - Turns the given number of seconds into a string in the format `(hh:)mm:ss` with intelligent zero-padding
+    - 🟣 [`function createTable()`](#function-createtable) - Creates an ASCII table string from the given rows
+      - 🟩 [`const defaultTableLineCharset`](#const-defaulttablelinecharset) - Default line characters for the table
+      - 🔷 [`type TableOptions`](#type-tableoptions) - Options for the [`createTable()`](#function-createtable) function
+      - 🔷 [`type TableLineStyle`](#type-tablelinestyle) - The line style to use for the table border
+      - 🔷 [`type TableColumnAlign`](#type-tablecolumnalign) - The alignment mode for a column
+      - 🔷 [`type TableLineCharset`](#type-tablelinecharset) - The full charset used for table line characters
+      - 🔷 [`type TableLineStyleChars`](#type-tablelinestylchars) - The characters for one line style variant
     - 🟣 [`function truncStr()`](#function-truncstr) - Truncates the given string to the given length
   <!-- - *[**TieredCache:**](#tieredcache)
     - 🟧 *[`class TieredCache`](#class-tieredcache) - A multi-tier cache that uses multiple storage engines with different expiration times
@@ -147,7 +154,7 @@ For submitting bug reports or feature requests, please use the [GitHub issue tra
 > 🟣 = function  
 > 🟧 = class  
 > 🔷 = type  
-> ⬜ = const
+> 🟩 = const
 
 <br><br><br>
 
@@ -3479,6 +3486,226 @@ console.log(secsToTimeStr(-3600)); // -1:00:00
 console.log(secsToTimeStr(NaN));   // TypeError: The seconds argument must be a valid number
 ```
 </details>
+
+<br>
+
+### `function createTable()`
+Signature:
+```ts
+createTable<TRow extends [...Stringifiable[]]>(rows: TRow[], options?: TableOptions): string;
+```
+  
+Creates an ASCII table string from the given rows.  
+Supports `\x1b[...m` ANSI color codes in cell content — they are ignored for width calculation but preserved in the output.  
+Use `options` to configure alignment, borders, padding, truncation, and custom styling callbacks.  
+  
+Refer to the [`TableOptions` type](#type-tableoptions) for the options object.  
+  
+<details><summary>Example - click to view</summary>
+
+```ts
+import { createTable } from "@sv443-network/coreutils";
+
+// basic table with single-line borders:
+console.log(createTable([
+  ["Name:",  "Score:"],
+  ["Alice", "95"],
+  ["Bob",   "72"],
+]));
+// ┌────────┬────────┐
+// │ Name:  │ Score: │
+// ├────────┼────────┤
+// │ Alice  │ 95     │
+// ├────────┼────────┤
+// │ Bob    │ 72     │
+// └────────┴────────┘
+
+// table with different column alignments, double
+// borders, truncated cell content above given length,
+// and underlined header row using ANSI codes:
+console.log(createTable([
+  ["Name:",  "Score:"],
+  ["Alice", 95],
+  ["Bob",   72],
+  ["Hubert Blaine Wolfeschlegelsteinhausenbergerdorff Sr.", 10000000000000000000000],
+], {
+  lineStyle: "double",
+  columnAlign: ["left", "centerLeft"],
+  truncateAbove: 20,
+  truncEndStr: "...", // use 3 dots (...) instead of the default unicode ellipsis (…)
+  applyCellStyle(i: number, j: number) {
+    // underline the header row cell contents using ANSI codes:
+    if(i === 0)
+      return ["\x1b[4m", "\x1b[0m"];
+
+    // On a browser, you would return %c placeholders here and then pass the styles as additional arguments to console.log() (see example below).
+    // To keep consistent style, it's necessary to alternate between modified and default styles for each cell, for example:
+    // 
+    // const defaultStyle = "font-family: monospace; color: inherit;";
+    // const styles = [
+    //   "font-family: monospace; color: red;",   // first cell
+    //   defaultStyle,                            // reset
+    //   "font-family: monospace; color: green;", // second cell
+    //   defaultStyle,                            // reset
+    // ];
+    // console.log(createTable(rows, {
+    //   applyCellStyle(i, j) {
+    //     if(i === 0)
+    //       return ["%c", "%c"];
+    //   },
+    // }), ...styles);
+  },
+}));
+
+// ╔══════════════════════╦══════════════════════╗
+// ║ Name:                ║         Age:         ║ (header row is underlined)
+// ╠══════════════════════╬══════════════════════╣
+// ║ Alice                ║          95          ║
+// ╠══════════════════════╬══════════════════════╣
+// ║ Bob                  ║          72          ║
+// ╠══════════════════════╬══════════════════════╣
+// ║ Hubert Blaine Wol... ║ 10000000000000000... ║
+// ╚══════════════════════╩══════════════════════╝
+
+// ANSI color codes in cells (width calculated correctly):
+import { styleText } from "node:util";
+
+const tableString = createTable([
+  // color the entire row:
+  ["Name:",  "Score:"].map((cell) => styleText(["bold"], cell)),
+  // color cells individually:
+  [styleText(["red"], "Alice"), styleText(["green"], "95")],
+  // without access to a library:
+  ["\x1b[31mBob\x1b[0m", "\x1b[32m72\x1b[0m"],
+  // using the %c placeholder to style text with CSS in browsers that support it:
+  ["%cHubert Blaine Wolfeschlegelsteinhausenbergerdorff Sr.%c", "%c100%c"], // (see below)
+  // note that when truncating, %c is treated as two characters and could be accidentally trimmed out.
+  // you should use applyCellStyle instead to add the %c placeholders in that case, or don't use truncateAbove like in this example.
+], {
+  applyCellStyle(i: number, j: number) {
+    // this is how to "correctly" add %c placeholders:
+    // if(i === 3)
+    //   return ["%c", "%c"];
+    return;
+  },
+});
+
+const browserStyles = [
+  "color: red; font-weight: bold;",        // first cell
+  "color: inherit; font-weight: inherit;", // reset to default
+  "color: green; font-weight: bold;",      // second cell
+  "color: inherit; font-weight: inherit;", // reset to default
+];
+
+console.log(tableString, ...browserStyles);
+
+// ┌───────────────────────────────────────────────────────┬────────┐
+// │ Name:                                                 │ Score: │ (bold)
+// ├───────────────────────────────────────────────────────┼────────┤
+// │ Alice                                                 │     95 │ (red, green)
+// ├───────────────────────────────────────────────────────┼────────┤
+// │ Bob                                                   │     72 │ (red, green)
+// ├───────────────────────────────────────────────────────┼────────┤
+// │ Hubert Blaine Wolfeschlegelsteinhausenbergerdorff Sr. │    100 │ (red bold, green bold)
+// └───────────────────────────────────────────────────────┴────────┘
+
+// (can't visualize the colors here, you get the idea)
+```
+</details>
+
+<br>
+
+#### `const defaultTableLineCharset`
+This object contains the default line characters for all three [`TableLineStyle`](#type-tablelinestyle) variants used by [`createTable()`](#function-createtable).  
+It is of type [`TableLineCharset`](#type-tablelinecharset).
+
+<br>
+
+#### `type TableOptions`
+Signature:
+```ts
+type TableOptions = {
+  columnAlign?: TableColumnAlign | TableColumnAlign[];
+  truncateAbove?: number;
+  truncEndStr?: string;
+  minPadding?: number;
+  lineStyle?: TableLineStyle;
+  lineCharset?: TableLineCharset;
+  applyLineStyle?: (i: number, j: number) => [before?: string, after?: string] | void;
+  applyCellStyle?: (i: number, j: number) => [before?: string, after?: string] | void;
+};
+```
+  
+All properties are optional. Defaults:
+| Property | Default | Description |
+| :-- | :-- | :-- |
+| `columnAlign` | `"left"` | Per-column alignment; either one value for all cells, or an array of values for each column. See [`TableColumnAlign`](#type-tablecolumnalign). |
+| `truncateAbove` | `Infinity` | Truncate visible cell content to at most this many characters, then insert `truncEndStr`. The max length includes the `truncEndStr` string. |
+| `truncEndStr` | `"…"` | String appended to truncated cells. Uses the unicode ellipsis character by default. |
+| `minPadding` | `1` | Minimum spaces added on each side of cell content. |
+| `lineStyle` | `"single"` | Border style (`"single"`, `"double"`, or `"none"`, see [`TableLineStyle`](#type-tablelinestyle)). |
+| `lineCharset` | `defaultTableLineCharset` | Custom character set for borders. Also refer to the [`TableLineCharset` type.](#type-tablelinecharset) |
+| `applyLineStyle` | `() => undefined` | Callback to wrap each border character (e.g. with ANSI codes). |
+| `applyCellStyle` | `() => undefined` | Callback to wrap each cell's content (e.g. with ANSI codes). Note: affects output only — width is measured before styling. |
+
+<br>
+
+#### `type TableLineStyle`
+Signature:
+```ts
+type TableLineStyle = "single" | "double" | "none";
+```
+  
+Controls the border characters used by [`createTable()`](#function-createtable).
+
+| Value | Top border example |
+| :-- | :-- |
+| `"single"` | `┌──────┬──────┐` |
+| `"double"` | `╔══════╦══════╗` |
+| `"none"` | *(no border rows rendered)* |
+
+<br>
+
+#### `type TableColumnAlign`
+Signature:
+```ts
+type TableColumnAlign = "left" | "centerLeft" | "centerRight" | "right";
+```
+  
+Determines how cell content is positioned within its column for [`createTable()`](#function-createtable).
+
+| Value | Example | Description |
+| :-- | :-- | :-- |
+| `"left"` | `│ Text    │` | Hugs the left border |
+| `"centerLeft"` | `│  Text   │` | Centered; uneven padding favors the left |
+| `"centerRight"` | `│   Text  │` | Centered; uneven padding favors the right |
+| `"right"` | `│    Text │` | Hugs the right border |
+
+<br>
+
+#### `type TableLineCharset`
+Signature:
+```ts
+type TableLineCharset = Record<TableLineStyle, TableLineStyleChars>;
+```
+  
+Maps each [`TableLineStyle`](#type-tablelinestyle) to a full set of border characters.  
+Pass a custom value via `options.lineCharset` to [`createTable()`](#function-createtable).
+
+<br>
+
+#### `type TableLineStyleChars`
+Signature:
+```ts
+type TableLineStyleChars = Record<
+  "horizontal" | "vertical" |
+  "topLeft" | "topRight" | "bottomLeft" | "bottomRight" |
+  "leftT" | "rightT" | "topT" | "bottomT" | "cross",
+  string
+>;
+```
+  
+The individual border characters for one [`TableLineStyle`](#type-tablelinestyle) variant.
 
 <br>
 
