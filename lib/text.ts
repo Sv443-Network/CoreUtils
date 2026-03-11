@@ -264,7 +264,7 @@ export const defaultTableLineCharset: TableLineCharset = {
 
 /**
  * Creates an ASCII table string from the given rows and options.  
- * Supports `\x1b` ANSI color codes in cell content: they are ignored for width calculation, included in the final output, and handled correctly during truncation (escape sequences are never split; any open color code is closed with a reset).
+ * Supports ANSI color codes in cell content: they are ignored for width calculation, included in the final output, and handled correctly during truncation (escape sequences are never split; any open color code is closed with a reset).
  * @param rows Array of tuples, where each tuple represents a row and its values. The first tuple is used to determine the column count.
  * @param options Object with options for customizing the table output, such as column alignment, truncation, padding and line styles.
  */
