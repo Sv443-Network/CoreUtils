@@ -317,7 +317,7 @@ describe("text/createTable", () => {
         },
       },
     });
-    expect(result).toContain("A");
-    expect(result).toContain("B");
+    expect(result).toContain("ABBB┐");
+    expect(result).toContain("└BBB┘");
   });
 });
