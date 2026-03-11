@@ -1,5 +1,11 @@
 # @sv443-network/coreutils
 
+## 3.5.1
+
+### Patch Changes
+
+- bea712a: Fixed build error that led to a SyntaxError.
+
 ## 3.5.0
 
 ### Minor Changes
