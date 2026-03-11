@@ -122,7 +122,7 @@ For submitting bug reports or feature requests, please use the [GitHub issue tra
       - 🔷 [`type TableLineStyle`](#type-tablelinestyle) - The line style to use for the table border
       - 🔷 [`type TableColumnAlign`](#type-tablecolumnalign) - The alignment mode for a column
       - 🔷 [`type TableLineCharset`](#type-tablelinecharset) - The full charset used for table line characters
-      - 🔷 [`type TableLineStyleChars`](#type-tablelinestylchars) - The characters for one line style variant
+      - 🔷 [`type TableLineStyleChars`](#type-tablelinestylechars) - The characters for one line style variant
     - 🟣 [`function truncStr()`](#function-truncstr) - Truncates the given string to the given length
   <!-- - *[**TieredCache:**](#tieredcache)
     - 🟧 *[`class TieredCache`](#class-tieredcache) - A multi-tier cache that uses multiple storage engines with different expiration times
@@ -3558,7 +3558,7 @@ console.log(createTable([
 }));
 
 // ╔══════════════════════╦══════════════════════╗
-// ║ Name:                ║         Age:         ║ (header row is underlined)
+// ║ Name:                ║        Score:        ║ (header row is underlined)
 // ╠══════════════════════╬══════════════════════╣
 // ║ Alice                ║          95          ║
 // ╠══════════════════════╬══════════════════════╣
