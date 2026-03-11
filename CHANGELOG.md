@@ -1,5 +1,15 @@
 # @sv443-network/coreutils
 
+## 3.5.0
+
+### Minor Changes
+
+- 9a2f561: Added function `createTable()` to create a very flexible ASCII table, including ANSI color and `%c` styling support.
+
+### Patch Changes
+
+- b620a8a: Fixed type variance issue in `DataStoreSerializer` where `DataStore` instances with specific data types (e.g. `DataStore<MyType>`) couldn't be passed to the constructor without being asserted `as DataStore<DataStoreData, boolean>`.
+
 ## 3.4.0
 
 ### Minor Changes
