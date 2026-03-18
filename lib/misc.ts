@@ -126,6 +126,21 @@ export function pureObj<TObj extends object>(obj?: TObj): TObj {
   return Object.assign(Object.create(null), obj ?? {}) as TObj;
 }
 
+/** Transforms an object's own properties into getters that return the original values. */
+export function getterifyObj<TObj extends object>(obj: TObj): TObj {
+  const newObj = {} as ReturnType<typeof getterifyObj<TObj>>;
+
+  for(const key in obj) {
+    Object.defineProperty(newObj, key, {
+      get: () => obj[key],
+      enumerable: true,
+      configurable: true,
+    });
+  }
+
+  return newObj;
+}
+
 /**
  * Works similarly to `setInterval()`, but the callback is also called immediately and can be aborted with an `AbortSignal`.  
  * Uses `setInterval()` internally, which might cause overlapping calls if the callback's synchronous execution takes longer than the given interval time.  

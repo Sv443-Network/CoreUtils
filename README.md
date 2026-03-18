@@ -82,6 +82,7 @@ Intended to be used in conjunction with [`@sv443-network/userutils`](https://git
     - 🔷 [`type ListLike`](./docs.md#type-listlike) - Any value with a quantifiable `length`, `count` or `size` property
   - 🟣 [`function pauseFor()`](./docs.md#function-pausefor) - Pauses async execution for the given amount of time
   - 🟣 [`function pureObj()`](./docs.md#function-pureobj) - Applies an object's props to a null object (object without prototype chain) or just returns a new null object
+  - 🟣 [`function getterifyObj()`](./docs.md#function-getterifyobj) - Turns an object's props into getters
   - 🟣 [`function setImmediateInterval()`](./docs.md#function-setimmediateinterval) - Like `setInterval()`, but instantly calls the callback and supports passing an [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal)
   - 🟣 [`function setImmediateTimeoutLoop()`](./docs.md#function-setimmediatetimeoutloop) - Like a recursive `setTimeout()` loop, but instantly calls the callback and supports passing an [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal)
   - 🟣 [`function createRecurringTask()`](./docs.md#function-createrecurringtask) - Similar to `setImmediateTimeoutLoop()`, but with many more ways of controlling execution.
