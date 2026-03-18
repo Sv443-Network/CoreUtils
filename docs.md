@@ -99,6 +99,7 @@ For submitting bug reports or feature requests, please use the [GitHub issue tra
     - 🟣 [`function getListLength()`](#function-getlistlength) - Returns the length of a [`ListLike` object](#type-listlike)
     - 🟣 [`function pauseFor()`](#function-pausefor) - Pauses async execution for the given amount of time
     - 🟣 [`function pureObj()`](#function-pureobj) - Applies an object's props to a null object (object without prototype chain) or just returns a new null object
+    - 🟣 [`function getterifyObj()`](#function-getterifyobj) - Turns an object's props into getters
     - 🟣 [`function setImmediateInterval()`](#function-setimmediateinterval) - Like `setInterval()`, but instantly calls the callback and supports passing an [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal)
     - 🟣 [`function setImmediateTimeoutLoop()`](#function-setimmediatetimeoutloop) - Like a recursive `setTimeout()` loop, but instantly calls the callback and supports passing an [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal)
     - 🟣 [`function createRecurringTask()`](#function-createrecurringtask) - Similar to `setImmediateTimeoutLoop()`, but with many more ways of controlling execution.
@@ -2770,6 +2771,40 @@ pureObj.toString = function() {
   return `[foo: ${this.foo}]`;
 }
 console.log(`${pureObj}`); // "[foo: bar]"
+```
+</details>
+
+<br>
+
+### `function getterifyObj()`
+Signature:
+```ts
+function getterifyObj<TObj extends object>(obj: TObj): TObj;
+```
+  
+Turns all properties of an object into [getters](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/get) that just return the original prop value.  
+  
+<details><summary><b>Example - click to view</b></summary>
+
+```ts
+import { getterifyObj } from "@sv443-network/coreutils";
+
+const obj = {
+  foo: "bar",
+};
+
+// when logged to the Firefox console:
+console.log(obj); // { foo: "bar" }
+
+const getterifiedObj = getterifyObj(obj);
+
+console.log(getterifiedObj); // { foo: [Getter] }
+// note: most browser devtools will allow you to manually invoke the getter when logging the object to the console.
+// this can be used to make a big object's properties "collapsed" by default.
+
+// getter functions are called when the properties are accessed:
+console.log(typeof getterifiedObj.foo); // "string"
+console.log(getterifiedObj.foo);        // "bar"
 ```
 </details>
 
