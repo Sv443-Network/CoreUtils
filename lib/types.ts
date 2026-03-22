@@ -51,7 +51,7 @@ export type NonEmptyString<TString extends string> = TString extends "" ? never 
 export type NumberFormat = "short" | "long";
 
 /**
- * Makes the structure of a type more readable by expanding it.  
+ * Makes the structure of a type more readable by expanding other types merged via intersections.  
  * This can be useful for debugging or for improving the readability of complex types.
  */
 export type Prettify<T> = {
