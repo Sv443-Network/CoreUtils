@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { consumeGen, consumeStringGen, getCallStack, createRecurringTask, fetchAdvanced, getListLength, pauseFor, pureObj, scheduleExit, setImmediateInterval, setImmediateTimeoutLoop } from "../misc.ts";
+import { consumeGen, consumeStringGen, getCallStack, createRecurringTask, fetchAdvanced, getListLength, pauseFor, pureObj, scheduleExit, setImmediateInterval, setImmediateTimeoutLoop, getterifyObj } from "../misc.ts";
 import { softExpect } from "./softExpect.ts";
 
 //#region pauseFor
@@ -119,6 +119,32 @@ describe("misc/pureObj", () => {
     const pure = pureObj(obj);
     // @ts-expect-error ensure the prototype chain is removed
     expect(pure.isPolluted).toBeUndefined();
+  });
+});
+
+//#region getterifyObj
+describe("misc/getterifyObj", () => {
+  it("Transforms properties into getters", () => {
+    const obj = { a: 1, b: 2 };
+    const getterified = getterifyObj(obj);
+
+    expect(getterified.a).toBe(1);
+    expect(getterified.b).toBe(2);
+
+    // when reassigned, getters should reflect the new value
+    obj.a = 42;
+    expect(getterified.a).toBe(42);
+  });
+
+  it("Returns a copy when asCopy is true", () => {
+    const obj = { x: 10 };
+    const getterifiedCopy = getterifyObj(obj, true);
+
+    expect(getterifiedCopy.x).toBe(10);
+
+    // when reassigned, the copy should not reflect the new value
+    obj.x = 20;
+    expect(getterifiedCopy.x).toBe(10);
   });
 });
 
