@@ -1039,9 +1039,9 @@ const serializer = new DataStoreSerializer([fooStore, barStore], {
     "bar-data": ["had-a-different-id"],
   },
 
-  // when this property is set to false, every call to serialize() or serializePartial() with the `stringify` parameter set to false
-  // will make the `data` property of the returned objects be an object instead of stringified JSON
-  // note that it will also bypass encoding and compression
+  // when this property is set to false, unencoded stores will keep their `data` property as a plain object
+  // instead of JSON-stringified data; encoded stores are unaffected and still use their encode/decode pipeline
+  // this option only controls per-store JSON stringification and does not disable encoding or compression
   stringifyData: false,
 });
 
@@ -1274,8 +1274,8 @@ It has the following properties:
 | :-- | :-- | :-- |
 | `addChecksum?` | `boolean` | (Optional) If set to `true` (default), a SHA-256 checksum will be calculated and saved with the serialized data. If set to `false`, no checksum will be calculated and saved. |
 | `ensureIntegrity?` | `boolean` | (Optional) If set to `true` (default), the checksum will be checked when importing data and an error will be thrown if it doesn't match. If set to `false`, the checksum will not be checked and no error will be thrown. If no checksum property exists on the imported data (for example because it wasn't enabled in a previous data format version), the checksum check will be skipped regardless of this setting. |
-| `remapIds?` | `{ [newId: string]: string | string[] }` | (Optional) An object that maps new IDs to old IDs, in case the DataStore instances had different IDs in a previous data format version. The key is the new (current) ID and the value is an array of old IDs to try to migrate from. If no data exist for the old ID(s), nothing will be done, but some time may still pass trying to fetch the non-existent data. |
-| `stringifyData?` | `boolean` | (Optional, default: `true`) When this property is set to false, every call to `serialize()` or `serializePartial()` with the `stringify` parameter set to false will make the `data` property of the returned objects be an object instead of stringified JSON. Note that it will also bypass encoding and compression. |
+| `remapIds?` | `Record<string, string[]>` | (Optional) An object that maps new IDs to old IDs, in case the DataStore instances had different IDs in a previous data format version. The key is the new (current) ID and the value is an array of old IDs to try to migrate from. If no data exist for the old ID(s), nothing will be done, but some time may still pass trying to fetch the non-existent data. |
+| `stringifyData?` | `boolean` | (Optional, default: `true`) Controls whether the individual stores' `data` payloads are JSON-stringified before any optional encoding or compression is applied. If set to `false`, the `data` property in the serialized result will contain plain objects instead of JSON strings, regardless of whether `serialize()` or `serializePartial()` are called with `stringify` set to `true` or `false`. Encoding and compression (if enabled) still run on the overall payload. |
 
 <br>
 
@@ -2786,10 +2786,11 @@ console.log(`${pureObj}`); // "[foo: bar]"
 ### `function getterifyObj()`
 Signature:
 ```ts
-function getterifyObj<TObj extends object>(obj: TObj): TObj;
+function getterifyObj<TObj extends object>(obj: TObj, asCopy = false): TObj;
 ```
   
-Turns all properties of an object into [getters](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/get) that just return the original prop value.  
+Turns all enumerable, own, string-keyed properties of an object into [getters](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/get) that just return the original value.  
+Set `asCopy` to true to return a new object with the getterified properties instead of a live view of the original object.  
   
 <details><summary><b>Example - click to view</b></summary>
 

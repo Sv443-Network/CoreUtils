@@ -16,8 +16,8 @@ export type DataStoreSerializerOptions = {
   /** If provided, all stores with an ID in the value's array will be remapped to the key's ID when deserialization is called. If they don't match a DataStore instance's ID, nothing will happen. */
   remapIds?: Record<string, string[]>;
   /**
-   * When this is set to `false` and calling {@linkcode DataStoreSerializer.serialize()} or {@linkcode DataStoreSerializer.serializePartial()} with `stringify` set to `false`, the `data` property of the {@linkcode SerializedDataStore} objects will be the raw data object instead of a string.  
-   * Defaults to `true` to remain backwards compatible and avoid data type inconsistencies when `encodeData` and `decodeData` or `compressionFormat` are used.
+   * Controls the type of the `data` property on {@linkcode SerializedDataStore} objects.  
+   * When this is set to `false`, `data` will be the raw data object instead of a string, regardless of whether {@linkcode DataStoreSerializer.serialize()} or {@linkcode DataStoreSerializer.serializePartial()} are called with their `stringify` / `stringified` parameter set to `true` or `false`.
    */
   stringifyData?: boolean;
 };
@@ -75,7 +75,7 @@ export class DataStoreSerializer {
   }
 
   /**
-   * Calculates the checksum of a string. Uses {@linkcode computeHash()} with SHA-256 and digests as a hex string by default.  
+   * Calculates the checksum of a string or {@linkcode DataStoreData} object. Uses {@linkcode computeHash()} with SHA-256 and digests as a hex string by default.  
    * Override this in a subclass if a custom checksum method is needed.
    */
   protected async calcChecksum(input: string | DataStoreData): Promise<string> {
