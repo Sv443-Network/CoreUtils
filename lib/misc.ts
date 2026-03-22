@@ -126,19 +126,22 @@ export function pureObj<TObj extends object>(obj?: TObj): TObj {
   return Object.assign(Object.create(null), obj ?? {}) as TObj;
 }
 
-/** Transforms an object's own properties into getters that return the original values. */
-export function getterifyObj<TObj extends object>(obj: TObj): TObj {
+/**
+ * Transforms an object's enumerable, own, string-keyed properties into getters that return the original values.  
+ * Set `asCopy` to true to return a new object with the getterified properties instead of a live view of the original object.
+ */
+export function getterifyObj<TObj extends object>(obj: TObj, asCopy = false): TObj {
   const newObj = {} as ReturnType<typeof getterifyObj<TObj>>;
 
   for(const key in obj) {
     Object.defineProperty(newObj, key, {
-      get: () => obj[key],
+      get: () => obj[key as keyof TObj],
       enumerable: true,
       configurable: true,
     });
   }
 
-  return newObj;
+  return asCopy ? structuredClone(newObj) : newObj;
 }
 
 /**
