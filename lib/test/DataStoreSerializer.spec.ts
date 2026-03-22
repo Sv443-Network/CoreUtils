@@ -8,8 +8,11 @@ import { FileStorageEngine } from "../DataStoreEngine.ts";
 
 //#region consts
 
-const getStores = () => [
-  new DataStore({
+type DssTest1Data = Record<"a" | "b", number>;
+type DssTest2Data = Record<"c" | "d", number>;
+
+const getStores = (): [DataStore<DssTest1Data>, DataStore<DssTest2Data>] => [
+  new DataStore<DssTest1Data>({
     id: "dss-test-1",
     defaultData: { a: 1, b: 2 },
     formatVersion: 1,
@@ -18,7 +21,7 @@ const getStores = () => [
     }),
     compressionFormat: null,
   }),
-  new DataStore({
+  new DataStore<DssTest2Data>({
     id: "dss-test-2",
     defaultData: { c: 1, d: 2 },
     formatVersion: 1,
@@ -157,5 +160,29 @@ describe("DataStoreSerializer", () => {
       },
     });
     await ser.loadStoresData();
+  });
+
+  //#region stringifyData disabled
+
+  it("Serialization with stringifyData disabled", async () => {
+    const [store1] = getStores();
+
+    const ser = new DataStoreSerializer([store1], {
+      stringifyData: false,
+    });
+    await ser.loadStoresData();
+
+    const result = await ser.serialize(false, false);
+
+    expect(result[0].data).toBeTypeOf("object");
+    expect(result).toEqual([
+      {
+        id: "dss-test-1",
+        data: { a: 1, b: 2 },
+        encoded: false,
+        formatVersion: 1,
+        checksum: expect.any(String),
+      },
+    ]);
   });
 });
