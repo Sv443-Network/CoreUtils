@@ -165,9 +165,9 @@ describe("DataStoreSerializer", () => {
   //#region stringifyData disabled
 
   it("Serialization with stringifyData disabled", async () => {
-    const [store1] = getStores();
+    const [store1, store2] = getStores();
 
-    const ser = new DataStoreSerializer([store1], {
+    const ser = new DataStoreSerializer([store1, store2], {
       stringifyData: false,
     });
     await ser.loadStoresData();
@@ -175,6 +175,7 @@ describe("DataStoreSerializer", () => {
     const result = await ser.serialize(false, false);
 
     expect(result[0].data).toBeTypeOf("object");
+    expect(result[1].data).toBeTypeOf("object");
     expect(result).toEqual([
       {
         id: "dss-test-1",
@@ -183,6 +184,18 @@ describe("DataStoreSerializer", () => {
         formatVersion: 1,
         checksum: expect.any(String),
       },
+      {
+        id: "dss-test-2",
+        data: { c: 1, d: 2 },
+        encoded: false,
+        formatVersion: 1,
+        checksum: expect.any(String),
+      },
     ]);
+
+    const resultStringified = await ser.serialize(true, true);
+
+    expect(resultStringified).toBeTypeOf("string");
+    expect(resultStringified).toEqual(`[{"id":"dss-test-1","data":{"a":1,"b":2},"formatVersion":1,"encoded":false,"checksum":"43258cff783fe7036d8a43033f830adfc60ec037382473548ac742b888292777"},{"id":"dss-test-2","data":"q1ZKVrIy1FFKUbIyqgUA","formatVersion":1,"encoded":true,"checksum":"b1020c3faac493009494fa622f701b831657c11ea53f8c8236f0689089c7e2d3"}]`);
   });
 });

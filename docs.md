@@ -1038,6 +1038,11 @@ const serializer = new DataStoreSerializer([fooStore, barStore], {
     "foo-data": ["old-foo-data", "even-older-foo-data"],
     "bar-data": ["had-a-different-id"],
   },
+
+  // when this property is set to false, every call to serialize() or serializePartial() with the `stringify` parameter set to false
+  // will make the `data` property of the returned objects be an object instead of stringified JSON
+  // note that it will also bypass encoding and compression
+  stringifyData: false,
 });
 
 async function exportMyDataPls() {
@@ -1055,7 +1060,7 @@ async function exportMyDataPls() {
   a.click();
   a.remove();
 
-  // `serialize()` exports a stringified object that looks similar to this:
+  // with the parameters left on their defaults, `serialize()` exports a stringified object that looks similar to this:
   // [
   //   {
   //     "id": "foo-data",
@@ -1269,6 +1274,8 @@ It has the following properties:
 | :-- | :-- | :-- |
 | `addChecksum?` | `boolean` | (Optional) If set to `true` (default), a SHA-256 checksum will be calculated and saved with the serialized data. If set to `false`, no checksum will be calculated and saved. |
 | `ensureIntegrity?` | `boolean` | (Optional) If set to `true` (default), the checksum will be checked when importing data and an error will be thrown if it doesn't match. If set to `false`, the checksum will not be checked and no error will be thrown. If no checksum property exists on the imported data (for example because it wasn't enabled in a previous data format version), the checksum check will be skipped regardless of this setting. |
+| `remapIds?` | `{ [newId: string]: string | string[] }` | (Optional) An object that maps new IDs to old IDs, in case the DataStore instances had different IDs in a previous data format version. The key is the new (current) ID and the value is an array of old IDs to try to migrate from. If no data exist for the old ID(s), nothing will be done, but some time may still pass trying to fetch the non-existent data. |
+| `stringifyData?` | `boolean` | (Optional, default: `true`) When this property is set to false, every call to `serialize()` or `serializePartial()` with the `stringify` parameter set to false will make the `data` property of the returned objects be an object instead of stringified JSON. Note that it will also bypass encoding and compression. |
 
 <br>
 
