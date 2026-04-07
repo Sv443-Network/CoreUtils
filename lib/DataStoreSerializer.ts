@@ -23,7 +23,7 @@ export type DataStoreSerializerOptions = {
 };
 
 /** Meta object and serialized data of a DataStore instance */
-export type SerializedDataStore<TData = string | DataStoreData> = {
+export type SerializedDataStore<TData extends string | DataStoreData = string> = {
   /** The ID of the DataStore instance */
   id: string;
   /** The serialized data */
