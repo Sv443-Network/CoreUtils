@@ -55,7 +55,7 @@ export class NanoEmitter<TEvtMap extends EventsMap = DefaultEvents> {
   protected eventUnsubscribes: Unsubscribe[] = [];
   protected emitterOptions: NanoEmitterOptions;
   /** Stores the last arguments for each event listed in `catchUpEvents` */
-  protected catchUpMemory = new Map<PropertyKey, unknown[]>();
+  protected catchUpMemory: Map<PropertyKey, unknown[]> = new Map<PropertyKey, unknown[]>();
 
   /** Creates a new instance of NanoEmitter - a lightweight event emitter with helper methods and a strongly typed event map */
   constructor(options: Partial<NanoEmitterOptions> = {}) {
