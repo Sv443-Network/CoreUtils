@@ -57,6 +57,12 @@ describe("misc/consumeGen", () => {
     // @ts-expect-error
     expect(await consumeGen()).toThrow(TypeError);
   });
+
+  it("Passes args to a parametrized ValueGen function", async () => {
+    expect(await consumeGen((n: number) => n * 2, 21)).toBe(42);
+    expect(await consumeGen(async (a: number, b: number) => a + b, 20, 22)).toBe(42);
+    expect(await consumeGen((s: string) => s.toUpperCase(), "hello")).toBe("HELLO");
+  });
 });
 
 //#region consumeStringGen
@@ -66,6 +72,12 @@ describe("misc/consumeStringGen", () => {
     expect(await consumeStringGen(() => "b")).toBe("b");
     expect(await consumeStringGen(() => Promise.resolve("c"))).toBe("c");
     expect(await consumeStringGen({ toString: () => "d" })).toBe("d");
+  });
+
+  it("Passes args to a parametrized StringGen function", async () => {
+    expect(await consumeStringGen((n: number) => String(n * 2), 21)).toBe("42");
+    expect(await consumeStringGen(async (s: string) => s.toUpperCase(), "hello")).toBe("HELLO");
+    expect(await consumeStringGen((a: string, b: string) => `${a}-${b}`, "foo", "bar")).toBe("foo-bar");
   });
 });
 

@@ -2497,11 +2497,12 @@ console.log(valsWithin(3, Math.PI, 0.1));             // false
 ### `function consumeGen()`
 Signature:
 ```ts
-consumeGen(valGen: ValueGen<any>): Promise<any>
+consumeGen(valGen: ValueGen<any>, ...args: any[]): Promise<any>
 ```
   
 Asynchronously turns a [`ValueGen`](#type-valuegen) into its final value.  
 ValueGen allows for tons of flexibility in how the value can be obtained. Calling this function will resolve the final value, no matter in what form it was passed.  
+If the ValueGen was typed with the optional `TFn` parameter, the extra `args` are forwarded to the function when it is called.  
   
 <details><summary><b>Example - click to view</b></summary>
 
@@ -2522,6 +2523,19 @@ useValue(async () => 42);
 
 // throws a TS error:
 useValue("foo");
+
+
+// with TFn to support a parametrized function:
+async function scaleValue(value: ValueGen<number, (input: number) => number>) {
+  // args are type-safe: only a `number` (matching the TFn param) is accepted
+  const finalValue = await consumeGen(value, 10);
+  console.log(finalValue);
+}
+
+// all valid:
+scaleValue((input) => input * 2); // logs 20
+scaleValue(() => 42);             // logs 42 (args are ignored)
+scaleValue(42);                   // logs 42 (args are ignored)
 ```
 </details>
 
@@ -2529,10 +2543,14 @@ useValue("foo");
 
 ### `type ValueGen`
 ```ts
-type ValueGen<TValueType> = TValueType | Promise<TValueType> | (() => TValueType | Promise<TValueType>);
+type ValueGen<
+  TValueType,
+  TFn extends (...args: any[]) => TValueType | Promise<TValueType> = () => TValueType | Promise<TValueType>
+> = TValueType | Promise<TValueType> | TFn;
 ```
   
 Describes a value that can be obtained in various ways, including via the type itself, a function that returns the type, a Promise that resolves to the type or either a sync or an async function that returns the type.  
+The optional `TFn` parameter lets you customise the function variant's signature. When specified, [`consumeGen()`](#function-consumegen) enforces that any extra arguments match `Parameters<TFn>`.  
 Use it in the [`consumeGen()` function](#function-consumegen) to convert the given ValueGen value to the type it represents. Also refer to that function for an example.  
 
 <br>
@@ -2540,12 +2558,13 @@ Use it in the [`consumeGen()` function](#function-consumegen) to convert the giv
 ### `function consumeStringGen()`
 Signature:
 ```ts
-consumeStringGen(strGen: StringGen): Promise<string>
+consumeStringGen(strGen: StringGen, ...args: any[]): Promise<string>
 ```
   
 Asynchronously turns a [`StringGen`](#type-stringgen) into its final string value.  
 StringGen allows for tons of flexibility in how the string can be obtained. Calling this function will resolve the final string.  
 Optionally you can use the template parameter to define the union of strings that the StringGen should yield.  
+If the StringGen was typed with the optional `TFn` parameter, the extra `args` are forwarded to the function when it is called.  
   
 <details><summary><b>Example - click to view</b></summary>
 
@@ -2576,6 +2595,20 @@ new MyTextPromptThing(async () => myText);
 
 // throws a TS error:
 new MyTextPromptThing(420);
+
+
+// with TFn to support a parametrized function:
+type Greeting = StringGen<(name: string) => string>;
+
+async function greet(text: Greeting) {
+  // args are type-safe: only a `string` (matching the TFn param) is accepted
+  console.log(await consumeStringGen(text, "World"));
+}
+
+// all valid:
+greet((name) => `Hello, ${name}!`); // logs "Hello, World!"
+greet(() => "Howdy!");              // logs "Howdy!" (args are ignored)
+greet("Hi there!");                 // logs "Hi there!" (args are ignored)
 ```
 </details>
 
@@ -2583,13 +2616,16 @@ new MyTextPromptThing(420);
 
 ### `type StringGen`
 ```ts
-type StringGen = ValueGen<Stringifiable>;
+type StringGen<
+  TFn extends (...args: any[]) => Stringifiable | Promise<Stringifiable> = () => Stringifiable | Promise<Stringifiable>
+> = ValueGen<Stringifiable, TFn>;
 ```
   
 Describes a string that can be obtained in various ways, including via a [`Stringifiable`](#type-stringifiable) value, a function that returns a [`Stringifiable`](#type-stringifiable) value, a Promise that resolves to a [`Stringifiable`](#type-stringifiable) value or either a sync or an async function that returns a [`Stringifiable`](#type-stringifiable) value.  
 Remember that [`Stringifiable`](#type-stringifiable) is a type that describes a value that either is a string itself or can be converted to a string implicitly using `toString()`, template literal interpolation, or by passing it to `String()`, giving you the utmost flexibility in how the string can be passed.  
   
-Contrary to [`ValueGen`](#type-valuegen), this type allows for specifying a union of strings that the StringGen should yield, as long as it is loosely typed as just `string`.  
+The optional `TFn` parameter lets you customise the function variant's signature. When specified, [`consumeStringGen()`](#function-consumestringgen) enforces that any extra arguments match `Parameters<TFn>`.  
+Contrary to [`ValueGen`](#type-valuegen), this type also allows for specifying a union of strings that the StringGen should yield, as long as it is loosely typed as just `string`.  
 Use it in the [`consumeStringGen()` function](#function-consumestringgen) to convert the given StringGen value to a plain string. Also refer to that function for an example.
 
 <br>
