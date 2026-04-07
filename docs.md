@@ -3232,6 +3232,8 @@ NanoEmitter.on<K extends keyof TEventMap>(event: K, listener: TEventMap[K]): () 
 Registers a listener function for the given event.  
 May be called multiple times for the same event.  
   
+If the event is listed in [`catchUpEvents`](#type-nanoemitteroptions) and has been emitted at least once, the listener will be called immediately with the last cached arguments before any future emissions.  
+  
 Returns a function that can be called to unsubscribe the listener from the event.
   
 <br>
@@ -3243,7 +3245,8 @@ NanoEmitter.once<K extends keyof TEventMap>(event: K, listener: TEventMap[K]): P
 ```
   
 Registers a listener function for the given event that will only be called once.  
-Returns a Promise that resolves with the arguments passed to `emit()`.  
+If the event is listed in [`catchUpEvents`](#type-nanoemitteroptions) and has been emitted at least once, the listener is called and the Promise resolved immediately with the cached arguments.  
+Otherwise, returns a Promise that resolves with the arguments passed to `emit()`.  
 
 <br>
 
@@ -3350,6 +3353,19 @@ console.log(result); // 30
 
 <br>
 
+### `NanoEmitter.emitEvent()`
+Signature:
+```ts
+// protected — only callable from within the class or a subclass
+NanoEmitter.emitEvent<K extends keyof TEventMap>(event: K, ...args: Parameters<TEventMap[K]>): void
+```
+  
+Protected method intended for use inside subclasses.  
+Behaves like `this.events.emit()` but also updates the catch-up memory for events listed in `catchUpEvents`.  
+Prefer this over calling `this.events.emit()` directly when you want late listeners to receive the last emitted value.
+
+<br>
+
 ### `NanoEmitter.emit()`
 Signature:
 ```ts
@@ -3357,9 +3373,10 @@ NanoEmitter.emit<K extends keyof TEventMap>(event: K, ...args: Parameters<TEvent
 ```
   
 Emits an event with the given arguments from outside the class instance, if enabled in the constructor options.  
+Also updates the catch-up memory, so late listeners added with `on()` or `once()` will receive the cached arguments.  
   
 If `publicEmit` is set to `true`, this method will return `true` if the event was emitted.  
-If it is set to `false`, it will always return `false` and you will need to use `this.events.emit()` from inside the class instead.
+If it is set to `false`, it will always return `false` and you will need to use `this.emitEvent()` from inside the class instead.
 
 <br>
 
@@ -3378,7 +3395,49 @@ The options object for the [`NanoEmitter` class.](#class-nanoemitter)
 It can have the following properties:
 | Property | Type | Description |
 | :-- | :-- | :-- |
-| `publicEmit?` | `boolean` | If set to true, the public method `emit()` will be callable. False by default, meaning only the protected member `this.events` can be used to emit events from within the class body. |
+| `publicEmit?` | `boolean` | If set to true, the public method `emit()` will be callable. False by default, meaning only the protected member `this.emitEvent()` can be used to emit events from within the class body. |
+| `catchUpEvents?` | `PropertyKey[]` | A list of event names whose last emission is remembered. Any listener added via `on()` or `once()` after one of these events has been emitted will be immediately called / resolved with the cached arguments. Only emissions via the public `emit()` or the protected `emitEvent()` are tracked. |
+
+<details><summary><b>Catch-up example - click to view</b></summary>
+
+```ts
+import { NanoEmitter } from "@sv443-network/coreutils";
+
+const emitter = new NanoEmitter<{
+  ready: (version: string) => void;
+  data: (payload: number[]) => void;
+}>({
+  publicEmit: true,
+  // remember the last emission of these events:
+  catchUpEvents: ["ready", "data"],
+});
+
+// emit once at startup:
+emitter.emit("ready", "1.0.0");
+emitter.emit("data", [1, 2, 3]);
+
+// --- some time later ---
+
+// listener arrives after the event already fired → called immediately with cached args:
+emitter.on("ready", (version) => {
+  console.log("ready:", version); // "ready: 1.0.0"
+});
+
+// same for once() / Promise syntax:
+const [payload] = await emitter.once("data");
+console.log("data:", payload); // "data: [1, 2, 3]"
+
+// in a subclass, use emitEvent() so the cache is updated:
+class MyService extends NanoEmitter<{ update: (n: number) => void }> {
+  constructor() {
+    super({ catchUpEvents: ["update"] });
+  }
+  broadcast(n: number): void {
+    this.emitEvent("update", n);
+  }
+}
+```
+</details>
 
 <br><br>
 
