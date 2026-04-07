@@ -8,39 +8,58 @@ import type { ListLike, Prettify, Stringifiable } from "./types.ts";
 
 /**
  * A ValueGen value is either its type, a promise that resolves to its type, or a function that returns its type, either synchronous or asynchronous.  
- * ValueGen allows for the utmost flexibility when applied to any type, as long as {@linkcode consumeGen()} is used to get the final value.
+ * ValueGen allows for the utmost flexibility when applied to any type, as long as {@linkcode consumeGen()} is used to get the final value.  
+ * The optional `TFn` parameter allows specifying the function variant's signature, enabling parametrized consumption via {@linkcode consumeGen()}.
  * @template TValueType The type of the value that the ValueGen should yield
+ * @template TFn The function signature for the function variant - defaults to a no-arg function for backwards compatibility
  */
-export type ValueGen<TValueType> = TValueType | Promise<TValueType> | (() => TValueType | Promise<TValueType>);
+export type ValueGen<
+  TValueType,
+  TFn extends (...args: any[]) => TValueType | Promise<TValueType> = () => TValueType | Promise<TValueType> // eslint-disable-line @typescript-eslint/no-explicit-any
+> = TValueType | Promise<TValueType> | TFn;
 
 /**
  * Turns a {@linkcode ValueGen} into its final value.  
+ * @param args Optional arguments forwarded to the function, if the ValueGen is a parametrized function
  * @template TValueType The type of the value that the ValueGen should yield
+ * @template TFn The function signature for the function variant - inferred automatically
  */
-export async function consumeGen<TValueType>(valGen: ValueGen<TValueType>): Promise<TValueType> {
+export async function consumeGen<
+  TValueType,
+  TFn extends (...args: any[]) => TValueType | Promise<TValueType> = () => TValueType | Promise<TValueType> // eslint-disable-line @typescript-eslint/no-explicit-any
+>(valGen: ValueGen<TValueType, TFn>, ...args: Parameters<TFn>): Promise<TValueType> {
   return await (typeof valGen === "function"
-    ? (valGen as (() => Promise<TValueType> | TValueType))()
+    ? (valGen as TFn)(...args)
     : valGen
   ) as TValueType;
 }
 
 /**
  * A StringGen value is either a string, anything that can be converted to a string, or a function that returns one of the previous two, either synchronous or asynchronous, or a promise that returns a string.  
- * StringGen allows for the utmost flexibility when dealing with strings, as long as {@linkcode consumeStringGen()} is used to get the final string.
+ * StringGen allows for the utmost flexibility when dealing with strings, as long as {@linkcode consumeStringGen()} is used to get the final string.  
+ * The optional `TFn` parameter allows specifying the function variant's signature, enabling parametrized consumption via {@linkcode consumeStringGen()}.
+ * @template TFn The function signature for the function variant - defaults to a no-arg function for backwards compatibility
  */
-export type StringGen = ValueGen<Stringifiable>;
+export type StringGen<
+  TFn extends (...args: any[]) => Stringifiable | Promise<Stringifiable> = () => Stringifiable | Promise<Stringifiable> // eslint-disable-line @typescript-eslint/no-explicit-any
+> = ValueGen<Stringifiable, TFn>;
 
 /**
  * Turns a {@linkcode StringGen} into its final string value.  
+ * @param args Optional arguments forwarded to the function, if the StringGen is a parametrized function
  * @template TStrUnion The union of strings that the StringGen should yield - this allows for finer type control compared to {@linkcode consumeGen()}
+ * @template TFn The function signature for the function variant - inferred automatically
  */
-export async function consumeStringGen<TStrUnion extends string>(strGen: StringGen): Promise<TStrUnion> {
+export async function consumeStringGen<
+  TStrUnion extends string,
+  TFn extends (...args: any[]) => Stringifiable | Promise<Stringifiable> = () => Stringifiable | Promise<Stringifiable> // eslint-disable-line @typescript-eslint/no-explicit-any
+>(strGen: StringGen<TFn>, ...args: Parameters<TFn>): Promise<TStrUnion> {
   return (
     typeof strGen === "string"
       ? strGen
       : String(
         typeof strGen === "function"
-          ? await strGen()
+          ? await (strGen as TFn)(...args)
           : strGen
       )
   ) as TStrUnion;
