@@ -11,6 +11,13 @@ import type { Prettify } from "./types.ts";
 export interface NanoEmitterOptions {
   /** If set to true, allows emitting events through the public method emit() */
   publicEmit: boolean;
+  /**
+   * When provided, the emitter will remember the last arguments of each listed event.
+   * Any listener attached via `on()` or `once()` after the event has already fired will
+   * be immediately called / resolved with the cached arguments (catch-up behaviour).
+   * Only works for emissions that go through the public `emit()` or the protected `emitEvent()` method.
+   */
+  catchUpEvents?: PropertyKey[];
 }
 
 type NanoEmitterOnMultiTriggerOptions<TEvtMap extends EventsMap, TKey extends keyof TEvtMap = keyof TEvtMap> = {
@@ -18,7 +25,7 @@ type NanoEmitterOnMultiTriggerOptions<TEvtMap extends EventsMap, TKey extends ke
   oneOf?: TKey[];
   /** Calls the callback when all of the given events are emitted. Either one of or both of `oneOf` and `allOf` need to be set. If both are set, they behave like an "AND" condition. */
   allOf?: TKey[];
-}
+};
 
 /** Options for the {@linkcode NanoEmitter.onMulti()} method */
 export type NanoEmitterOnMultiOptions<TEvtMap extends EventsMap, TKey extends keyof TEvtMap = keyof TEvtMap> = Prettify<
@@ -41,12 +48,14 @@ export type NanoEmitterOnMultiOptions<TEvtMap extends EventsMap, TKey extends ke
 
 /**
  * Class that can be extended or instantiated by itself to create a lightweight event emitter with helper methods and a strongly typed event map.  
- * If extended from, you can use `this.events.emit()` to emit events, even if the `emit()` method doesn't work because `publicEmit` is not set to true in the constructor.
+ * If extended from, prefer using `this.emitEvent()` over `this.events.emit()` — it updates the catch-up memory for any events listed in `catchUpEvents`.
  */
 export class NanoEmitter<TEvtMap extends EventsMap = DefaultEvents> {
   protected readonly events: Emitter<TEvtMap> = createNanoEvents<TEvtMap>();
   protected eventUnsubscribes: Unsubscribe[] = [];
   protected emitterOptions: NanoEmitterOptions;
+  /** Stores the last arguments for each event listed in `catchUpEvents` */
+  protected catchUpMemory = new Map<PropertyKey, unknown[]>();
 
   /** Creates a new instance of NanoEmitter - a lightweight event emitter with helper methods and a strongly typed event map */
   constructor(options: Partial<NanoEmitterOptions> = {}) {
@@ -54,6 +63,19 @@ export class NanoEmitter<TEvtMap extends EventsMap = DefaultEvents> {
       publicEmit: false,
       ...options,
     };
+  }
+
+  //#region emitEvent
+
+  /**
+   * Emits an event on this instance, bypassing the `publicEmit` guard.
+   * Prefer this over `this.events.emit()` in subclasses — it updates catch-up memory
+   * for any event listed in `catchUpEvents` so late listeners can still receive the last value.
+   */
+  protected emitEvent<TKey extends keyof TEvtMap>(event: TKey, ...args: Parameters<TEvtMap[TKey]>): void {
+    if(this.emitterOptions.catchUpEvents?.includes(event as PropertyKey))
+      this.catchUpMemory.set(event as PropertyKey, args);
+    this.events.emit(event, ...args);
   }
 
   //#region on
@@ -91,8 +113,12 @@ export class NanoEmitter<TEvtMap extends EventsMap = DefaultEvents> {
     };
 
     unsub = this.events.on(event, cb);
-
     this.eventUnsubscribes.push(unsub);
+
+    const memory = this.catchUpMemory.get(event as PropertyKey);
+    if(memory)
+      cb(...memory as Parameters<TEvtMap[TKey]>);
+
     return unsubProxy;
   }
 
@@ -117,6 +143,13 @@ export class NanoEmitter<TEvtMap extends EventsMap = DefaultEvents> {
    * ```
    */
   public once<TKey extends keyof TEvtMap>(event: TKey | "_", cb?: TEvtMap[TKey]): Promise<Parameters<TEvtMap[TKey]>> {
+    const memory = this.catchUpMemory.get(event as PropertyKey);
+    if(memory) {
+      const args = memory as Parameters<TEvtMap[TKey]>;
+      cb?.(...args);
+      return Promise.resolve(args);
+    }
+
     return new Promise((resolve) => {
       // eslint-disable-next-line prefer-const
       let unsub: Unsubscribe | undefined;
@@ -255,7 +288,7 @@ export class NanoEmitter<TEvtMap extends EventsMap = DefaultEvents> {
    */
   public emit<TKey extends keyof TEvtMap>(event: TKey, ...args: Parameters<TEvtMap[TKey]>): boolean {
     if(this.emitterOptions.publicEmit) {
-      this.events.emit(event, ...args);
+      this.emitEvent(event, ...args);
       return true;
     }
     return false;

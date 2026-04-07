@@ -254,3 +254,129 @@ describe("NanoEmitter onMulti", () => {
     expect(cbVal).toBe(-1);
   });
 });
+
+describe("NanoEmitter catch-up events", () => {
+  //#region on catch-up
+  it("on() fires immediately with cached args", () => {
+    const evts = new NanoEmitter<{ foo: (val: number) => void }>({
+      publicEmit: true,
+      catchUpEvents: ["foo"],
+    });
+
+    evts.emit("foo", 42);
+
+    let received = -1;
+    evts.on("foo", (val) => { received = val; });
+
+    expect(received).toBe(42);
+  });
+
+  it("on() uses only the last cached emission", () => {
+    const evts = new NanoEmitter<{ foo: (val: number) => void }>({
+      publicEmit: true,
+      catchUpEvents: ["foo"],
+    });
+
+    evts.emit("foo", 10);
+    evts.emit("foo", 20);
+
+    let received = -1;
+    evts.on("foo", (val) => { received = val; });
+
+    expect(received).toBe(20);
+  });
+
+  it("on() still receives future emissions after catch-up", () => {
+    const evts = new NanoEmitter<{ foo: (val: number) => void }>({
+      publicEmit: true,
+      catchUpEvents: ["foo"],
+    });
+
+    evts.emit("foo", 5);
+
+    const received: number[] = [];
+    evts.on("foo", (val) => received.push(val));
+
+    evts.emit("foo", 10);
+
+    expect(received).toEqual([5, 10]);
+  });
+
+  //#region once catch-up
+  it("once() resolves immediately with cached args", async () => {
+    const evts = new NanoEmitter<{ foo: (val: number) => void }>({
+      publicEmit: true,
+      catchUpEvents: ["foo"],
+    });
+
+    evts.emit("foo", 42);
+
+    const [val] = await evts.once("foo");
+    expect(val).toBe(42);
+  });
+
+  it("once() fires the callback immediately with cached args", async () => {
+    const evts = new NanoEmitter<{ foo: (val: number) => void }>({
+      publicEmit: true,
+      catchUpEvents: ["foo"],
+    });
+
+    evts.emit("foo", 99);
+
+    let cbVal = -1;
+    await evts.once("foo", (val) => { cbVal = val; });
+    expect(cbVal).toBe(99);
+  });
+
+  //#region non-tracked events
+  it("does not catch up events not listed in catchUpEvents", () => {
+    const evts = new NanoEmitter<{
+      tracked: (val: number) => void;
+      untracked: (val: number) => void;
+    }>({
+      publicEmit: true,
+      catchUpEvents: ["tracked"],
+    });
+
+    evts.emit("tracked", 10);
+    evts.emit("untracked", 20);
+
+    let trackedVal = -1, untrackedVal = -1;
+    evts.on("tracked", (val) => { trackedVal = val; });
+    evts.on("untracked", (val) => { untrackedVal = val; });
+
+    expect(trackedVal).toBe(10);
+    expect(untrackedVal).toBe(-1);
+  });
+
+  it("does not fire catch-up if event has never been emitted", () => {
+    const evts = new NanoEmitter<{ foo: (val: number) => void }>({
+      publicEmit: true,
+      catchUpEvents: ["foo"],
+    });
+
+    let received = -1;
+    evts.on("foo", (val) => { received = val; });
+
+    expect(received).toBe(-1);
+  });
+
+  //#region emitEvent catch-up
+  it("emitEvent() in subclass updates catch-up memory", () => {
+    class MyEmitter extends NanoEmitter<{ foo: (val: number) => void }> {
+      constructor() {
+        super({ catchUpEvents: ["foo"] });
+      }
+      fire(val: number): void {
+        this.emitEvent("foo", val);
+      }
+    }
+
+    const em = new MyEmitter();
+    em.fire(55);
+
+    let received = -1;
+    em.on("foo", (val) => { received = val; });
+    expect(received).toBe(55);
+  });
+});

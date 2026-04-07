@@ -95,7 +95,7 @@ export class Debouncer<TFunc extends AnyFn> extends NanoEmitter<DebouncerEventMa
 
   /** Sets the timeout for the debouncer */
   public setTimeout(timeout: number): void {
-    this.events.emit("change", this.timeout = timeout, this.type);
+    this.emitEvent("change", this.timeout = timeout, this.type);
   }
 
   /** Returns the current timeout */
@@ -112,7 +112,7 @@ export class Debouncer<TFunc extends AnyFn> extends NanoEmitter<DebouncerEventMa
 
   /** Sets the edge type for the debouncer */
   public setType(type: DebouncerType): void {
-    this.events.emit("change", this.timeout, this.type = type);
+    this.emitEvent("change", this.timeout, this.type = type);
   }
 
   /** Returns the current edge type */
@@ -127,7 +127,7 @@ export class Debouncer<TFunc extends AnyFn> extends NanoEmitter<DebouncerEventMa
     /** When called, calls all registered listeners */
     const cl = (...a: Parameters<TFunc>): void => {
       this.queuedCall = undefined;
-      this.events.emit("call", ...a);
+      this.emitEvent("call", ...a);
       this.listeners.forEach((l) => l.call(this, ...a));
     };
 

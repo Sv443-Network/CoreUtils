@@ -305,7 +305,7 @@ export class DataStore<TData extends DataStoreData, TMemCache extends boolean = 
       if((typeof storedDataRaw !== "string" && typeof storedDataRaw !== "object") || storedDataRaw === null || isNaN(storedFmtVer)) {
         await this.saveDefaultData(false);
         const data = this.engine.deepCopy(this.defaultData);
-        this.events.emit("loadData", data);
+        this.emitEvent("loadData", data);
         return data;
       }
 
@@ -327,13 +327,13 @@ export class DataStore<TData extends DataStoreData, TMemCache extends boolean = 
       const result = this.memoryCache
         ? (this.cachedData = this.engine.deepCopy(parsed))
         : this.engine.deepCopy(parsed);
-      this.events.emit("loadData", result);
+      this.emitEvent("loadData", result);
       return result;
     }
     catch(err) {
       const error = err instanceof Error ? err : new Error(String(err));
       console.warn("Error while parsing JSON data, resetting it to the default value.", err);
-      this.events.emit("error", error);
+      this.emitEvent("error", error);
       await this.saveDefaultData();
       return this.defaultData;
     }
@@ -360,7 +360,7 @@ export class DataStore<TData extends DataStoreData, TMemCache extends boolean = 
     const dataCopy = this.engine.deepCopy(data);
     if(this.memoryCache) {
       this.cachedData = data;
-      this.events.emit("updateDataSync", dataCopy);
+      this.emitEvent("updateDataSync", dataCopy);
     }
 
     // resolve asynchronously
@@ -372,11 +372,11 @@ export class DataStore<TData extends DataStoreData, TMemCache extends boolean = 
       ]);
 
       if(results.every(r => r.status === "fulfilled"))
-        this.events.emit("updateData", dataCopy);
+        this.emitEvent("updateData", dataCopy);
       else {
         const error = new Error("Error while saving data to persistent storage: " + results.map(r => r.status === "rejected" ? r.reason : null).filter(Boolean).join("; "));
         console.error(error);
-        this.events.emit("error", error);
+        this.emitEvent("error", error);
       }
 
       resolve();
@@ -400,11 +400,11 @@ export class DataStore<TData extends DataStoreData, TMemCache extends boolean = 
     ]);
 
     if(results.every(r => r.status === "fulfilled"))
-      emitEvent && this.events.emit("setDefaultData", this.defaultData);
+      emitEvent && this.emitEvent("setDefaultData", this.defaultData);
     else {
       const error = new Error("Error while saving default data to persistent storage: " + results.map(r => r.status === "rejected" ? r.reason : null).filter(Boolean).join("; "));
       console.error(error);
-      this.events.emit("error", error);
+      this.emitEvent("error", error);
     }
   }
 
@@ -422,7 +422,7 @@ export class DataStore<TData extends DataStoreData, TMemCache extends boolean = 
       this.engine.deleteValue(`${this.keyPrefix}${this.id}-enf`),
     ]);
     await this.engine.deleteStorage?.();
-    this.events.emit("deleteData");
+    this.emitEvent("deleteData");
   }
 
   //#region encodingEnabled
@@ -460,12 +460,12 @@ export class DataStore<TData extends DataStoreData, TMemCache extends boolean = 
           newData = migRes instanceof Promise ? await migRes : migRes;
           lastFmtVer = oldFmtVer = ver;
           const isFinal = ver >= this.formatVersion || i === sortedMigrations.length - 1;
-          this.events.emit("migrateData", ver, newData, isFinal);
+          this.emitEvent("migrateData", ver, newData, isFinal);
         }
         catch(err) {
           const migError = new MigrationError(`Error while running migration function for format version '${fmtVer}'`, { cause: err });
-          this.events.emit("migrationError", ver, migError);
-          this.events.emit("error", migError);
+          this.emitEvent("migrationError", ver, migError);
+          this.emitEvent("error", migError);
 
           if(!resetOnError)
             throw migError;
@@ -485,7 +485,7 @@ export class DataStore<TData extends DataStoreData, TMemCache extends boolean = 
     const result = this.memoryCache
       ? (this.cachedData = this.engine.deepCopy(newData as TData))
       : this.engine.deepCopy(newData as TData);
-    this.events.emit("updateData", result);
+    this.emitEvent("updateData", result);
     return result;
   }
 
@@ -519,7 +519,7 @@ export class DataStore<TData extends DataStoreData, TMemCache extends boolean = 
         this.engine.deleteValue(`${this.keyPrefix}${id}-ver`),
         this.engine.deleteValue(`${this.keyPrefix}${id}-enf`),
       ]);
-      this.events.emit("migrateId", id, this.id);
+      this.emitEvent("migrateId", id, this.id);
     }));
   }
 }
