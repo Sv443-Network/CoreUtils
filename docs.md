@@ -109,6 +109,9 @@ For submitting bug reports or feature requests, please use the [GitHub issue tra
   - [**NanoEmitter:**](#nanoemitter)
     - 🟧 [`class NanoEmitter`](#class-nanoemitter) - Simple, lightweight event emitter class that can be used in both FP and OOP, inspired by [`EventEmitter` from `node:events`](https://nodejs.org/api/events.html#class-eventemitter), based on [`nanoevents`](https://npmjs.com/package/nanoevents)
       - 🔷 [`type NanoEmitterOptions`](#type-nanoemitteroptions) - Options for the [`NanoEmitter` class](#class-nanoemitter)
+  - [**PicoEmitter:**](#picoemitter)
+    - 🟧 [`class PicoEmitter`](#class-picoemitter) - Even simpler event emitter purely for bootstrapping event-emitting classes in OOP.
+      - 🔷 [`type PicoEmitterOptions`](#type-picoemitteroptions) - Options for the [`PicoEmitter` class](#class-picoemitter)
   - [**Text:**](#text)
     - 🟣 [`function autoPlural()`](#function-autoplural) - Turns the given term into its plural form, depending on the given number or list length
     - 🟣 [`function capitalize()`](#function-capitalize) - Capitalizes the first letter of the given string
@@ -3109,6 +3112,9 @@ However in a functional environment you can also just create instances for use a
   
 For the options object, refer to the [`NanoEmitterOptions` type.](#type-nanoemitteroptions)  
   
+If you're working in OOP and you only want the class itself to emit events, consider using [the `PicoEmitter` class](#picoemitter) instead.  
+It's what `NanoEmitter` extends from and only comes with the core event listening functionality and no ability to publicly emit events.  
+  
 The `TEventMap` generic is used to define the events that can be emitted and listened to.  
 It is an object where keys are the event names and values are the listener function types.  
 The arguments of the function are the arguments that will be passed to the listener when the event is emitted. The function should always return `void`.  
@@ -3143,7 +3149,7 @@ class MyClass extends NanoEmitter<MyEventMap> {
     this.emit("baz", 42);
     this.emit("foo", "world");
     // this one will always work when used inside the class and functions identically:
-    this.events.emit("baz", 69);
+    this.emitEvent("baz", 69);
   }
 }
 
@@ -3160,8 +3166,8 @@ myInstance.on("foo", (bar) => {
   const [bar] = await myInstance.once("foo");
 })();
 
-// throws a TS error since `events` is protected, but technically still works in JS:
-myInstance.events.emit("foo", "hello");
+// throws a TS error since `events` is protected, but would technically still work when transpiled to JS:
+myInstance.emitEvent("foo", "hello");
 
 // only works because publicEmit is set to true:
 myInstance.emit("baz", "hello from the outside");
@@ -3438,6 +3444,81 @@ class MyService extends NanoEmitter<{ update: (n: number) => void }> {
 }
 ```
 </details>
+
+<br><br>
+
+
+## PicoEmitter
+
+### `class PicoEmitter`
+Usage:
+```ts
+class MyClass extends PicoEmitter<TEventMap = EventsMap> {
+  constructor() {
+    super(options?: PicoEmitterOptions);
+  }
+}
+```
+  
+A class that provides a basic internal event emitting system with a small footprint, powered by [the nanoevents library.](https://npmjs.com/package/nanoevents)  
+  
+The main intention behind this class is to extend it in your own classes to provide a simple event system directly built into the class.  
+It doesn't offer public emitting capabilities, so it's ideal for cases where you only want the class itself to emit events, but public listeners should still be able to subscribe to those events.  
+  
+For the options object, refer to the [`PicoEmitterOptions` type.](#type-picoemitteroptions)  
+  
+If you're working in FP and you only want to create a standalone instance, use [the `NanoEmitter` class](#nanoemitter) instead and set `publicEmit` to true in its options.  
+  
+The `TEventMap` generic is used to define the events that can be emitted and listened to.  
+It is an object where keys are the event names and values are the listener function types.  
+The arguments of the function are the arguments that will be passed to the listener when the event is emitted. The function should always return `void`.  
+  
+<details><summary><b>Object oriented example - click to view</b></summary>
+
+```ts
+import { PicoEmitter } from "@sv443-network/coreutils";
+
+// map of events for strong typing - the functions always return void
+interface MyEventMap {
+  foo: (bar: string) => void;
+}
+
+// ⚠️ this kind of usage will error in TS since PicoEmitter is an abstract class:
+// const myInstance = new PicoEmitter<MyEventMap>();
+
+// PicoEmitter is meant to be extended in your own classes:
+class MyClass extends PicoEmitter<MyEventMap> {
+  constructor() {
+    super({
+      // store the latest emission of the "foo" event, so late listeners can catch up:
+      catchUpEvents: ["foo"],
+    });
+
+    // the class can listen to its own events:
+    this.once("foo", (bar) => {
+      console.log("foo event (once):", bar);
+    });
+  }
+
+  public doStuff() {
+    // emit events from inside the class with emitEvent(), which also updates the catch-up memory for late listeners:
+    this.emitEvent("baz", 69);
+  }
+}
+
+// create an instance of the class:
+const myInstance = new MyClass();
+
+// PicoEmitter offers the public methods `on()`, `once()` and `onMulti()` for publicly subscribing to events:
+const unsub = myInstance.on("foo", (bar) => {
+  console.log("foo event (outside, continuous):", bar);
+});
+
+myInstance.doStuff();
+```
+
+</details>
+
 
 <br><br>
 

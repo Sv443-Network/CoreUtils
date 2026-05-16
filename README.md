@@ -91,6 +91,9 @@ Intended to be used in conjunction with [`@sv443-network/userutils`](https://git
 - [**NanoEmitter:**](./docs.md#nanoemitter)
   - 🟧 [`class NanoEmitter`](./docs.md#class-nanoemitter) - Simple, lightweight event emitter class that can be used in both FP and OOP, inspired by [`EventEmitter` from `node:events`](https://nodejs.org/api/events.html#class-eventemitter), based on [`nanoevents`](https://npmjs.com/package/nanoevents)
     - 🔷 [`type NanoEmitterOptions`](./docs.md#type-nanoemitteroptions) - Options for the [`NanoEmitter` class](./docs.md#class-nanoemitter)
+- [**PicoEmitter:**](./docs.md#picoemitter)
+  - 🟧 [`class PicoEmitter`](./docs.md#class-picoemitter) - Even simpler event emitter purely for bootstrapping event-emitting classes in OOP.
+    - 🔷 [`type PicoEmitterOptions`](./docs.md#type-picoemitteroptions) - Options for the [`PicoEmitter` class](./docs.md#class-picoemitter)
 - [**Text:**](./docs.md#text)
   - 🟣 [`function autoPlural()`](./docs.md#function-autoplural) - Turns the given term into its plural form, depending on the given number or list length
   - 🟣 [`function capitalize()`](./docs.md#function-capitalize) - Capitalizes the first letter of the given string

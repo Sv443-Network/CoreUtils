@@ -5,44 +5,17 @@
 
 import { createNanoEvents, type DefaultEvents, type Emitter, type EventsMap, type Unsubscribe } from "nanoevents";
 import type { Prettify } from "./types.ts";
+import { PicoEmitter, type PicoEmitterOnMultiOptions, type PicoEmitterOptions } from "./PicoEmitter.ts";
 
 //#region types
 
-export interface NanoEmitterOptions {
+export type NanoEmitterOptions = Prettify<{
   /** If set to true, allows emitting events through the public method emit() */
   publicEmit: boolean;
-  /**
-   * When provided, the emitter will remember the last arguments of each listed event.
-   * Any listener attached via `on()` or `once()` after the event has already fired will
-   * be immediately called / resolved with the cached arguments (catch-up behaviour).
-   * Only works for emissions that go through the public `emit()` or the protected `emitEvent()` method.
-   */
-  catchUpEvents?: PropertyKey[];
-}
-
-type NanoEmitterOnMultiTriggerOptions<TEvtMap extends EventsMap, TKey extends keyof TEvtMap = keyof TEvtMap> = {
-  /** Calls the callback when one of the given events is emitted. Either one of or both of `oneOf` and `allOf` need to be set. If both are set, they behave like an "AND" condition. */
-  oneOf?: TKey[];
-  /** Calls the callback when all of the given events are emitted. Either one of or both of `oneOf` and `allOf` need to be set. If both are set, they behave like an "AND" condition. */
-  allOf?: TKey[];
-};
+} & PicoEmitterOptions>;
 
 /** Options for the {@linkcode NanoEmitter.onMulti()} method */
-export type NanoEmitterOnMultiOptions<TEvtMap extends EventsMap, TKey extends keyof TEvtMap = keyof TEvtMap> = Prettify<
-  & {
-    /** If true, the callback will be called only once for the first event (or set of events) that match the criteria */
-    once?: boolean;
-    /** If provided, can be used to cancel the subscription if the signal is aborted */
-    signal?: AbortSignal;
-    /** The callback to call when the event with the given name is emitted */
-    callback: (event: TKey, ...args: Parameters<TEvtMap[TKey]>) => void;
-  }
-  & NanoEmitterOnMultiTriggerOptions<TEvtMap, TKey>
-  & (
-    | Pick<Required<NanoEmitterOnMultiTriggerOptions<TEvtMap, TKey>>, "oneOf">
-    | Pick<Required<NanoEmitterOnMultiTriggerOptions<TEvtMap, TKey>>, "allOf">
-  )
->;
+export type NanoEmitterOnMultiOptions<TEvtMap extends EventsMap, TKey extends keyof TEvtMap = keyof TEvtMap> = PicoEmitterOnMultiOptions<TEvtMap, TKey>;
 
 //#region NanoEmitter
 
@@ -50,7 +23,7 @@ export type NanoEmitterOnMultiOptions<TEvtMap extends EventsMap, TKey extends ke
  * Class that can be extended or instantiated by itself to create a lightweight event emitter with helper methods and a strongly typed event map.  
  * If extended from, prefer using `this.emitEvent()` over `this.events.emit()` — it updates the catch-up memory for any events listed in `catchUpEvents`.
  */
-export class NanoEmitter<TEvtMap extends EventsMap = DefaultEvents> {
+export class NanoEmitter<TEvtMap extends EventsMap = DefaultEvents> extends PicoEmitter<TEvtMap> {
   protected readonly events: Emitter<TEvtMap> = createNanoEvents<TEvtMap>();
   protected eventUnsubscribes: Unsubscribe[] = [];
   protected emitterOptions: NanoEmitterOptions;
@@ -59,222 +32,11 @@ export class NanoEmitter<TEvtMap extends EventsMap = DefaultEvents> {
 
   /** Creates a new instance of NanoEmitter - a lightweight event emitter with helper methods and a strongly typed event map */
   constructor(options: Partial<NanoEmitterOptions> = {}) {
+    super(options);
     this.emitterOptions = {
       publicEmit: false,
       ...options,
     };
-  }
-
-  //#region emitEvent
-
-  /**
-   * Emits an event on this instance, bypassing the `publicEmit` guard.
-   * Prefer this over `this.events.emit()` in subclasses — it updates catch-up memory
-   * for any event listed in `catchUpEvents` so late listeners can still receive the last value.
-   */
-  protected emitEvent<TKey extends keyof TEvtMap>(event: TKey, ...args: Parameters<TEvtMap[TKey]>): void {
-    if(this.emitterOptions.catchUpEvents?.includes(event as PropertyKey))
-      this.catchUpMemory.set(event as PropertyKey, args);
-    this.events.emit(event, ...args);
-  }
-
-  //#region on
-
-  /**
-   * Subscribes to an event and calls the callback when it's emitted.  
-   * @param event The event to subscribe to. Use `as "_"` in case your event names aren't thoroughly typed (like when using a template literal, e.g. \`event-${val}\` as "_")
-   * @returns Returns a function that can be called to unsubscribe the event listener
-   * @example ```ts
-   * const emitter = new NanoEmitter<{
-   *   foo: (bar: string) => void;
-   * }>({
-   *   publicEmit: true,
-   * });
-   * 
-   * let i = 0;
-   * const unsub = emitter.on("foo", (bar) => {
-   *   // unsubscribe after 10 events:
-   *   if(++i === 10) unsub();
-   *   console.log(bar);
-   * });
-   * 
-   * emitter.emit("foo", "bar");
-   * ```
-   */
-  public on<TKey extends keyof TEvtMap>(event: TKey | "_", cb: TEvtMap[TKey]): () => void {
-    // eslint-disable-next-line prefer-const
-    let unsub: Unsubscribe | undefined;
-
-    const unsubProxy = (): void => {
-      if(!unsub)
-        return;
-      unsub();
-      this.eventUnsubscribes = this.eventUnsubscribes.filter(u => u !== unsub);
-    };
-
-    unsub = this.events.on(event, cb);
-    this.eventUnsubscribes.push(unsub);
-
-    const memory = this.catchUpMemory.get(event as PropertyKey);
-    if(memory)
-      cb(...memory as Parameters<TEvtMap[TKey]>);
-
-    return unsubProxy;
-  }
-
-  //#region once
-
-  /**
-   * Subscribes to an event and calls the callback or resolves the Promise only once when it's emitted.  
-   * @param event The event to subscribe to. Use `as "_"` in case your event names aren't thoroughly typed (like when using a template literal, e.g. \`event-${val}\` as "_")
-   * @param cb The callback to call when the event is emitted - if provided or not, the returned Promise will resolve with the event arguments
-   * @returns Returns a Promise that resolves with the event arguments when the event is emitted
-   * @example ```ts
-   * const emitter = new NanoEmitter<{
-   *   foo: (bar: string) => void;
-   * }>();
-   * 
-   * // Promise syntax:
-   * const [bar] = await emitter.once("foo");
-   * console.log(bar);
-   * 
-   * // Callback syntax:
-   * emitter.once("foo", (bar) => console.log(bar));
-   * ```
-   */
-  public once<TKey extends keyof TEvtMap>(event: TKey | "_", cb?: TEvtMap[TKey]): Promise<Parameters<TEvtMap[TKey]>> {
-    const memory = this.catchUpMemory.get(event as PropertyKey);
-    if(memory) {
-      const args = memory as Parameters<TEvtMap[TKey]>;
-      cb?.(...args);
-      return Promise.resolve(args);
-    }
-
-    return new Promise((resolve) => {
-      // eslint-disable-next-line prefer-const
-      let unsub: Unsubscribe | undefined;
-
-      const onceProxy = ((...args: Parameters<TEvtMap[TKey]>) => {
-        cb?.(...args);
-        unsub?.();
-        resolve(args);
-      }) as TEvtMap[TKey];
-
-      unsub = this.events.on(event, onceProxy);
-      this.eventUnsubscribes.push(unsub);
-    });
-  }
-
-  //#region onMulti
-
-  /**
-   * Allows subscribing to multiple events and calling the callback only when one of, all of, or a subset of the events are emitted, either continuously or only once.  
-   * @param options An object or array of objects with the following properties:  
-   * `callback` (required) is the function that will be called when the conditions are met.  
-   *   
-   * Set `once` to true to call the callback only once for the first event (or set of events) that match the criteria, then stop listening.  
-   * If `signal` is provided, the subscription will be canceled when the given signal is aborted.  
-   *   
-   * If `oneOf` is used, the callback will be called when any of the matching events are emitted.  
-   * If `allOf` is used, the callback will be called after all of the matching events are emitted at least once, then any time any of them are emitted.  
-   * If both `oneOf` and `allOf` are used together, the callback will be called when any of the `oneOf` events are emitted AND all of the `allOf` events have been emitted at least once.  
-   * At least one of `oneOf` or `allOf` must be provided.  
-   *   
-   * @returns Returns a function that can be called to unsubscribe all listeners created by this call. Alternatively, pass an `AbortSignal` to all options objects to achieve the same effect or for finer control.
-   */
-  public onMulti<TEvt extends keyof TEvtMap>(options: NanoEmitterOnMultiOptions<TEvtMap> | Array<NanoEmitterOnMultiOptions<TEvtMap>>): Unsubscribe {
-    const allUnsubs: Unsubscribe[] = [];
-
-    const unsubAll = (): void => {
-      for(const unsub of allUnsubs)
-        unsub();
-      allUnsubs.splice(0, allUnsubs.length);
-      this.eventUnsubscribes = this.eventUnsubscribes.filter(u => !allUnsubs.includes(u));
-    };
-
-    for(const opts of Array.isArray(options) ? options : [options]) {
-      // options defaults:
-
-      const optsWithDefaults = {
-        allOf: [],
-        oneOf: [],
-        once: false,
-        ...opts,
-      } as Prettify<
-        Required<Pick<NanoEmitterOnMultiOptions<TEvtMap>, "allOf" | "oneOf">>
-        & NanoEmitterOnMultiOptions<TEvtMap>
-      >;
-
-      const {
-        oneOf,
-        allOf,
-        once,
-        signal,
-        callback,
-      } = optsWithDefaults;
-
-      if(signal?.aborted)
-        return unsubAll;
-
-      // if no events are provided, throw an error
-      if(oneOf.length === 0 && allOf.length === 0)
-        throw new TypeError("NanoEmitter.onMulti(): Either `oneOf` or `allOf` or both must be provided in the options");
-
-      // unsubs:
-
-      const curEvtUnsubs: Unsubscribe[] = [];
-
-      const checkUnsubAllEvt = (force = false): void => {
-        if(!signal?.aborted && !force)
-          return;
-        for(const unsub of curEvtUnsubs)
-          unsub();
-        curEvtUnsubs.splice(0, curEvtUnsubs.length);
-        this.eventUnsubscribes = this.eventUnsubscribes.filter(u => !curEvtUnsubs.includes(u));
-      };
-
-      // track allOf state:
-      const allOfEmitted: Set<TEvt> = new Set();
-      const allOfConditionMet = (): boolean => allOf.length === 0 || allOfEmitted.size === allOf.length;
-
-      // oneOf:
-
-      for(const event of oneOf) {
-        const unsub = this.events.on(event, ((...args: Parameters<TEvtMap[typeof event]>) => {
-          checkUnsubAllEvt();
-          // only call callback if allOf condition is met (or not applicable)
-          if(allOfConditionMet()) {
-            callback(event, ...args);
-            if(once)
-              checkUnsubAllEvt(true);
-          }
-        }) as TEvtMap[typeof event]);
-
-        curEvtUnsubs.push(unsub);
-      }
-
-      // allOf:
-
-      for(const event of allOf) {
-        const unsub = this.events.on(event, ((...args: Parameters<TEvtMap[typeof event]>) => {
-          checkUnsubAllEvt();
-          allOfEmitted.add(event as TEvt);
-          
-          // only call callback if oneOf condition is met (or not applicable) AND allOf is complete
-          if(allOfConditionMet() && (oneOf.length === 0 || oneOf.includes(event as TEvt))) {
-            callback(event, ...args);
-            if(once)
-              checkUnsubAllEvt(true);
-          }
-        }) as TEvtMap[typeof event]);
-
-        curEvtUnsubs.push(unsub);
-      }
-
-      allUnsubs.push(() => checkUnsubAllEvt(true));
-    }
-
-    return unsubAll;
   }
 
   //#region emit
@@ -296,10 +58,8 @@ export class NanoEmitter<TEvtMap extends EventsMap = DefaultEvents> {
 
   //#region unsubscribeAll
 
-  /** Unsubscribes all event listeners from this instance */
+  /** Unsubscribes all event listeners from this instance. Also clears the event catch-up memory. */
   public unsubscribeAll(): void {
-    for(const unsub of this.eventUnsubscribes)
-      unsub();
-    this.eventUnsubscribes = [];
+    super.unsubscribeAll();
   }
 }
