@@ -24,19 +24,19 @@ describe("misc/pauseFor", () => {
 describe("misc/fetchAdvanced", () => {
   it("Fetches a resource correctly", async () => {
     try {
-      const res = await fetchAdvanced("https://jsonplaceholder.typicode.com/todos/1");
+      const res = await fetchAdvanced("https://raw.githubusercontent.com/Sv443-Network/CoreUtils/refs/heads/main/package.json");
       const json = await res.json();
 
-      expect(json?.id).toBe(1);
+      expect(typeof json?.name).toBe("string");
     }
     catch(e) {
-      expect(e).toBeUndefined();
+      expect(e).toBe(Symbol("something broke lol"));
     }
   });
 
   it("Throws error on invalid resource", async () => {
     try {
-      const res = await fetchAdvanced("invalid-url");
+      await fetchAdvanced("invalid-url");
     }
     catch(e) {
       expect(e).toBeInstanceOf(Error);

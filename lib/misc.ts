@@ -76,28 +76,33 @@ export type FetchAdvancedOpts = Prettify<
 /** Calls the fetch API with special options like a timeout */
 export async function fetchAdvanced(input: string | RequestInfo | URL, options: FetchAdvancedOpts = {}): Promise<Response> {
   const { timeout = 10000, signal, ...restOpts } = options;
-  const ctl = new AbortController();
 
-  signal?.addEventListener("abort", () => ctl.abort());
+  // avoid using AbortSignal for the timeout to prevent realm mismatches in environments
+  // where the global AbortSignal is replaced (e.g. jsdom), causing fetch's instanceof check to fail,
+  // and instead race the fetch promise against a timeout promise
+  const fetchOpts: RequestInit = { ...restOpts };
+  if(signal)
+    fetchOpts.signal = signal;
 
-  let sigOpts: Partial<RequestInit> = {},
-    id: ReturnType<typeof setTimeout> | undefined = undefined;
-
-  if(timeout >= 0) {
-    id = setTimeout(() => ctl.abort(), timeout);
-    sigOpts = { signal: ctl.signal };
-  }
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
 
   try {
-    const res = await fetch(input, {
-      ...restOpts,
-      ...sigOpts,
-    });
-    typeof id !== "undefined" && clearTimeout(id);
+    const fetchPromise = fetch(input, fetchOpts);
+
+    if(timeout < 0)
+      return await fetchPromise;
+
+    const res = await Promise.race([
+      fetchPromise,
+      new Promise<never>((_, reject) => {
+        timeoutId = setTimeout(() => reject(new DOMException("The operation timed out.", "TimeoutError")), timeout);
+      }),
+    ]);
+    clearTimeout(timeoutId);
     return res;
   }
   catch(err) {
-    typeof id !== "undefined" && clearTimeout(id);
+    clearTimeout(timeoutId);
     throw new NetworkError("Error while calling fetch", { cause: err });
   }
 }
