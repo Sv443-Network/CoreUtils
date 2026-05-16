@@ -19,6 +19,7 @@ export * from "./DataStoreSerializer.ts";
 export * from "./Debouncer.ts";
 export * from "./Errors.ts";
 export * from "./NanoEmitter.ts";
+export * from "./PicoEmitter.ts";
 // unfinished:
 // export * from "./TieredCache.ts";
 // export * from "./Translate.ts";
