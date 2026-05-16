@@ -1,5 +1,11 @@
 # @sv443-network/coreutils
 
+## 3.7.0
+
+### Minor Changes
+
+- 0a0835f: Added `PicoEmitter` class as an even more lightweight alternative to `NanoEmitter`, to be used only for bootstrapping classes in OOP.
+
 ## 3.6.0
 
 ### Minor Changes
