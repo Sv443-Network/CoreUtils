@@ -1,5 +1,11 @@
 # @sv443-network/coreutils
 
+## 3.7.1
+
+### Patch Changes
+
+- 07b4fa8: Fixed missing re-export of `PicoEmitter`.
+
 ## 3.7.0
 
 ### Minor Changes
