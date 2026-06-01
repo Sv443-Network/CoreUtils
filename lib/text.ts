@@ -66,11 +66,16 @@ export type ProgressBarChars = Prettify<Record<keyof typeof defaultPbChars, stri
  * Use {@linkcode chars} to override the default characters (for example, use emojis via `<:emoji:ID>` or `😃`)
  */
 export function createProgressBar(percentage: number, barLength: number, chars: ProgressBarChars = defaultPbChars): string {
+  if(percentage < 0 || percentage > 100)
+    throw new RangeError(`Percentage must be between 0 and 100, got ${percentage}`);
+  if(barLength < 0)
+    throw new RangeError(`Bar length must be non-negative, got ${barLength}`);
+
   if(percentage === 100)
     return chars[100].repeat(barLength);
 
   const filledLength = Math.floor((percentage / 100) * barLength);
-  const remainingPercentage = percentage / 10 * barLength - filledLength;
+  const remainingPercentage = (percentage / 100) * barLength - filledLength;
 
   let lastBlock = "";
   if(remainingPercentage >= 0.75)

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { autoPlural, capitalize, createProgressBar, createTable, defaultTableLineCharset, insertValues, joinArrayReadable, secsToTimeStr, truncStr } from "../text.ts";
+import { autoPlural, capitalize, createProgressBar, createTable, defaultPbChars, defaultTableLineCharset, insertValues, joinArrayReadable, secsToTimeStr, truncStr } from "../text.ts";
 
 //#region autoPlural
 describe("misc/autoPlural", () => {
@@ -52,9 +52,9 @@ describe("misc/capitalize", () => {
 describe("misc/createProgressBar", () => {
   it("Creates a progress bar with correct characters", () => {
     expect(createProgressBar(100, 10)).toBe("██████████");
-    expect(createProgressBar(75, 10)).toBe("███████▓──");
-    expect(createProgressBar(50, 10)).toBe("█████▓────");
-    expect(createProgressBar(25, 10)).toBe("██▓───────");
+    expect(createProgressBar(75, 10)).toBe("███████▒──");
+    expect(createProgressBar(50, 10)).toBe("█████─────");
+    expect(createProgressBar(25, 10)).toBe("██▒───────");
     expect(createProgressBar(0, 10)).toBe("──────────");
 
     expect(createProgressBar(75, 5, {
@@ -64,6 +64,12 @@ describe("misc/createProgressBar", () => {
       25: "d",
       0: "e",
     })).toBe("aaabe");
+
+    expect(createProgressBar(0, 1)).toBe(defaultPbChars[0]);
+    expect(createProgressBar(25, 1)).toBe(defaultPbChars[25]);
+    expect(createProgressBar(50, 1)).toBe(defaultPbChars[50]);
+    expect(createProgressBar(75, 1)).toBe(defaultPbChars[75]);
+    expect(createProgressBar(100, 1)).toBe(defaultPbChars[100]);
   });
 
   it("Throws errors for invalid inputs", () => {
