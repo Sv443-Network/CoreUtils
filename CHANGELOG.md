@@ -1,5 +1,11 @@
 # @sv443-network/coreutils
 
+## 3.7.2
+
+### Patch Changes
+
+- 0265c41: Fixed `createProgressBar()` not using the 25% and 75% characters.
+
 ## 3.7.1
 
 ### Patch Changes
