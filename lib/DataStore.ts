@@ -122,8 +122,9 @@ export type DataStoreOptions<TData extends DataStoreData, TMemCache extends bool
 /**
  * Generic type that represents the serializable data structure saved in a {@linkcode DataStore} instance.  
  * - ⚠️ Uses `object` instead of an index signature so that interfaces without an explicit index signature can be used as `TData`.  
- *   However, this also means that the type system won't prevent you from using non-serializable data structures like functions or symbols in the data, which will cause errors at runtime.  
- *   Make sure to only use types that are compatible with `JSON.stringify()`, and use `null` instead of `undefined` when you need to preserve the key of an empty value.
+ *   However, this also means that the type system won't prevent you from using non-serializable data structures in the data, which will cause errors at runtime.  
+ *   For engines that only support JSON data like the `BrowserStorageEngine` and `FileStorageEngine`, make sure to only use types that are compatible with `JSON.stringify()`, and use `null` instead of `undefined` when you need to preserve the key of an empty value.  
+ *   For engines like the `IndexedDBStorageEngine`, make sure all your passed data is compatible with [`structuredClone()`](https://developer.mozilla.org/en-US/docs/Web/API/structuredClone).
  */
 export type DataStoreData = object;
 

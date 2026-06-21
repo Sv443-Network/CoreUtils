@@ -75,7 +75,7 @@ export abstract class DataStoreEngine<TData extends DataStoreData = DataStoreDat
 
   //#region misc api
 
-  /** Throws an error if the DataStoreOptions are not set or invalid */
+  /** Throws an error if the {@linkcode DataStoreOptions} are not set or invalid. Call in every method where {@linkcode DataStoreEngineDSOptions} needs to be present. */
   protected ensureDataStoreOptions(): void {
     if(!this.dataStoreOptions)
       throw new DatedError("DataStoreEngine must be initialized with DataStore options before use. If you are using this instance standalone, set them in the constructor or call `setDataStoreOptions()` with the DataStore options.");
