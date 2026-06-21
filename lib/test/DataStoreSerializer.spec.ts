@@ -4,7 +4,7 @@ import { DataStoreSerializer } from "../DataStoreSerializer.ts";
 import { DataStore } from "../DataStore.ts";
 import { beforeEach } from "node:test";
 import { compress, decompress } from "../crypto.ts";
-import { FileStorageEngine } from "../DataStoreEngine.ts";
+import { FileStorageEngine } from "../engines/index.ts";
 
 //#region consts
 

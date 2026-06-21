@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { DataStore } from "../DataStore.ts";
-import { BrowserStorageEngine, DataStoreEngine } from "../DataStoreEngine.ts";
+import { DataStoreEngine } from "../DataStoreEngine.ts";
+import { BrowserStorageEngine } from "../engines/index.ts";
 import type { SerializableVal } from "../types.ts";
 import { DirectAccessDataStore } from "./DirectAccessDataStore.ts";
 import { randomId } from "../crypto.ts";

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { access, readFile, writeFile } from "node:fs/promises";
-import { FileStorageEngine, type FileStorageEngineOptions } from "../DataStoreEngine.ts";
+import { FileStorageEngine, type FileStorageEngineOptions, IndexedDBStorageEngine } from "../engines/index.ts";
 import { DatedError } from "../Errors.ts";
 import { DataStore } from "../DataStore.ts";
 import { compress, decompress } from "../crypto.ts";
