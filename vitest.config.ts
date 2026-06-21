@@ -16,6 +16,7 @@ export default defineConfig({
         "lib/test/*.ts",
         "lib/TieredCache.ts",
         "lib/Translate.ts",
+        "lib/engines/IndexedDBStorageEngine.ts",
         "lib/index.ts",
       ],
       reporter: ["text", "text-summary", "lcov"],

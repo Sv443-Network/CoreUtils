@@ -5,6 +5,8 @@ import type { SerializableVal } from "../types.ts";
 
 /** Options for the {@linkcode IndexedDBStorageEngine} class */
 export type IndexedDBStorageEngineOptions = {
+  /** Prefix for the DB connection ID. Is set to `__ds-` by default. Set to an empty string to only use the DataStore ID. */
+  dbPrefix?: string;
   /**
    * Specifies the necessary options for storing data.  
    * - ⚠️ Only specify this if you are using this instance standalone! The parent DataStore will set this automatically.
@@ -101,7 +103,7 @@ export class IndexedDBStorageEngine<TData extends DataStoreData = DataStoreData>
       throw new ScriptContextError("IndexedDBStorageEngine requires a DOM environment with access to the IndexedDB API", { cause: new DatedError("'indexedDB' is not available in the global scope") });
 
     return this.dbOpenPromise = new Promise<IDBDatabase>((resolve, reject) => {
-      const req = indexedDB.open(`ds-${this.dataStoreOptions.id}`);
+      const req = indexedDB.open(`${this.options.dbPrefix ?? "__ds-"}${this.dataStoreOptions.id}`);
 
       req.addEventListener("upgradeneeded", () => {
         req.result.createObjectStore(IndexedDBStorageEngine.storeName);
