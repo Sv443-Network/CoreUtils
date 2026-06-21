@@ -15,6 +15,7 @@ export * from "./types.ts";
 // classes:
 export * from "./DataStore.ts";
 export * from "./DataStoreEngine.ts";
+export * from "./engines/index.ts";
 export * from "./DataStoreSerializer.ts";
 export * from "./Debouncer.ts";
 export * from "./Errors.ts";
