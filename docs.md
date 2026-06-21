@@ -334,7 +334,7 @@ Signature:
 function darkenColor(color: string, percent: number, upperCase = false): string;
 ```
   
-Darkens the given CSS color value (in `#HEX`, `HEX`, `rgb()` or `rgba()` format) by the given decimal percentage.  
+Darkens the given CSS color value (in `#HEX`, `HEX`, `rgb()` or `rgba()` format) by the given percentage value (0.0 to 100.0).  
 A negative percentage will lighten the color, just like the [`lightenColor()` function.](#function-lightencolor)  
 The color values will not exceed their maximum range (`00-FF` / `0-255`) and the alpha value will be preserved.  
 Returns the new color in the same format as the input.  
@@ -909,7 +909,7 @@ The options object for the [`DataStore` class.](#class-datastore)
 It has the following properties:
 | Property | Type | Description |
 | :-- | :-- | :-- |
-| `id` | `string` | A unique internal identification string for this instance. If two DataStores share the same ID, they will overwrite each other's data. |
+| `id` | `string` | A unique internal identification string for this instance, used for namespacing the data at the [DataStoreEngine](#storage-engines) level. If two DataStores share the same ID, they will overwrite each other's data. |
 | `defaultData` | `TData` | The default data to use if no data is saved in persistent storage yet. Until the data is loaded from persistent storage, this will be the data returned by `getData()`. For TypeScript, the type of the data passed here is what will be used for all other methods of the instance. |
 | `formatVersion` | `number` | An incremental version of the data format. If the format of the data is changed in any way, this number should be incremented, in which case all necessary functions of the migrations dictionary will be run consecutively. *Never decrement this number!* |
 | `engine` | [`DataStoreEngine \| () => DataStoreEngine`](#storage-engines) | Either a storage engine instance or a function that creates and returns a new storage engine instance. The engine implements the API used to persist all key-value pairs. See the [Storage Engines section.](#storage-engines) |
@@ -1577,6 +1577,7 @@ It contains only the properties necessary for storage engines to function proper
 DataStores use storage engines (classes that extend the [`DataStoreEngine` base class](#class-datastoreengine)) to save their data persistently.  
 CoreUtils comes with some premade ones out of the box that aim to cover the most common execution environments:
 - [`BrowserStorageEngine`](#class-browserstorageengine) can be used when [`localStorage`](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage) or [`sessionStorage`](https://developer.mozilla.org/en-US/docs/Web/API/Window/sessionStorage) are available on the [`globalThis` object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/globalThis), which is usually the case in frontend environments.
+- [`IndexedDBStorageEngine`](#class-indexeddbstorageengine) can be used in browsers that support the IndexedDB API, which is a more powerful alternative to localStorage and sessionStorage, allowing for larger storage limits and more complex data structures, including non-JSON-serializable and binary (Blob/File) data.
 - [`FileStorageEngine`](#class-filestorageengine) can be used in Node.js (or Deno with Node compatibility) to save the data as a (potentially encoded) JSON file.
 
 <br>
@@ -1595,8 +1596,12 @@ const engine = new BrowserStorageEngine(options?: BrowserStorageEngineOptions);
   
 Storage engine for the [`DataStore` class](#class-datastore) that uses the browser's LocalStorage or SessionStorage to store data.  
   
-- ⚠️ Requires a secure DOM environment (HTTPS)  
-- ⚠️ Don't reuse engines across multiple [`DataStore`](#class-datastore) instances
+**For information on the options object, please [refer to the `BrowserStorageEngineOptions` type.](#type-browserstorageengineoptions)**  
+  
+- ⚠️ Only works with JSON-serializable data.
+- ⚠️ Requires a secure DOM environment (HTTPS).
+- ⚠️ Don't reuse the same engine instance across multiple [`DataStore`](#class-datastore) instances.
+- ⚠️ Since the browser storage APIs will [evict all site data](https://developer.mozilla.org/en-US/docs/Web/API/Storage_API/Storage_quotas_and_eviction_criteria) when a certain threshold is reached, it's recommended to [request persistence from the user using `navigator.storage.persist()`](https://developer.mozilla.org/en-US/docs/Web/API/StorageManager/persist) or use engines and DataStores only for non-critical data.
   
 <details><summary>Example - click to view</summary>
 
@@ -1649,6 +1654,74 @@ Note that the session storage will be cleared when the page is closed, while the
 
 <br><br>
 
+### `class IndexedDBStorageEngine`
+Signature:
+```ts
+class IndexedDBStorageEngine<TData extends DataStoreData>
+  extends DataStoreEngine<TData>;
+```
+  
+Usage:
+```ts
+const engine = new IndexedDBStorageEngine(options?: IndexedDBStorageEngineOptions);
+```
+  
+Storage engine for the [`DataStore` class](#class-datastore) that uses the [IndexedDB API](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API) to store data in the browser. IndexedDB is a more powerful alternative to localStorage and sessionStorage, allowing for larger storage limits and more complex data structures, including non-JSON-serializable and binary ([Blob](https://developer.mozilla.org/en-US/docs/Web/API/Blob) / [File](https://developer.mozilla.org/en-US/docs/Web/API/File)) data.  
+  
+**For information on the options object, please [refer to the `IndexedDBStorageEngineOptions` type.](#type-indexeddbstorageengineoptions)**  
+  
+- ⚠️ Requires a secure DOM environment (HTTPS).
+- ⚠️ Don't reuse the same engine instance across multiple [`DataStore`](#class-datastore) instances.
+- ⚠️ Since the browser storage APIs will [evict all site data](https://developer.mozilla.org/en-US/docs/Web/API/Storage_API/Storage_quotas_and_eviction_criteria) when a certain threshold is reached, it's recommended to [request persistence from the user using `navigator.storage.persist()`](https://developer.mozilla.org/en-US/docs/Web/API/StorageManager/persist) or use engines and DataStores only for non-critical data.
+  
+<details><summary>Example - click to view</summary>
+
+```ts
+import { DataStore, IndexedDBStorageEngine } from "@sv443-network/coreutils";
+
+// this DataStore will only work in the browser, because it uses the IndexedDBStorageEngine
+const myStore = new DataStore({
+  id: "my-data",
+  defaultData: {
+    // this engine supports any object that can be structuredClone()d, so create an empty text blob by default:
+    foo: new Blob([""], { type: "text/plain" });
+  },
+  formatVersion: 1,
+  engine: new IndexedDBStorageEngine(),
+  encodeData: ["deflate-raw", (data) => compress(data, "deflate-raw", "string")],
+  decodeData: ["deflate-raw", (data) => decompress(data, "deflate-raw", "string")],
+  // ensure the algorithm always stays consistent!
+  // for the first tuple item you may use `null`, `"identity"` or any custom string to indicate custom encoding or no compression
+});
+
+async function init() {
+  // wait for the data to be loaded from the file or for the defaultData to be saved
+  const configData = await myStore.loadData();
+
+  console.log(configData.foo); // Blob { size: 0, type: 'text/plain' }
+}
+
+init();
+```
+</details>
+
+<br>
+
+### `type IndexedDBStorageEngineOptions`
+```ts
+type IndexedDBStorageEngineOptions = DataStoreEngineDSOptions<DataStoreData>;
+```
+  
+Options for the [`IndexedDBStorageEngine` class.](#class-indexeddbstorageengine)  
+This type includes all properties of the [type `DataStoreEngineDSOptions`.](#type-datastoreenginedsoptions)  
+  
+Additionally, there are the following properties:
+| Property | Type | Description |
+| :-- | :-- | :-- |
+| `dbPrefix?` | `string \| undefined` | Prefix that is used in the database connection ID, together with the DataStore ID. Defaults to `__ds-` if left undefined. |
+
+<br><br>
+
 ### `class FileStorageEngine`
 Signature:
 ```ts
@@ -1663,9 +1736,12 @@ const engine = new FileStorageEngine(options?: FileStorageEngineOptions);
   
 Storage engine for the [`DataStore` class](#class-datastore) that uses a file to store data.  
   
-- ⚠️ Requires Node.js or Deno with Node compatibility (v1.31+)  
-- ⚠️ Don't reuse engines across multiple [`DataStore`](#class-datastore) instances  
-- ⚠️ As of version 3.0.6, this engine saves unencoded data as a JSON object, allowing for easier readability and modification of the stored data. Previously saved stringified data can still be loaded fine and will be automatically migrated to the new format when `DataStore.setData()` is called.
+**For information on the options object, please [refer to the `FileStorageEngineOptions` type.](#type-filestorageengineoptions)**  
+  
+- ⚠️ Only works with JSON-serializable data.
+- ⚠️ Requires Node.js or Deno with Node compatibility (v1.31+).  
+- ⚠️ Don't reuse the engine instance across multiple [`DataStore`](#class-datastore) instances.  
+- ⚠️ As of version 3.0.6, this engine saves unencoded data as a plain (non-stringified) JSON object, allowing for easier readability and modification of the stored data. Previously saved stringified data can still be loaded fine and will be automatically migrated to the new format when `DataStore.setData()` is called.
   
 <details><summary>Example - click to view</summary>
 
@@ -1676,25 +1752,25 @@ import { DataStore, FileStorageEngine } from "@sv443-network/coreutils";
 const myStore = new DataStore({
   id: "my-data",
   defaultData: {
-    foo: 1,
+    foo: 420,
   },
   formatVersion: 1,
   engine: new FileStorageEngine({
-    // missing directories will be created automatically
+    // note: missing directories will be created automatically.
     // since the data is encoded, the file contains raw data instead of JSON, so it's saved as .dat:
     filePath: (id) => `./.data/store-${id}.dat`,
   }),
   encodeData: (data) => compress(data, "deflate-raw", "string"),
   decodeData: (data) => decompress(data, "deflate-raw", "string"),
   // ensure the algorithm always stays consistent!
-  // for the first tuple item you may use `null`, `"identity"` or any custom string to indicate encoding without compression
+  // for the first tuple item you may use `null`, `"identity"` or any custom string to indicate encoding without compression.
 });
 
 async function init() {
-  // wait for the data to be loaded from the file or for the defaultData to be saved
+  // wait for the data to be loaded from the file or for the defaultData to be saved:
   const configData = await myStore.loadData();
 
-  console.log(configData.foo); // 1
+  console.log(configData.foo); // 420
 }
 
 init();
