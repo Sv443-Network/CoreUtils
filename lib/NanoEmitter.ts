@@ -11,7 +11,7 @@ import { PicoEmitter, type PicoEmitterOnMultiOptions, type PicoEmitterOptions } 
 
 export type NanoEmitterOptions = Prettify<{
   /** If set to true, allows emitting events through the public method emit() */
-  publicEmit: boolean;
+  publicEmit?: boolean;
 } & PicoEmitterOptions>;
 
 /** Options for the {@linkcode NanoEmitter.onMulti()} method */
