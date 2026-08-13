@@ -1594,7 +1594,7 @@ Usage:
 const engine = new BrowserStorageEngine(options?: BrowserStorageEngineOptions);
 ```
   
-Storage engine for the [`DataStore` class](#class-datastore) that uses the browser's LocalStorage or SessionStorage to store data.  
+Storage engine for the [`DataStore` class](#class-datastore) that uses the browser's [LocalStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage) or [SessionStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/sessionStorage) to store data.  
   
 **For information on the options object, please [refer to the `BrowserStorageEngineOptions` type.](#type-browserstorageengineoptions)**  
   
@@ -1619,7 +1619,6 @@ const myStore = new DataStore({
     // LocalStorage will persist across sessions, SessionStorage will be cleared when the page is closed
     type: "localStorage", // or "sessionStorage"
   }),
-  // ensure the algorithm always stays the same!
   encodeData: ["deflate-raw", (data) => compress(data, "deflate-raw", "string")],
   decodeData: ["deflate-raw", (data) => decompress(data, "deflate-raw", "string")],
   // ensure the algorithm always stays consistent!
@@ -1719,6 +1718,7 @@ Additionally, there are the following properties:
 | Property | Type | Description |
 | :-- | :-- | :-- |
 | `dbPrefix?` | `string \| undefined` | Prefix that is used in the database connection ID, together with the DataStore ID. Defaults to `__ds-` if left undefined. |
+| `dbStoreName?` | `string \| undefined` | Name of the IndexedDB object store that holds the key-value pairs. Defaults to `keyval` if left undefined. |
 
 <br><br>
 
