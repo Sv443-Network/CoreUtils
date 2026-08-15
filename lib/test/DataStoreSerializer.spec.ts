@@ -1,4 +1,4 @@
-import { afterAll, describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it, vi } from "vitest";
 import { unlink } from "node:fs/promises";
 import { DataStoreSerializer } from "../DataStoreSerializer.ts";
 import { DataStore } from "../DataStore.ts";
@@ -75,6 +75,9 @@ describe("DataStoreSerializer", () => {
         checksum: "86cada6157f4b726bf413e0371a2f461a82d2809e6eb3c095ec796fcfd8d72ee",
       },
     ]);
+
+    const storesIdentical = ser.getStores().every(s => getStores().find(st => st.id === s.id));
+    expect(storesIdentical).toBe(true);
   });
 
   it("Serialization with memoryCache disabled", async () => {
@@ -197,5 +200,129 @@ describe("DataStoreSerializer", () => {
 
     expect(resultStringified).toBeTypeOf("string");
     expect(resultStringified).toEqual(`[{"id":"dss-test-1","data":{"a":1,"b":2},"formatVersion":1,"encoded":false,"checksum":"43258cff783fe7036d8a43033f830adfc60ec037382473548ac742b888292777"},{"id":"dss-test-2","data":"q1ZKVrIy1FFKUbIyqgUA","formatVersion":1,"encoded":true,"checksum":"b1020c3faac493009494fa622f701b831657c11ea53f8c8236f0689089c7e2d3"}]`);
+  });
+
+  //#region events
+
+  it("Emits loadedStore and loadedAllStores", async () => {
+    const stores = getStores();
+    const ser = new DataStoreSerializer(stores);
+
+    const loadedStore = vi.fn();
+    const loadedAllStores = vi.fn();
+    ser.on("loadedStore", loadedStore);
+    ser.on("loadedAllStores", loadedAllStores);
+
+    await ser.loadStoresData();
+
+    expect(loadedStore).toHaveBeenCalledTimes(2);
+    expect(loadedStore).toHaveBeenNthCalledWith(1, stores[0]);
+    expect(loadedStore).toHaveBeenNthCalledWith(2, stores[1]);
+    expect(loadedAllStores).toHaveBeenCalledTimes(1);
+    expect(loadedAllStores).toHaveBeenCalledWith();
+  });
+
+  it("Only emits loadedAllStores once all stores have loaded", async () => {
+    const stores = getStores();
+    const ser = new DataStoreSerializer(stores);
+
+    const loadedAllStores = vi.fn();
+    ser.on("loadedAllStores", loadedAllStores);
+
+    await ser.loadStoresData(["dss-test-1"]);
+    expect(loadedAllStores).not.toHaveBeenCalled();
+
+    await ser.loadStoresData(["dss-test-2"]);
+    expect(loadedAllStores).toHaveBeenCalledTimes(1);
+  });
+
+  it("Emits resetStores", async () => {
+    const stores = getStores();
+    const ser = new DataStoreSerializer(stores);
+    await ser.loadStoresData();
+
+    const resetStores = vi.fn();
+    ser.on("resetStores", resetStores);
+
+    await ser.resetStoresData(["dss-test-1"]);
+    expect(resetStores).toHaveBeenCalledTimes(1);
+    expect(resetStores).toHaveBeenCalledWith([stores[0]]);
+
+    await ser.resetStoresData(() => false);
+    expect(resetStores).toHaveBeenCalledTimes(1);
+  });
+
+  it("Emits deletedStores", async () => {
+    const stores = getStores();
+    const ser = new DataStoreSerializer(stores);
+    await ser.loadStoresData();
+
+    const deletedStores = vi.fn();
+    ser.on("deletedStores", deletedStores);
+
+    await ser.deleteStoresData(["dss-test-2"]);
+    expect(deletedStores).toHaveBeenCalledTimes(1);
+    expect(deletedStores).toHaveBeenCalledWith([stores[1]]);
+
+    await ser.deleteStoresData(() => false);
+    expect(deletedStores).toHaveBeenCalledTimes(1);
+
+    await ser.resetStoresData();
+  });
+
+  it("Forwards events triggered directly on a contained DataStore instance", async () => {
+    const stores = getStores();
+    const [store1, store2] = stores;
+    const ser = new DataStoreSerializer(stores);
+
+    const loadedStore = vi.fn();
+    const loadedAllStores = vi.fn();
+    const resetStores = vi.fn();
+    const deletedStores = vi.fn();
+    ser.on("loadedStore", loadedStore);
+    ser.on("loadedAllStores", loadedAllStores);
+    ser.on("resetStores", resetStores);
+    ser.on("deletedStores", deletedStores);
+
+    await store1.loadData();
+    expect(loadedStore).toHaveBeenCalledTimes(1);
+    expect(loadedStore).toHaveBeenCalledWith(store1);
+    expect(loadedAllStores).not.toHaveBeenCalled();
+
+    await store2.loadData();
+    expect(loadedStore).toHaveBeenCalledTimes(2);
+    expect(loadedAllStores).toHaveBeenCalledTimes(1);
+
+    await store1.saveDefaultData();
+    expect(resetStores).toHaveBeenCalledTimes(1);
+    expect(resetStores).toHaveBeenCalledWith([store1]);
+
+    await store2.deleteData();
+    expect(deletedStores).toHaveBeenCalledTimes(1);
+    expect(deletedStores).toHaveBeenCalledWith([store2]);
+
+    await ser.resetStoresData();
+  });
+
+  it("Stops forwarding events from stores removed via setStores()", async () => {
+    const oldStores = getStores();
+    const [oldStore1] = oldStores;
+    const ser = new DataStoreSerializer(oldStores);
+
+    const newStores = getStores();
+    const [newStore1] = newStores;
+    await ser.setStores(newStores);
+
+    const loadedStore = vi.fn();
+    ser.on("loadedStore", loadedStore);
+
+    await oldStore1.loadData();
+    expect(loadedStore).not.toHaveBeenCalled();
+
+    await newStore1.loadData();
+    expect(loadedStore).toHaveBeenCalledTimes(1);
+    expect(loadedStore).toHaveBeenCalledWith(newStore1);
+
+    await ser.resetStoresData();
   });
 });
