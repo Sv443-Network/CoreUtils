@@ -1,5 +1,22 @@
 # @sv443-network/coreutils
 
+## 3.8.0
+
+### Minor Changes
+
+- 96abc51: Added new `DataStore` engine `IndexedDBStorageEngine` for DOM environments with access to [`indexedDB`](https://developer.mozilla.org/en-US/docs/Web/API/Window/indexedDB).
+  This engine allows for larger storage limits and more complex data structures, including non-JSON-serializable and binary ([Blob](https://developer.mozilla.org/en-US/docs/Web/API/Blob) / [File](https://developer.mozilla.org/en-US/docs/Web/API/File)) data.
+- 12866fb: `DataStoreSerializer` now extends `PicoEmitter` and emits these events:
+  - `loadedAllStores`: Emitted once, whenever all contained DataStore instances have finished loading at least once. No arguments.
+  - `loadedStore`: Emitted once, whenever a contained DataStore instance has finished loading at least once. Gets passed the instance as the only argument.
+  - `resetStores`: Emitted whenever one or more stores have had their data reset to the default value. Gets passed an array of all instances that were reset.
+  - `deletedStores`: Emitted whenever one or more stores have had their persistent data cleared. Gets passed an array of all instances that were cleared.
+
+### Patch Changes
+
+- 969119f: `NanoEmitterOptions.publicEmit` is no longer a required property in all CoreUtils classes that extend `NanoEmitter`.
+- 0265c41: `createProgressBar()` now correctly uses the 25% and 75% characters.
+
 ## 3.7.1
 
 ### Patch Changes
