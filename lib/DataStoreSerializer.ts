@@ -78,7 +78,7 @@ export class DataStoreSerializer extends PicoEmitter<DataStoreSerializerEventMap
   protected stores: DataStore<any, boolean>[];
   protected options: Required<DataStoreSerializerOptions>;
   /** Set of IDs of loaded stores. Is kept in sync via {@linkcode bindStoreEvents()}. */
-  protected loadedStores = new Set<string>();
+  protected loadedStores: Set<string> = new Set<string>();
   /** Unsubscribe functions for the event listeners bound to each contained {@linkcode DataStore} instance, keyed by store ID. */
   protected storeEventUnsubs: Map<string, Array<() => void>> = new Map();
 
