@@ -9,7 +9,9 @@ If you like using this library, please consider [supporting the development ❤�
 
 <!-- #region Preamble -->
 ## Preamble:
-This library is written in TypeScript and contains builtin TypeScript declarations, but it will also work in plain JavaScript after removing the `: type` annotations in the example code snippets.  
+Every bit of code exported by the library comes with included TSDoc documentation, meaning you can just fully rely on your IDE's autocomplete. However this document goes more in-depth and offers more hands-on code examples than the integrated documentation.  
+  
+Though this library is written in TypeScript and contains builtin TypeScript declarations, it will also work in plain JavaScript after removing the `: type` annotations in the example code snippets.  
   
 Each feature's example code snippet can be expanded by clicking on the text "Example - click to view".  
 The signatures and examples are written in TypeScript and use ESM import syntax to show you which types need to be provided and will be returned.  
@@ -20,8 +22,9 @@ They will also be further explained in the description below that section.
   
 Warning emojis (⚠️) denote special cautions or important notes that you should be aware of when using the feature.  
   
-If you need help with something, please [create a new discussion](https://github.com/Sv443-Network/CoreUtils/discussions) or [join my Discord server.](https://dc.sv443.net/)  
-For submitting bug reports or feature requests, please use the [GitHub issue tracker.](https://github.com/Sv443-Network/CoreUtils/issues)
+> [!TIP]  
+> If you need help with something, please [create a new discussion](https://github.com/Sv443-Network/UserUtils/discussions) or [join my Discord server.](https://dc.sv443.net/)  
+> **For bug reports or feature requests, please use the [GitHub issue tracker.](https://github.com/Sv443-Network/UserUtils/issues)**
 
 <br>
 
@@ -170,6 +173,7 @@ For submitting bug reports or feature requests, please use the [GitHub issue tra
 
 <!-- #region array -->
 ## Array
+This section contains utilities for array manipulation.
 
 ### `function randomItem()`
 Signature:
@@ -325,6 +329,7 @@ console.log(arr); // []
 
 <!-- #region colors -->
 ## Colors
+This section contains utilities for color manipulation.
 
 <br>
 
@@ -426,6 +431,7 @@ console.log(rgbToHex());                                // #nannannan
 
 <!-- #region crypto -->
 ## Crypto
+This section contains utilities related to cryptography.
 
 <br>
 
@@ -618,6 +624,7 @@ benchmark(true, true);   // Generated 10k in 1054ms
 
 <!-- #region DataStore -->
 ## DataStore
+The framework of modular DataStore classes and types allow for some highly type-safe and deeply configurable ways of storing data in different environments.
 
 <br>
 
@@ -638,17 +645,19 @@ Supports automatic migration of outdated data formats via configured migration f
 You may create as many instances as you like as long as they have different IDs.  
 The class' internal methods are all declared as protected, so you can extend this class and override them if you need to add your own functionality.  
   
-**For info on the options object, please [refer to the `DataStoreOptions` type.](#type-datastoreoptions)**  
+**For info on the options object, please [refer to the `DataStoreOptions` type](#type-datastoreoptions)** (or your IDE's autocomplete).  
   
-Each DataStore instance needs an engine, which is responsible for the actual data storage.  
-To see a list of available engines, see the [Storage Engines section.](#storage-engines)  
-To make your own engine, refer to the [`DataStoreEngine` class.](#class-datastoreengine)  
+Each DataStore instance needs an engine, which is responsible for the actual data storage. Different environments may call for different engines, like the [`BrowserStorageEngine`](#class-browserstorageengine) and [`IndexedDBStorageEngine`](#class-indexeddbstorageengine) in the DOM and the [`FileStorageEngine`](#class-filestorageengine) in Node.js/Deno.  
+  
+To see a list of available engines, check out the [Storage Engines section.](#storage-engines)  
+To make your own engine, refer to the [`DataStoreEngine` class and its example code.](#class-datastoreengine)  
+  
 The JSON string data stored by the engine is compressed using `deflate-raw` by default, but the algorithm can be changed or compression disabled via the options.  
   
 DataStore extends from the [`NanoEmitter` class](#class-nanoemitter) so it also exposes all of its event handling methods.  
 For a list of all events, please refer to the events section below the code example or the [`DataStoreEventMap` type.](#type-datastoreeventmap)  
   
-If you have multiple DataStore instances and you want to be able to easily and safely export and import their data, take a look at the [DataStoreSerializer class.](#class-datastoreserializer) It combines the data of multiple DataStore instances into a single object that can be exported and imported as a whole, including filter-based partial imports and exports.  
+If you have multiple DataStore instances and you want to be able to easily and safely export and import their data, check out the [DataStoreSerializer class.](#class-datastoreserializer) It combines the data of multiple DataStore instances into a single object that can be exported and imported as a whole, including filter-based partial imports and exports.  
   
 - ⚠️ **The data is cloned using [`structuredClone()`](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm) and serialized with [`JSON.stringify()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify)** prior to encoding. So make sure to only use data that can be cloned and serialized as JSON properly. This means circular structures and complex objects (containing functions, self-references, etc.) will either not be cloned fully, throw an error on load and save, or cause otherwise unexpected behavior. Properties with a value of `undefined` will be removed from the data prior to saving it, so use `null` if you need to preserve the key.
 - ⚠️ **In environments where the same script is running multiple times in parallel** (multiple open tabs of the same website, workers, etc.), leaving `memoryCache` enabled may cause data inconsistency between the different instances, so consider either disabling it in those cases or to use some sort of inter-instance communication to trigger a data load.
@@ -3601,6 +3610,7 @@ myInstance.doStuff();
 
 <!-- #region text -->
 ## Text
+This section contains utilities for string/text manipulation.
 
 <br>
 
