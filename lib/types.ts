@@ -63,3 +63,17 @@ export type SerializableVal = string | number | boolean | null | SerializableVal
 
 /** Any value that can be implicitly converted to a string with `String(val)`, `val.toString()` or \``${val}`\` */
 export type Stringifiable = string | number | boolean | null | undefined | { toString(): string } | Stringifiable[];
+
+/**
+ * Returns a union of all property keys of the object {@linkcode TObj} whose values are of type {@linkcode TType}.
+ * @example
+ * type Foo = {
+ *   bar: string;
+ *   baz: boolean;
+ *   qux: string;
+ * };
+ * ExtractKeysOfType<Foo, string>; // "bar" | "qux"
+ */
+export type ExtractKeysOfType<TObj, TType> = {
+  [UKey in keyof TObj]: TObj[UKey] extends TType ? UKey : never
+}[keyof TObj];

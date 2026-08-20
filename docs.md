@@ -156,6 +156,7 @@ Warning emojis (⚠️) denote special cautions or important notes that you shou
     - 🔷 [`type StringGen`](#type-stringgen) - A value that can be either of type string, or a sync or async function that returns a string
     - 🔷 [`type ValueGen`](#type-valuegen) - A value that can be either the generic type T, or a sync or async function that returns T
     - 🔷 [`type Stringifiable`](#type-stringifiable) - Any value that can be implicitly converted to a string
+    - 🔷 [`type ExtractKeysOfType`](#type-extractkeysoftype) - Creates a union of all property keys of the given object type whose values are of the given type
 
 > [!NOTE]  
 > 🟣 = function  
@@ -4356,5 +4357,31 @@ type Stringifiable = string | number | boolean | null | undefined | { toString()
   
 Any value that can be *implicitly* converted to a string with `String(val)`, `val.toString()` or `${val}`  
 Objects like [Symbols](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol) or objects returned by [`pureObj()`](#function-pureobj) are excluded from this type and will throw a TypeError when implicitly stringified with `${val}` (as opposed to explicitly with `String(val)` or `val.toString()`).
+
+<br>
+
+### `type ExtractKeysOfType`
+```ts
+type ExtractKeysOfType<TObj, TType> = {
+  [UKey in keyof TObj]: TObj[UKey] extends TType ? UKey : never
+}[keyof TObj];
+```
+  
+Creates a union of all property keys of the given object `TObj`, whose values are of the given type `TType`.  
+  
+<details><summary><b>Example - click to view</b></summary>
+
+```ts
+import type { ExtractKeysOfType } from "@sv443-network/coreutils";
+
+type Foo = {
+  bar: string;
+  baz: boolean;
+  qux: string;
+};
+
+type Bar = ExtractKeysOfType<Foo, string>; // "bar" | "qux"
+```
+</details>
 
 <br><br>

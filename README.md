@@ -135,6 +135,7 @@ Intended to be used in conjunction with [`@sv443-network/userutils`](https://git
   - 🔷 [`type StringGen`](./docs.md#type-stringgen) - A value that can be either of type string, or a sync or async function that returns a string
   - 🔷 [`type ValueGen`](./docs.md#type-valuegen) - A value that can be either the generic type T, or a sync or async function that returns T
   - 🔷 [`type Stringifiable`](./docs.md#type-stringifiable) - Any value that can be implicitly converted to a string
+  - 🔷 [`type ExtractKeysOfType`](./docs.md#type-extractkeysoftype) - Creates a union of all property keys of the given object type whose values are of the given type
 
 > [!NOTE]  
 > 🟣 = function  
