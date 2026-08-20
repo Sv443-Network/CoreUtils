@@ -1,5 +1,11 @@
 # @sv443-network/coreutils
 
+## 3.9.0
+
+### Minor Changes
+
+- 9158871: Added new type `ExtractKeysOfType<TObj, TType>` to create a union of all property keys of the given object type whose values are of the given type.
+
 ## 3.8.0
 
 ### Minor Changes
