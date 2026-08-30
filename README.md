@@ -48,6 +48,8 @@ Intended to be used in conjunction with [`@sv443-network/userutils`](https://git
       - 🔷 [`type BrowserStorageEngineOptions`](./docs.md#browserstorageengineoptions) - Options for the browser storage engine
     - 🟧 [`class FileStorageEngine`](./docs.md#class-FileStorageEngine) - File-based storage engine for Node.js and Deno
       - 🔷 [`type FileStorageEngineOptions`](./docs.md#FileStorageEngineoptions) - Options for the file storage engine
+    - 🟧 [`class IndexedDBStorageEngine`](./docs.md#class-indexeddbstorageengine) - Storage engine for the IndexedDB in browser environments (can store more than just JSON)
+      - 🔷 [`type IndexedDBStorageEngineOptions`](./docs.md#indexeddbstorageengineoptions) - Options for the IndexedDB storage engine
 - [**Debouncer:**](./docs.md#debouncer)
   - 🟣 [`function debounce()`](./docs.md#function-debounce) - Function wrapper for the [`Debouncer` class](./docs.md#class-debouncer)
   - 🟧 [`class Debouncer`](./docs.md#class-debouncer) - Class that manages listeners whose calls are rate-limited
