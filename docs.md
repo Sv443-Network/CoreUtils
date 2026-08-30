@@ -69,6 +69,8 @@ Warning emojis (⚠️) denote special cautions or important notes that you shou
         - 🔷 [`type BrowserStorageEngineOptions`](#browserstorageengineoptions) - Options for the browser storage engine
       - 🟧 [`class FileStorageEngine`](#class-FileStorageEngine) - File-based storage engine for Node.js and Deno
         - 🔷 [`type FileStorageEngineOptions`](#FileStorageEngineoptions) - Options for the file storage engine
+      - 🟧 [`class IndexedDBStorageEngine`](./docs.md#class-indexeddbstorageengine) - Storage engine for the IndexedDB in browser environments (can store more than just JSON)
+        - 🔷 [`type IndexedDBStorageEngineOptions`](./docs.md#indexeddbstorageengineoptions) - Options for the IndexedDB storage engine
   - [**Debouncer:**](#debouncer)
     - 🟣 [`function debounce()`](#function-debounce) - Function wrapper for the [`Debouncer` class](#class-debouncer)
     - 🟧 [`class Debouncer`](#class-debouncer) - Class that manages listeners whose calls are rate-limited
