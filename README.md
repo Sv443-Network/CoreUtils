@@ -2,7 +2,8 @@
 
 # CoreUtils
 Cross-platform, general-purpose, JavaScript core library for Node, Deno and the browser with tons of various utility functions and classes.  
-In a DOM environment, this library can be replaced with [`@sv443-network/userutils`](https://github.com/Sv443-Network/UserUtils), which fully re-export all CoreUtils features.
+  
+Note: In a DOM environment, CoreUtils can be replaced with [`@sv443-network/userutils`](https://github.com/Sv443-Network/UserUtils), which fully re-exports all CoreUtils features.
 
 ### [Documentation](./docs.md#readme) &bull; [Features](#features) &bull; [Installation](#installation) &bull; [License](./LICENSE.txt) &bull; [Changelog](./CHANGELOG.md)
 
