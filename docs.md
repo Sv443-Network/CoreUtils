@@ -3607,6 +3607,21 @@ myInstance.doStuff();
 
 </details>
 
+<br>
+
+### `type PicoEmitterOptions`
+Signature:
+```ts
+type PicoEmitterOptions = {
+  /**
+   * When provided, the emitter will remember the last arguments of each listed event.
+   * Any listener attached via `on()` or `once()` after the event has already fired will
+   * be immediately called / resolved with the cached arguments (catch-up behaviour).
+   * Only works for emissions that go through the public `emit()` or the protected `emitEvent()` method.
+   */
+  catchUpEvents?: PropertyKey[],
+};
+```
 
 <br><br>
 
