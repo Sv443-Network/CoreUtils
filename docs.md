@@ -2640,7 +2640,7 @@ type ValueGen<
 > = TValueType | Promise<TValueType> | TFn;
 ```
   
-Describes a value that can be obtained in various ways, including via the type itself, a function that returns the type, a Promise that resolves to the type or either a sync or an async function that returns the type.  
+Describes a value that can be obtained in various ways, including via the given type itself, a sync or an async function that returns the type, or a Promise that resolves to the type.  
 The optional `TFn` parameter lets you customise the function variant's signature. When specified, [`consumeGen()`](#function-consumegen) enforces that any extra arguments match `Parameters<TFn>`.  
 Use it in the [`consumeGen()` function](#function-consumegen) to convert the given ValueGen value to the type it represents. Also refer to that function for an example.  
 
