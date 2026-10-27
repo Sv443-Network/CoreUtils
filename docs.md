@@ -2712,7 +2712,7 @@ type StringGen<
 > = ValueGen<Stringifiable, TFn>;
 ```
   
-Describes a string that can be obtained in various ways, including via a [`Stringifiable`](#type-stringifiable) value, a function that returns a [`Stringifiable`](#type-stringifiable) value, a Promise that resolves to a [`Stringifiable`](#type-stringifiable) value or either a sync or an async function that returns a [`Stringifiable`](#type-stringifiable) value.  
+Describes a string that can be obtained in various ways, including via a [`Stringifiable`](#type-stringifiable) value, a sync or async function that returns a [`Stringifiable`](#type-stringifiable) value, or a Promise that resolves to a [`Stringifiable`](#type-stringifiable) value.  
 Remember that [`Stringifiable`](#type-stringifiable) is a type that describes a value that either is a string itself or can be converted to a string implicitly using `toString()`, template literal interpolation, or by passing it to `String()`, giving you the utmost flexibility in how the string can be passed.  
   
 The optional `TFn` parameter lets you customise the function variant's signature. When specified, [`consumeStringGen()`](#function-consumestringgen) enforces that any extra arguments match `Parameters<TFn>`.  
