@@ -323,7 +323,7 @@ export class DataStore<TData extends DataStoreData, TMemCache extends boolean = 
 
       // run migrations if needed
       if(storedFmtVer < this.formatVersion && this.migrations)
-        parsed = await this.runMigrations(parsed, storedFmtVer); // setting saveData = true not needed since runMigrations() already saves the data
+        parsed = await this.runMigrations(parsed, storedFmtVer); // data is persistently saved in the runMigrations() call
 
       const result = this.memoryCache
         ? (this.cachedData = this.engine.deepCopy(parsed))

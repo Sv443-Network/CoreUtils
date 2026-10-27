@@ -105,6 +105,9 @@ describe("math/digitCount", () => {
     expect(digitCount(10)).toBe(2);
     expect(digitCount(100_000_000.000_001)).toBe(15);
     expect(digitCount(100_000_000.000_001, false)).toBe(9);
+    expect(digitCount(0.1)).toBe(2);
+    expect(digitCount(1.1)).toBe(2);
+    expect(digitCount(0.123)).toBe(4);
   });
 
   it("Handles edge cases", () => {
