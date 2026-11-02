@@ -1223,7 +1223,7 @@ If you want to import all serialized data, or see an example, refer to [`DataSto
 ### `DataStoreSerializer.loadStoresData()`
 Signature:
 ```ts
-loadStoresData(stores?: string[] | ((id: string) => boolean)): PromiseSettledResult<{ id: string, data: object }>[];;
+loadStoresData(stores?: string[] | ((id: string) => boolean)): PromiseSettledResult<{ id: string, data: object }>[];
 ```
   
 Loads the persistent data of the DataStore instances with IDs matching the `stores` parameter into the in-memory cache of each DataStore instance.  
@@ -1259,7 +1259,7 @@ See the [`DataStore.loadData()`](#datastoreloaddata) method for more information
 ### `DataStoreSerializer.resetStoresData()`
 Signature:
 ```ts
-resetStoresData(stores?: string[] | ((id: string) => boolean)): PromiseSettledResult[];;
+resetStoresData(stores?: string[] | ((id: string) => boolean)): PromiseSettledResult[];
 ```
   
 Resets the persistent data of the DataStore instances with IDs matching the `stores` parameter to their default values.  
@@ -1272,7 +1272,7 @@ Any call to `serialize()` will then use the value of `options.defaultData` of th
 ### `DataStoreSerializer.deleteStoresData()`
 Signature:
 ```ts
-deleteStoresData(stores?: string[] | ((id: string) => boolean)): PromiseSettledResult[];;
+deleteStoresData(stores?: string[] | ((id: string) => boolean)): PromiseSettledResult[];
 ```
   
 Deletes the persistent data of the DataStore instances with IDs matching the `stores` parameter from the set storage method.  
